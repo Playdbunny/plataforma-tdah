@@ -1,0 +1,23 @@
+/* Fuente pixel “Press Start 2P” (puedes cambiarla por otra) */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Outfit:wght@400;600;800&display=swap');
+
+:root{
+  /* Colores editables */
+  --bg: #e5f3f8;             /* cielo claro base */
+  --text: #0f1320;
+  --muted: #5d6470;
+  --primary: #8a87ff;        /* lila botones/subtítulos */
+  --primary-600:#736ef6;
+  --pink: #ff62b7;           /* Intatento */
+  --green:#43cf3b;           /* Hiperactivo-Impulsivo */
+  --purple:#a77bff;          /* Combinado */
+  --chip: rgba(149,165,255,.6); /* burbuja translúcida */
+  --chip-border: rgba(149,165,255,.35);
+  --nav: #0aa3bf;            /* franja superior */
+  --white:#fff;
+  --radius: 24px;
+}
+
+html,body,#root{ height:100%; margin:0; }
+*{ box-sizing:border-box }
+a{ color:inherit; text-decoration:none }
