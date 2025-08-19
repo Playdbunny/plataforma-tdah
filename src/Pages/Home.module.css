@@ -63,7 +63,7 @@
   -webkit-backdrop-filter: blur(3px);
   backdrop-filter: blur(3px);
 }
-.linkish{ color:#fff; text-decoration:underline dotted }
+.linkish{ color:#fff; }
 
 /* Botones redondos con glow */
 .buttonsRow{
