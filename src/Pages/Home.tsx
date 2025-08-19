@@ -23,7 +23,6 @@ export default function Home() {
           <Link to="/login">Login</Link>
           <Link to="#progress">Mi progreso</Link>
           <Link to="#subjects">Materias</Link>
-          <Link to="#resources">Recursos</Link>
         </nav>
       </div>
 
