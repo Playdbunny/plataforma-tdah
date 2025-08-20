@@ -1,0 +1,118 @@
+/* Este es el CSS que ya tenías para el contenedor principal y el navbar */
+.screen {
+  min-height: 100dvh;
+  background: var(--bg) url("/Prado.jpg") center / cover no-repeat fixed;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Barra superior estilo juego */
+.navbar {
+  height: 60px;
+  width: 100%;
+  background: var(--nav);
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  letter-spacing: .3px;
+  font: 700 14px 'Outfit', system-ui;
+}
+.brand { font-weight: 800; }
+.menu { display: flex; gap: 20px; }
+.menu a { opacity: .95; }
+.menu a:hover { text-decoration: underline; }
+
+.content{
+  background: white;
+  border-radius: 12px;
+  max-width: 1600px;
+  width: 90%;
+  margin: 20px auto;
+  padding: 40px 30px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+
+  min-height: calc(100vh - 100px); /* ocupa casi toda la pantalla */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+/* Estilos para el contenedor del carrusel */
+.carousel {
+  width: 100%;
+  max-width: var(--maxw);
+  padding: 10px;
+  margin: 20px auto;
+  background: #2a2a2a; /* Fondo oscuro */
+  border-radius: var(--radius);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+/* Contenedor de los elementos del carrusel */
+.carouselContent {
+  display: flex;
+  gap: 15px; /* Espacio entre las tarjetas */
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory;
+  padding: 10px;
+}
+
+/* Ocultar la barra de desplazamiento en navegadores WebKit */
+.carouselContent::-webkit-scrollbar {
+  display: none;
+}
+
+/* Estilos de cada elemento (la "píldora") */
+.carouselItem {
+  min-width: 150px;
+  height: 60px;
+  background: #444; /* Fondo de la píldora */
+  border-radius: 30px; /* Bordes redondeados para la forma de píldora */
+  flex-shrink: 0;
+  scroll-snap-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--white);
+  font-size: 14px;
+}
+
+/* Botón de navegación (flecha) */
+.carouselNavBtn {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 2rem;
+  cursor: pointer;
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+}
+
+/* Estilos para los indicadores de posición */
+.carouselIndicators {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.5);
+  margin: 0 5px;
+  cursor: pointer;
+  border: none;
+}
+
+.indicator.active {
+  background-color: var(--primary); /* Usa tu color primario para el indicador activo */
+}

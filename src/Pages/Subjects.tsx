@@ -23,17 +23,17 @@ export default function Subjects() {
             </p>
             
             <section className={styles.subjectsCards}>
-                <Link to={"/subject/math"} className={styles.subject}>
+                <Link to={"/subjects/math"} className={styles.subject}>
                     <div className={styles.thumb} />
                     <span className={styles.subjectTitle}>Matemáticas</span>
                 </Link>
 
-                <Link to={"/subject/history"} className={styles.subject}>
+                <Link to={"/subjects/history"} className={styles.subject}>
                     <div className={styles.thumb} />
                     <span className={styles.subjectTitle}>Historia</span>
                 </Link>
 
-                <Link to={"/subject/chemistry"} className={styles.subject}>
+                <Link to={"/subjects/chemistry"} className={styles.subject}>
                     <div className={styles.thumb} />
                     <span className={styles.subjectTitle}>Química</span>
                 </Link>
