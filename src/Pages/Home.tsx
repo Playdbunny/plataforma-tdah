@@ -17,12 +17,12 @@ export default function Home() {
     <div className={styles.screen}>
       {/* NAV */}
       <div className={styles.navbar}>
-        <a className={styles.brand} href="#Inicio">###</a>
+        <a className={styles.brand} href="/">###</a>
         <nav className={styles.menu}>
           <Link to="/">Home</Link>
           <Link to="/login">Login</Link>
           <Link to="#progress">Mi progreso</Link>
-          <Link to="#subjects">Materias</Link>
+          <Link to="/subjects">Materias</Link>
         </nav>
       </div>
 

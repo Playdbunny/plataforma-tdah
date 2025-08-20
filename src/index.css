@@ -16,6 +16,7 @@
   --nav: #0aa3bf;            /* franja superior */
   --white:#fff;
   --radius: 24px;
+  --maxw: 1080px;            /* ancho máximo del contenido */
 }
 
 html,body,#root{ height:100%; margin:0; }
