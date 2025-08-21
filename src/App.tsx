@@ -1,11 +1,11 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import Home from "./Pages/Home";
-import Login from "./Pages/Login";
-import Register from "./Pages/Register"; // si ya tienes la página de crear cuenta
-import Subjects from "./Pages/Subjects";
-import MathPage from "./Pages/Math";
-import HistoryPage from "./Pages/History";
-import ChemistryPage from "./Pages/Chemistry";
+import Home from "./pages/Home";
+import Login from "./pages/Login";
+import Register from "./pages/Register"; // si ya tienes la página de crear cuenta
+import Subjects from "./pages/Subjects";
+import MathPage from "./pages/MathPage";
+import HistoryPage from "./pages/HistoryPage";
+import ChemistryPage from "./pages/ChemistryPage";
  // si tienes una página específica para el modelo atómico
 export default function App() {
   return (
