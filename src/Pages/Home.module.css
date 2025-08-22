@@ -1,64 +1,121 @@
-.screen{
-  min-height:100dvh;
+/* Pantalla base con fondo */
+.screen {
+  min-height: 100dvh;
   background: var(--bg) url("/BosquePixel.jpg") center / cover no-repeat fixed;
-
-  display:flex; flex-direction:column;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
 }
 
-/* Barra superior estilo juego */
+/* ======== Decoraciones ======== */
+/* Nube: pon una imagen en /public/cloud.png */
+.cloud {
+  position: absolute;
+  top: 70px;
+  left: 6%;
+  width: min(520px, 45vw);
+  height: 180px;
+  background: url("/cloud.png") center / contain no-repeat;
+  opacity: 0.9;
+  filter: drop-shadow(0 2px 0 rgba(0,0,0,.15));
+  pointer-events: none;
+  z-index: 0;
+  /* Si la quieres moverse MUY suave, descomenta:
+  animation: cloudDrift 60s linear infinite;
+  */
+}
+
+/* Luciérnagas sutiles */
+.fireflies {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  mix-blend-mode: screen;
+  background:
+    radial-gradient(6px 6px at 10% 30%, #8af7bdcc 25%, transparent 60%),
+    radial-gradient(6px 6px at 40% 60%, #9fd5ffcc 25%, transparent 60%),
+    radial-gradient(6px 6px at 70% 20%, #ffe6a6cc 25%, transparent 60%),
+    radial-gradient(6px 6px at 85% 70%, #bfa7ffcc 25%, transparent 60%),
+    radial-gradient(6px 6px at 25% 80%, #a0ffcccc 25%, transparent 60%);
+  animation: twinkle 2.8s ease-in-out infinite;
+  opacity: .9;
+}
+
+@keyframes twinkle {
+  0%, 100% { filter: brightness(1); }
+  50%      { filter: brightness(1.35); }
+}
+
+/* Movimiento opcional súper suave de la nube */
+@keyframes cloudDrift {
+  from { transform: translateX(0); }
+  to   { transform: translateX(40px); }
+}
+
+/* ===== Barra superior ===== */
 .navbar{
-  height:60px; width:100%;
+  height: 60px;
+  width: 100%;
   background: var(--nav);
   color: var(--white);
-  display:flex; align-items:center; justify-content:space-between;
-  padding:0 16px; letter-spacing:.3px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  letter-spacing: .3px;
   font: 700 14px 'Outfit', system-ui;
+  position: relative;
+  z-index: 2;
 }
-.brand{ font-weight:800 }
+.brand{ font-weight:800; }
 .menu{ display:flex; gap:20px; }
-.menu a{ opacity:.95 }
-.menu a:hover{ text-decoration:underline }
+.menu a{ color: var(--white); opacity:.95; text-decoration: none; }
+.menu a:hover{ text-decoration: underline; }
 
-/* Centro de la escena */
+/* ===== Centro de la escena ===== */
 .hero{
-  flex:1;
-  display:grid;
-  place-items:center;
-  gap:18px;
-  padding:40px 16px 72px;
-  text-align:center;
+  flex: 1;
+  display: grid;
+  place-items: center;
+  gap: 18px;
+  padding: 40px 16px 72px;
+  text-align: center;
+  position: relative;
+  z-index: 2; /* sobre la nube y luciérnagas */
 }
 
 /* Título con burbuja translúcida */
 .titleBubble{
-  padding:14px 24px;
+  padding: 14px 24px;
   background: var(--chip);
-  border:1px solid var(--chip-border);
+  border: 1px solid var(--chip-border);
   border-radius: 48px;
   box-shadow: 0 10px 30px rgba(0,0,0,.15);
   -webkit-backdrop-filter: blur(3px);
   backdrop-filter: blur(3px);
 }
 .title{
-  margin:0;
+  margin: 0;
   font-family: 'Press Start 2P', system-ui;
   font-size: clamp(24px, 5vw, 56px);
   color: var(--white);
   text-shadow:
-    4px 4px 0 rgba(0,0,0,.35), /* sombra gruesa tipo pixel */
+    4px 4px 0 rgba(0,0,0,.35),
     0 0 12px rgba(255,255,255,.25);
 }
 .pixelShadow{ filter: drop-shadow(0 0 6px rgba(255,255,255,.2)); }
 
 /* Subtítulo tipo “chip” */
 .subtitleBubble{
-  margin:10px 0 0;
-  display:inline-block;
-  padding:12px 18px;
+  margin: 10px 0 0;
+  display: inline-block;
+  padding: 12px 18px;
   font: 800 18px 'Outfit', system-ui;
-  color:#fff;
+  color: #fff;
   background: rgba(138,135,255,.55);
-  border:1px solid rgba(138,135,255,.35);
+  border: 1px solid rgba(138,135,255,.35);
   border-radius: 16px;
   -webkit-backdrop-filter: blur(3px);
   backdrop-filter: blur(3px);
@@ -67,15 +124,19 @@
 
 /* Botones redondos con glow */
 .buttonsRow{
-  display:flex; gap:28px; flex-wrap:wrap; justify-content:center;
-  margin-top:6px;
+  display: flex;
+  gap: 28px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 6px;
 }
 .btn{
-  border:none; cursor:pointer;
-  padding:16px 28px;
+  border: none;
+  cursor: pointer;
+  padding: 16px 28px;
   border-radius: 999px;
   font: 800 16px 'Outfit', system-ui;
-  color:#fff;
+  color: #fff;
   transform: translateY(0);
   transition: transform .08s ease, box-shadow .15s ease, filter .15s ease;
   box-shadow: 0 10px 22px rgba(0,0,0,.18);
@@ -87,9 +148,10 @@
 .btnGreen{  background: var(--green);  }
 .btnPurple{ background: var(--purple); }
 
-/* Asegurar contraste en móvil */
+/* Responsive */
 @media (max-width: 520px){
   .subtitleBubble{ font-size:16px; }
   .buttonsRow{ gap:16px; }
   .btn{ padding:14px 22px; font-size:15px; }
 }
+

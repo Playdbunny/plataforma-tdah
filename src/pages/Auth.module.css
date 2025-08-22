@@ -1,0 +1,215 @@
+/* Fondo general y layout */
+.screen {
+  min-height: 100dvh;
+  background: var(--bg) url("/Prado.jpg") center / cover no-repeat fixed;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Top bar estilo juego */
+.topbar {
+  height: 60px;
+  width: 100%;
+  background: var(--nav);
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  letter-spacing: .3px;
+  font: 700 14px 'Outfit', system-ui;
+}
+.brand { font-weight: 800; }
+.menu { display: flex; gap: 20px; }
+.menu a { color: var(--white); opacity: .95; text-decoration: none; }
+.menu a:hover { text-decoration: underline; }
+
+/* Tablero central */
+.board {
+  max-width: 1100px;
+  width: calc(100% - 40px);
+  margin: 40px auto;
+  background: rgba(80, 98, 150, 0.55);
+  backdrop-filter: blur(6px);
+  border-radius: 18px;
+  display: grid;
+  grid-template-columns: 1fr 10px 1fr;
+  padding: 28px;
+  box-shadow: 0 20px 70px rgba(0,0,0,.25);
+}
+
+/* paneles */
+.panel {
+  background: rgba(60, 72, 115, 0.55);
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 16px;
+  padding: 24px 20px;
+  color: #fff;
+  min-height: 420px;
+  position: relative;
+  overflow: hidden;
+  animation: drop .5s ease both;
+}
+.left { animation-delay: .05s; }
+.right { animation-delay: .12s; }
+
+@keyframes drop {
+  from { opacity: 0; transform: translateY(-10px) scale(.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.divider {
+  width: 10px;
+  height: 100%;
+  display: grid;
+  place-items: center;
+}
+.divider::after {
+  content: "";
+  width: 6px; height: 90%;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #cfd7ff33, #b4bfff55);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.25);
+}
+
+/* Títulos y textos */
+.h2 {
+  margin: 0 0 8px;
+  font: 800 26px 'Outfit', system-ui;
+}
+.copy {
+  margin: 0 0 16px;
+  color: #e9ecff;
+  opacity: .92;
+}
+
+/* Formularios */
+.form { display: grid; gap: 12px; }
+.inputWrap { position: relative; }
+.input {
+  width: 100%;
+  height: 42px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 2px solid rgba(255,255,255,.55);
+  background: rgba(255,255,255,.96);
+  box-shadow: 0 10px 24px rgba(0,0,0,.15);
+  outline: none;
+  font: 600 14px 'Outfit', system-ui;
+}
+.input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(79,99,255,.25), 0 10px 24px rgba(0,0,0,.15);
+}
+
+/* Botones */
+.btn {
+  height: 44px;
+  border: none;
+  border-radius: 999px;
+  font: 800 14px 'Outfit', system-ui;
+  letter-spacing: .3px;
+  cursor: pointer;
+  transition: transform .06s ease, filter .15s ease;
+  box-shadow: 0 10px 22px rgba(0,0,0,.20);
+}
+.btn:active { transform: translateY(1px); }
+
+.btnPrimary {
+  background: var(--primary);
+  color: #fff;
+}
+.btnPrimary:hover { filter: brightness(1.04); }
+
+.btnSuccess {
+  background: #35c875;
+  color: #fff;
+}
+.btnSuccess:hover { filter: brightness(1.04); }
+
+/* TDAH badge */
+.tagRow { margin-top: 4px; margin-bottom: 6px; }
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font: 700 12px 'Outfit', system-ui;
+  color: #1a2;
+  background: #ddffe9;
+  border: 1px solid #b1f3cf;
+  box-shadow: inset 0 -1px 0 #ffffffaa;
+  animation: pulse .9s ease-in-out infinite alternate;
+}
+@keyframes pulse {
+  from { transform: translateY(0) scale(1); }
+  to   { transform: translateY(-1px) scale(1.02); }
+}
+
+.hint {
+  display: block;
+  margin-top: 8px;
+  color: #e9ecff;
+  opacity: .8;
+  font-size: 12px;
+}
+
+/* Flotantes/decoro */
+.float { position: absolute; pointer-events: none; z-index: 0; }
+.cloud {
+  width: 240px; height: 120px;
+  background: radial-gradient(#fff, #ffffffcc);
+  border-radius: 999px;
+  filter: blur(1px);
+  opacity: .7;
+  animation: cloud 22s linear infinite;
+}
+@keyframes cloud {
+  0% { transform: translateX(-10vw); }
+  100% { transform: translateX(110vw); }
+}
+.c1 { top: 80px; left: -20vw; animation-delay: 0s; }
+.c2 { top: 140px; left: -30vw; animation-delay: 6s; }
+
+.coin { font-size: 22px; animation: bob 3s ease-in-out infinite; }
+.k1 { right: 18px; top: 90px; }
+.k2 { right: 12px; top: 340px; }
+@keyframes bob {
+  0%, 100% { transform: translateY(0) rotate(-6deg); }
+  50% { transform: translateY(-5px) rotate(6deg); }
+}
+
+/* confeti simple */
+.confetti {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  gap: 8px;
+  font-size: 42px;
+  animation: fadeOut 1.6s ease forwards;
+  pointer-events: none;
+  z-index: 5;
+}
+.confetti span { animation: pop .7s ease both; }
+.confetti span:nth-child(2) { animation-delay: .1s; }
+.confetti span:nth-child(3) { animation-delay: .2s; }
+.confetti span:nth-child(4) { animation-delay: .3s; }
+.confetti span:nth-child(5) { animation-delay: .4s; }
+
+@keyframes pop { from{ transform: scale(.6); opacity: .3 } to{ transform: scale(1.1); opacity: 1 } }
+@keyframes fadeOut { to { opacity: 0 } }
+
+/* shake feedback */
+.shake {
+  animation: shake .45s cubic-bezier(.36,.07,.19,.97) both;
+}
+@keyframes shake {
+  10%, 90% { transform: translateX(-1px); }
+  20%, 80% { transform: translateX(2px); }
+  30%, 50%, 70% { transform: translateX(-4px); }
+  40%, 60% { transform: translateX(4px); }
+}
+/* Responsive */    

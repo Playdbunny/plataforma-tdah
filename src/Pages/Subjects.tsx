@@ -9,7 +9,6 @@ export default function Subjects() {
         <a className={styles.brand} href="/">###</a>
         <nav className={styles.menu}>
           <Link to="/">Home</Link>
-          <Link to="/login">Login</Link>
           <Link to="#progress">Mi progreso</Link>
           <Link to="/subjects">Materias</Link>
         </nav>

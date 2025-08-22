@@ -1,6 +1,5 @@
 // src/pages/Home.tsx
-import { Link } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAppStore, type TDAHType } from "../stores/appStore";
 import styles from "./Home.module.css";
 
@@ -9,18 +8,22 @@ export default function Home() {
   const setTdahType = useAppStore((s) => s.setTdahType);
 
   const handleSelect = (type: TDAHType) => {
-    setTdahType(type);     // persiste en localStorage (zustand/persist)
-    navigate("/Register");    // redirige al registro
+    setTdahType(type);       // persiste (zustand/persist)
+    navigate("/auth");       // ir a registro/login
   };
 
   return (
     <div className={styles.screen}>
+      {/* capa decorativa: nube pixel art */}
+      <div className={styles.cloud} aria-hidden="true" />
+      {/* capa decorativa: luciérnagas */}
+      <div className={styles.fireflies} aria-hidden="true" />
+
       {/* NAV */}
       <div className={styles.navbar}>
         <a className={styles.brand} href="/">###</a>
         <nav className={styles.menu}>
           <Link to="/">Home</Link>
-          <Link to="/login">Login</Link>
           <Link to="#progress">Mi progreso</Link>
           <Link to="/subjects">Materias</Link>
         </nav>
@@ -46,12 +49,14 @@ export default function Home() {
           >
             Inatento
           </button>
+
           <button
             onClick={() => handleSelect("Hiperactivo-Impulsivo")}
             className={`${styles.btn} ${styles.btnGreen}`}
           >
             Hiperactivo-Impulsivo
           </button>
+
           <button
             onClick={() => handleSelect("Combinado")}
             className={`${styles.btn} ${styles.btnPurple}`}
@@ -63,5 +68,6 @@ export default function Home() {
     </div>
   );
 }
+
 
 
