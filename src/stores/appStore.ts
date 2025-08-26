@@ -2,7 +2,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-export type TDAHType = "Inatento" | "Hiperactivo-Impulsivo" | "Combinado";
+export type TDAHType = "Inatento" | "Hiperactivo-Impulsivo" | "Combinado"| "iniciar" | "continuar";
 
 type AppState = {
   tdahType: TDAHType | null;

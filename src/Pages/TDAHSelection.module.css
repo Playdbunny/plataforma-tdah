@@ -1,0 +1,85 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+.screen {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  width: 100vw;
+  background-repeat: no-repeat;
+  background-position: center bottom;
+  background-size: cover;
+  color: #fff;
+  font-family: 'Press Start 2P', cursive;
+  overflow: hidden;
+}
+
+/* Navbar */
+.navbar {
+  width: 100%;
+  padding: 20px 40px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  /* Estas dos líneas son la clave */
+  background-color: rgb(1, 1, 41); /* Un fondo oscuro con transparencia */
+  backdrop-filter: blur(2px); /* Agrega un efecto de desenfoque al fondo para mejorar la visibilidad */
+}
+
+.container {
+  text-align: center;
+}
+
+.title {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+}
+
+.subtitle {
+  font-size: 1rem;
+  margin-bottom: 2rem;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.buttonsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.btn {
+  display: inline-block;
+  min-width: 150px;
+  padding: 15px 20px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-family: 'Press Start 2P', cursive;
+  font-weight: 400;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 8px 0 rgba(0, 0, 0, 0.4);
+}
+
+.btn:hover {
+  transform: translateY(-5px);
+}
+
+.btnInatento {
+  background-color: #f282a6; /* Color rosa */
+  color: #ffffff;
+}
+
+.btnHiperactivo {
+  background-color: #61c471; /* Color verde */
+  color: #ffffff;
+}
+
+.btnCombinado {
+  background-color: #a461c4; /* Color morado */
+  color: #ffffff;
+}
