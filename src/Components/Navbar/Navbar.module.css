@@ -1,0 +1,71 @@
+.navbar{
+  position: fixed;      /* ← Fijo arriba siempre */
+  top: 0; left: 0; right: 0;
+  height: 56px;         /* altura explícita */
+  background: #0b1326;
+  z-index: 1000;        /* bien por encima del fondo */
+  display:flex; 
+  align-items:center; 
+  justify-content:space-between;
+  height:64px; 
+  padding:0 20px; 
+  border-bottom:1px solid var(--border);
+  background: #0d1220;
+}
+
+.inner{ 
+  width: 100%;                /* ocupar todo el ancho */
+  margin: 0;                  /* quita el centrado automático */
+  height: 56px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start; /* alinea todo a la izquierda */
+  gap: 32px;                  /* espacio entre brand y menú futuro */
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #e7f0ff;
+  text-decoration: none;
+  composes: pixel from "../../globals.css"; /* si usas CSS Modules con postcss-modules, si no, usa className="brand pixel" en TSX */
+  font-size: 18px;              /* Press Start es pequeña; ajusta a gusto */
+  color: #ffffff;
+  text-shadow:
+    1px 0 #1b2140, -1px 0 #1b2140,
+    0 1px #1b2140,  0 -1px #1b2140; /* contorno estilo pixel */
+}
+
+.logoSlot {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;        /* asegura proporción */
+  image-rendering: pixelated; /* si es pixel art */
+}
+
+.brandText {
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  /* Si luego usas una fuente pixel (p.ej. Press Start 2P), cámbiala aquí */
+  /* font-family: "Press Start 2P", system-ui, sans-serif; */
+  font-size: 18px;
+}
+
+.menu {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.menu a {
+  color: #cfe0ff;
+  text-decoration: none;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+.menu a:hover {
+  opacity: 1;
+}

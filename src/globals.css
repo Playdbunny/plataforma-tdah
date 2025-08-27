@@ -1,0 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=Press+Start+2P&display=swap');
+
+:root{
+  --nav:#0a1424;
+  --bg:#050c18;
+  --text:#cfe3ff;
+  --text-strong:#eef6ff;
+  --line:#1a2b42;
+  --accent:#ffd33d;   /* botón amarillo */
+  --blue:#2aa4ff;     /* botón Explore */
+  --font-press: "Press Start 2P", system-ui, sans-serif;
+}
+
+/* para que se vea nítida sobre fondos oscuros */
+.pixel {
+  font-family: var(--font-press);
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: 0.5px;  /* opcional, ajusta */
+}
+
+*{ box-sizing:border-box; }
+html,body,#root{ height:100%; }
+body{ margin:0; background:var(--bg); color:var(--text); font-family:Inter, system-ui; }
+a{ color:inherit; text-decoration:none; }
+button{ cursor:pointer; font:inherit; }
+img{ display:block; max-width:100%; }
