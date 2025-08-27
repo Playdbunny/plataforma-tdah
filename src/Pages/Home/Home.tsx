@@ -10,7 +10,7 @@ export default function Home() {
 
   const start = () => {
     setTdahType(null);
-    navigate("/register");
+    navigate("/tdah");
   };
 
   return (
@@ -40,7 +40,8 @@ export default function Home() {
           {/* contenedor con borde pixelado */}
           <div className={styles.ctaPanel}>
             <div className={styles.btnRow}>
-              <button className={`${styles.pxBtn} ${styles.btnYellow}`} onClick={start}>
+              <button className={`${styles.pxBtn} ${styles.btnYellow}`} 
+                onClick={start}>
                 Iniciar aventura
               </button>
               <button

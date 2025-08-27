@@ -1,0 +1,99 @@
+:root{
+  --font-pixel: "Press Start 2P", system-ui, sans-serif;
+  --bg-dark: #0a0f16;
+  --navH: 56px;
+}
+
+/* ===== Sección Hero (pantalla completa) ===== */
+.hero{
+  position: relative;
+  margin-top: var(--navH);                  /* deja espacio al navbar */
+  min-height: calc(100dvh - var(--navH));   /* ocupa toda la pantalla menos navbar */
+  background: var(--bg-dark);
+  overflow: hidden;
+  color: #fff;
+}
+
+/* ===== Fondo en capas ===== */
+.bg{ position:absolute; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
+.layer{
+  position:absolute; inset:0;
+  background-repeat: repeat-x;
+  background-position: center bottom;
+  background-size: auto 100%; /* ✅ esto evita cortes al achicar */
+  image-rendering: pixelated;
+}
+
+/* Cada capa con su asset (todos en /public) */
+.sky{ background-image:url("/sky.png"); background-position: top center; z-index:1; }
+.mountains{ background-image:url("/mountain-grass.png"); z-index:2; }
+.hills{ background-image:url("/Gifs/hills.gif"); z-index:3; }
+.grass{ background-image:url("/Gifs/LandingGrass.gif"); z-index:4; }
+
+/* ===== Contenido centrado ===== */
+.center{
+  position:relative; z-index:5;
+  min-height:inherit;
+  display:flex; flex-direction:column; align-items:center;
+  gap:18px;
+  text-align:center;
+  padding: clamp(16px, 6vh, 48px) 16px clamp(32px, 12vh, 96px);
+}
+
+/* Título principal */
+.title{
+  margin:0;
+  font-family:var(--font-pixel);
+  font-size:clamp(28px, 7vw, 72px);
+  color:#796739; /* dorado fijo */
+  text-shadow:
+    -2px -2px 0 #2a1d00, 0 -2px 0 #2a1d00, 2px -2px 0 #2a1d00,
+    -2px  0   0 #2a1d00,                   2px  0   0 #2a1d00,
+    -2px  2px 0 #2a1d00, 0  2px 0 #2a1d00, 2px  2px 0 #2a1d00,
+    -3px -3px 0 #000,    0 -3px 0 #000,    3px -3px 0 #000,
+    -3px  0   0 #000,                    3px  0   0 #000,
+    -3px  3px 0 #000,    0  3px 0 #000,    3px  3px 0 #000;
+}
+.subtitle{
+  margin:0 0 8px;
+  font-weight:700;
+  color:#0e1a2b;
+  text-shadow:0 1px 0 rgba(255,255,255,.8);
+}
+
+/* ===== Grid de opciones ===== */
+.grid{
+  display:grid;
+  grid-template-columns: repeat(3, minmax(200px, 1fr));
+  gap: clamp(12px, 3vw, 24px);
+  width:min(980px, 92vw);
+}
+
+/* Card estilo botón pixelado */
+.card{
+  display:flex; align-items:center; justify-content:center;
+  background:#fff; color:#121212;
+  border:2px solid #2a2a2a;
+  outline:2px solid #d9d9d9;
+  outline-offset:-4px;
+  border-radius:14px;
+  padding: clamp(16px, 2.8vw, 24px);
+  box-shadow: 0 6px 0 rgba(0,0,0,.35);
+  cursor:pointer;
+
+  font-family:var(--font-pixel);
+  font-size:clamp(12px, 1.6vw, 16px);
+
+  -webkit-font-smoothing:none;
+  image-rendering:pixelated;
+  transition: transform .02s, box-shadow .02s, filter .1s;
+}
+.card:hover{ filter:brightness(1.02); box-shadow:0 7px 0 rgba(0,0,0,.38); }
+.card:active{ transform:translateY(1px); box-shadow:0 4px 0 rgba(0,0,0,.38); }
+
+/* Responsive: en móvil, cards una debajo de la otra */
+@media (max-width:900px){
+  .grid{ grid-template-columns:1fr; }
+}
+
+

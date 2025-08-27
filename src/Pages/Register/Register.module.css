@@ -1,0 +1,186 @@
+/* ===== Estilos del registro. Fondo por capas (reciclado del Login), card y controles pixel ===== */
+
+:root{
+  --font-pixel: "Press Start 2P", system-ui, sans-serif; /* misma fuente pixel */
+  --navH: 56px;                                          /* altura navbar fijo */
+}
+
+/* ===== Lienzo principal con fondo por capas ===== */
+.screen{
+  position: relative;
+  margin-top: var(--navH);                   /* espacio para el navbar */
+  min-height: calc(100dvh - var(--navH));    /* vista completa menos navbar */
+  background: #081126;                       /* base de “cielo nocturno” */
+  overflow: hidden;
+  display: grid;
+  place-items: center;                       /* centra la card */
+}
+
+/* Fondo: usa imágenes en /public */
+.bg{ position:absolute; 
+  inset:0; 
+  z-index:0; 
+  pointer-events:none;
+ }
+
+.layer{ 
+  position:absolute; 
+  inset:0; 
+  background-repeat: 
+  repeat-x; 
+  background-size: auto 100%; 
+}
+
+.sky{ 
+  background-image: url("/public/sky-stars.png"); 
+  background-position: top center; 
+}
+
+.clouds{ 
+  background-image: url("/public/dark-cloud.webp"); 
+  background-position: center bottom; 
+  background-repeat: no-repeat;   /* ← evita el corte */
+  background-size: 100% auto;     /* ← “acerca” la imagen para cubrir ancho */
+  image-rendering: pixelated;
+}
+
+/* ===== Tarjeta / contenedor del formulario ===== */
+.card{
+  position: relative; z-index: 3;            /* por delante del fondo */
+  width: min(520px, 90%);                    /* responsive */
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 24px 22px 18px;
+  box-shadow: 0 10px 0 rgba(0,0,0,.35);      /* sombra estilo “puffy” */
+  border: 2px solid #e6e6e6;
+}
+
+/* ===== Botón “Google” (placeholder) ===== */
+.googleBtn{
+  width: 100%;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  font-family: var(--font-pixel);
+  font-size: 14px;
+  background:#fff;
+  border: 2px solid #000;                    /* borde negro pixel */
+  outline: 2px solid #e6e6e6;                /* segundo borde claro */
+  outline-offset: -4px;                      /* hacia adentro → doble línea */
+  border-radius: 10px;
+  padding: 12px 14px;
+  box-shadow: 4px 4px 0 #000;                /* sombra dura estilo pixel */
+  cursor: pointer;
+}
+.googleBtn:active{
+  transform: translate(1px,1px);             /* “presiona” */
+  box-shadow: 3px 3px 0 #000;
+}
+.gIcon{ width:18px; height:18px; }           /* tamaño del ícono de Google */
+
+/* ===== Separador “o” ===== */
+.divider{
+  display:flex; align-items:center; gap:10px;
+  margin:18px 6px;
+}
+.divider::before,
+.divider::after{
+  content:"";
+  flex:1; height:2px; background:#e6e6e6;    /* líneas izquierda/derecha */
+}
+.divider span{
+  font-family: var(--font-pixel);
+  font-size: 12px;
+  color:#8b8b8b;
+}
+
+/* ===== Formulario ===== */
+.form{ display:grid; gap: 14px; }            /* separación vertical entre campos */
+.inputWrap{ position: relative; }            /* para posicionar el botón “ojo” */
+
+/* Input base (mismo estilo en todos) */
+.input{
+  width:100%;
+  font-family: var(--font-pixel);
+  font-size: 12px;
+  padding: 14px 14px;
+  border-radius: 10px;
+  border:2px solid #b9c2d0;
+  background:#f7f9ff;
+  color:#162032;
+  outline:none;
+}
+.input:focus{
+  border-color:#6aa7ff;
+  box-shadow: 0 0 0 2px #d6e7ff;            /* halo suave */
+}
+
+/* Botón “ojo” para ver/ocultar contraseña */
+.eyeBtn{
+  position:absolute; right:8px; top:50%;
+  transform:translateY(-50%);
+  font-size: 16px;
+  background:transparent; border:0;
+  cursor:pointer; opacity:.85;
+}
+
+/* Fila con el TDAH seleccionado + link para ir a /tdah */
+.tdahRow{
+  display:flex; align-items:center; gap:8px;
+}
+.inputReadonly{                                /* campo de solo lectura */
+  background:#f1f5ff; color:#1a2140;
+}
+.pickLink{
+  font-size:12px; text-decoration:none; color:#2a60ff;
+}
+.pickLink:hover{ text-decoration:underline; }
+
+/* Pistas/validación bajo el form */
+.hints{
+  list-style:none; padding:0; margin: 2px 0 6px;
+  text-align:left; color:#6b7280; font-size:12px;
+}
+.hints li{ margin:4px 0; }
+.ok{ color:#107c41; }                           /* condición cumplida */
+
+/* ===== Botón principal “puffy” cian ===== */
+.pxBtn{
+  position: relative;
+  display:inline-block;
+  width:100%;
+  font-family: var(--font-pixel);
+  font-size: 14px;
+  padding: 14px 22px;
+  border-radius: 10px;
+  cursor: pointer;
+  -webkit-font-smoothing: none;
+  image-rendering: pixelated;
+  transition: transform .02s ease, box-shadow .02s ease, filter .1s ease;
+}
+.btnCyan{
+  background:#2fd3ea; color:#072027;
+  border:2px solid #0c4a58;                    /* borde oscuro */
+  outline:2px solid #3fb1c2;                   /* segunda línea */
+  outline-offset:-4px;
+  box-shadow: 0 4px 0 #2a6672;                 /* relieve inferior */
+}
+/* Brillo superior + sombra interior (líneas pixel) */
+.pxBtn::after, .pxBtn::before{
+  content:""; position:absolute; left:8px; right:8px; height:4px; border-radius:2px; pointer-events:none;
+}
+.pxBtn::after{ top:6px; background:rgba(255,255,255,.45); }   /* highlight */
+.pxBtn::before{ bottom:6px; background:rgba(0,0,0,.25); }     /* sombra */
+.pxBtn:hover{ filter:brightness(1.05); box-shadow:0 5px 0 rgba(0,0,0,.3); }
+.pxBtn:active{ transform:translateY(1px); box-shadow:0 3px 0 rgba(0,0,0,.35); }
+.pxBtn[disabled]{ opacity:.6; cursor:default; }
+
+/* Nota legal inferior */
+.terms{
+  margin-top:10px; text-align:center; font-size:12px; color:#6a7a90;
+}
+.terms a{ color:#2a60ff; }
+
+/* ===== Responsive pequeño ===== */
+@media (max-width: 560px){
+  .card{ padding: 20px 16px 14px; }
+  .pxBtn{ font-size: 12px; padding: 12px 14px; }
+}

@@ -162,6 +162,7 @@
   color:#1a1a1a;
   border:2px solid #6b4700;        /* borde exterior oscuro */
   outline:2px solid #dfa21a;       /* segunda línea (más clara) */
+  margin-bottom: 20px;
   outline-offset:-4px;             /* hacia adentro para crear doble borde */
   /* base/relieve */
   box-shadow:
@@ -174,6 +175,7 @@
   color:#072027;
   border:2px solid #0c4a58;
   outline:2px solid #3fb1c2;
+  margin-bottom: 12px;
   outline-offset:-4px;
   box-shadow:
     0 4px 0 #2a6672;
