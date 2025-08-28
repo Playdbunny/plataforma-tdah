@@ -1,71 +1,115 @@
-.navbar{
-  position: fixed;      /* ← Fijo arriba siempre */
-  top: 0; left: 0; right: 0;
-  height: 56px;         /* altura explícita */
-  background: #0b1326;
-  z-index: 1000;        /* bien por encima del fondo */
-  display:flex; 
-  align-items:center; 
-  justify-content:space-between;
-  height:64px; 
-  padding:0 20px; 
-  border-bottom:1px solid var(--border);
-  background: #0d1220;
+:root {
+  --bg: #0d1220;
+  --text: #e7f0ff;
+  --text-dim: #cfe0ff;
+  --border: rgba(255,255,255,.08);
 }
 
-.inner{ 
-  width: 100%;                /* ocupar todo el ancho */
-  margin: 0;                  /* quita el centrado automático */
-  height: 56px;
+/* Contenedor principal del navbar */
+.navbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 1000;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Contenido interno (marca + menú/burger) */
+.inner {
+  width: 100%;
+  height: 64px;
   padding: 0 16px;
   display: flex;
   align-items: center;
-  justify-content: flex-start; /* alinea todo a la izquierda */
-  gap: 32px;                  /* espacio entre brand y menú futuro */
+  justify-content: space-between;
 }
 
+/* Marca (logo + texto) — SIEMPRE visible */
 .brand {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  color: #e7f0ff;
   text-decoration: none;
-  composes: pixel from "../../globals.css"; /* si usas CSS Modules con postcss-modules, si no, usa className="brand pixel" en TSX */
-  font-size: 18px;              /* Press Start es pequeña; ajusta a gusto */
-  color: #ffffff;
+  color: var(--text);
   text-shadow:
     1px 0 #1b2140, -1px 0 #1b2140,
-    0 1px #1b2140,  0 -1px #1b2140; /* contorno estilo pixel */
+    0 1px #1b2140,  0 -1px #1b2140; /* contorno pixel */
 }
-
 .logoSlot {
   width: 40px;
   height: 40px;
-  object-fit: contain;        /* asegura proporción */
-  image-rendering: pixelated; /* si es pixel art */
+  object-fit: contain;
+  image-rendering: pixelated;
 }
-
 .brandText {
-  font-weight: 800;
-  letter-spacing: 0.4px;
-  /* Si luego usas una fuente pixel (p.ej. Press Start 2P), cámbiala aquí */
-  /* font-family: "Press Start 2P", system-ui, sans-serif; */
-  font-size: 18px;
+  font-family: "Press Start 2P", system-ui, sans-serif; /* ← fuente retro */
+  font-size: 14px;  /* Press Start es pequeña, puedes ajustar */
+  font-weight: 400; /* la fuente ya es bold por defecto */
+  letter-spacing: 0.5px;
+  color: #ffffff;
 }
 
+/* Menú en desktop */
 .menu {
-  display: flex;
+  display: none;
   align-items: center;
   gap: 16px;
 }
-
 .menu a {
-  color: #cfe0ff;
+  color: #ffffff;
   text-decoration: none;
   font-weight: 600;
-  opacity: 0.9;
-}
 
-.menu a:hover {
-  opacity: 1;
+  /* 👇 Aquí aplicamos la fuente retro */
+  font-family: "Press Start 2P", system-ui, sans-serif;
+  font-size: 14px;   /* Ajusta porque esta fuente es muy pequeña */
+  letter-spacing: 0.5px;
+}
+.menu a:hover { opacity: 1; }
+
+/* Botón hamburguesa */
+.burger {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 36px;
+  height: 36px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+.burger span {
+  width: 22px;
+  height: 2.5px;
+  background: var(--text);
+  border-radius: 2px;
+  transition: transform .25s ease, opacity .2s ease;
+}
+.burgerOpen span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.burgerOpen span:nth-child(2) { opacity: 0; }
+.burgerOpen span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* Menú móvil */
+.menuMobile {
+  display: none;
+  flex-direction: column;
+  padding: 10px 16px 14px;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+}
+.menuMobile a {
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 600;
+  padding: 10px 2px;
+}
+.menuMobileOpen { display: flex; }
+
+/* Breakpoint: desktop */
+@media (min-width: 768px) {
+  .menu { display: flex; }
+  .burger { display: none; }
+  .menuMobile, .menuMobileOpen { display: none !important; }
 }

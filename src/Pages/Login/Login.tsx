@@ -1,9 +1,16 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../../Components/Navbar/Navbar";
 import styles from "./Login.module.css";
 
 export default function Login() {
+
+  /* Bloquea el scroll */
+  useEffect(() => {
+    document.documentElement.classList.add("no-scroll");
+    return () => document.documentElement.classList.remove("no-scroll");
+  }, []);
+
   const [showPw, setShowPw] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {

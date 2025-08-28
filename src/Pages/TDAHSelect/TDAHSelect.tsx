@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import Navbar from "../../Components/Navbar/Navbar";
 import { useAppStore } from "../../stores/appStore";
 import styles from "./TdahSelect.module.css";
@@ -7,6 +8,12 @@ import styles from "./TdahSelect.module.css";
 type TdahType = "inatento" | "hiperactivo" | "combinado";
 
 export default function TdahSelect() {
+  /* Bloquea el scroll*/
+  useEffect(() => {
+    document.documentElement.classList.add("no-scroll");
+    return () => document.documentElement.classList.remove("no-scroll");
+  }, []);
+
   const navigate = useNavigate();
   const setTdahType = useAppStore((s) => s.setTdahType);
 

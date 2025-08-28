@@ -1,9 +1,16 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import Navbar from "../../Components/Navbar/Navbar";
 import styles from "./Reset.module.css";
 
 function useResetToken() {
+
+  /* Bloquea el scroll */
+  useEffect(() => {
+    document.documentElement.classList.add("no-scroll");
+    return () => document.documentElement.classList.remove("no-scroll");
+  }, []);
+
   const { token: paramToken } = useParams<{ token: string }>();
   const { search } = useLocation();
   const queryToken = new URLSearchParams(search).get("token");
