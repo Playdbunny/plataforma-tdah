@@ -1,0 +1,115 @@
+:root {
+  --bg: #0d1220;
+  --text: #e7f0ff;
+  --text-dim: #cfe0ff;
+  --border: rgba(255,255,255,.08);
+}
+
+/* Contenedor principal del navbar */
+.navbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 1000;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Contenido interno (marca + menú/burger) */
+.inner {
+  width: 100%;
+  height: 64px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Marca (logo + texto) — SIEMPRE visible */
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--text);
+  text-shadow:
+    1px 0 #1b2140, -1px 0 #1b2140,
+    0 1px #1b2140,  0 -1px #1b2140; /* contorno pixel */
+}
+.logoSlot {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+.brandText {
+  font-family: "Press Start 2P", system-ui, sans-serif; /* ← fuente retro */
+  font-size: 14px;  /* Press Start es pequeña, puedes ajustar */
+  font-weight: 400; /* la fuente ya es bold por defecto */
+  letter-spacing: 0.5px;
+  color: #ffffff;
+}
+
+/* Menú en desktop */
+.menu {
+  display: none;
+  align-items: center;
+  gap: 16px;
+}
+.menu a {
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: 600;
+
+  /* 👇 Aquí aplicamos la fuente retro */
+  font-family: "Press Start 2P", system-ui, sans-serif;
+  font-size: 14px;   /* Ajusta porque esta fuente es muy pequeña */
+  letter-spacing: 0.5px;
+}
+.menu a:hover { opacity: 1; }
+
+/* Botón hamburguesa */
+.burger {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 36px;
+  height: 36px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+.burger span {
+  width: 22px;
+  height: 2.5px;
+  background: var(--text);
+  border-radius: 2px;
+  transition: transform .25s ease, opacity .2s ease;
+}
+.burgerOpen span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.burgerOpen span:nth-child(2) { opacity: 0; }
+.burgerOpen span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* Menú móvil */
+.menuMobile {
+  display: none;
+  flex-direction: column;
+  padding: 10px 16px 14px;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+}
+.menuMobile a {
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 600;
+  padding: 10px 2px;
+}
+.menuMobileOpen { display: flex; }
+
+/* Breakpoint: desktop */
+@media (min-width: 768px) {
+  .menu { display: flex; }
+  .burger { display: none; }
+  .menuMobile, .menuMobileOpen { display: none !important; }
+}
