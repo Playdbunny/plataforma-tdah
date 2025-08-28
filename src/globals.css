@@ -1,5 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=Press+Start+2P&display=swap');
 
+@font-face {
+  font-family: 'PixelGrid';
+  src: url('/src/assets/fonts/pixelgrid-squarebolds.woff') format('woff');
+  font-weight: bold;
+  font-style: normal;
+}
+
+
 :root{
   --nav:#0a1424;
   --bg:#050c18;
@@ -25,3 +33,19 @@ body{ margin:0; background:var(--bg); color:var(--text); font-family:Inter, syst
 a{ color:inherit; text-decoration:none; }
 button{ cursor:pointer; font:inherit; }
 img{ display:block; max-width:100%; }
+
+
+/* Bloquea el scroll cuando <html> tenga esta clase */
+html.no-scroll,
+html.no-scroll body {
+  height: 100svh;     /* estable en móviles */
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+/* Por si algún contenedor suma 1px */
+html.no-scroll #root {
+  height: 100%;
+  overflow: hidden;
+}
+

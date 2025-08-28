@@ -1,12 +1,18 @@
 // ===== Registro de usuario con estilo pixel, fondo por capas y lectura del TDAH desde el store =====
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../../Components/Navbar/Navbar";
 import { useAppStore } from "../../stores/appStore";     // Zustand con persist
 import styles from "./Register.module.css";
 
 export default function Register() {
+
+  /* Bloquea el scroll */
+  useEffect(() => {
+    document.documentElement.classList.add("no-scroll");
+    return () => document.documentElement.classList.remove("no-scroll");
+  }, []);
+
   // 1) Leemos el tipo de TDAH que eligió el usuario en /tdah.
   //    Como tu store usa `persist`, este valor se rehidrata solo al recargar la app.
   const tdahType = useAppStore((s) => s.tdahType); // "inatento" | "hiperactivo" | "combinado" | null

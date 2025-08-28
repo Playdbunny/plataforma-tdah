@@ -1,0 +1,216 @@
+/* ─────────────────────────────────────────────────────────
+   Variables (reutilizamos las del Login para consistencia)
+   ───────────────────────────────────────────────────────── */
+:root{
+  --font-pixel: "Press Start 2P", system-ui, sans-serif;
+  --navH: 56px;
+}
+
+/* 🎬 Lienzo con fondo (mismo patrón del Login) */
+.screen{
+  position: relative;
+  margin-top: var(--navH);
+  min-height: calc(100dvh - var(--navH));
+  background: #081126;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+
+/* ─────────────────────────────────────────────────────────
+   Contenedor del campo: agrupa input + helper
+   ───────────────────────────────────────────────────────── */
+.field{
+  /* Crea un bloque vertical para input y helper */
+  display: flex;
+  flex-direction: column;
+
+  /* Separa el conjunto del resto del contenido */
+  margin-bottom: 12px; /* deja aire antes del botón */
+}
+
+/* El helper SIEMPRE ocupa altura para evitar “saltos” del layout */
+.helper{
+  /* Altura fija: reserva el espacio incluso cuando el texto cambia */
+  min-height: 20px;                 /* ~1 línea */
+  margin: 6px 4px 0;                /* separa del input */
+  font-size: 12px;
+  font-weight: 700;
+
+  /* Tipografía consistente con el login */
+  /* font-family: var(--font-pixel); */ /* activa si quieres el look retro */
+}
+
+/* Estados del helper */
+.helperError{ color: #cf3551; }      /* rojo (error)    */
+.helperOk{    color: #2ea043; }      /* verde (válido)  */
+
+
+/* 🌌 Capas del fondo (pon tus assets en /public como en Login) */
+.bg{ position:absolute; inset:0; z-index:0; pointer-events:none; }
+.layer{ position:absolute; inset:0; background-repeat: repeat-x; background-size: auto 100%; }
+.sky{
+  /* usa el mismo asset que Login para mantener coherencia */
+  background-image: url("/public/sky-stars.png");
+  background-position: top center;
+}
+.clouds{
+  background-image: url("/public/dark-cloud.webp");
+  background-position: center bottom;
+  background-repeat: no-repeat;
+  background-size: 100% auto;
+  image-rendering: pixelated;
+}
+
+/* 🧩 Tarjeta central */
+.card{
+  position: relative;
+  z-index: 1;
+  width: min(520px, 92%);
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 24px 22px 18px;
+  box-shadow: 0 10px 0 rgba(0,0,0,.35);
+  border: 2px solid #e6e6e6;
+  text-align: center;
+}
+
+/* 🎯 Fila de selector de avatar (flecha - avatar - flecha) */
+.avatarRow{
+  display: grid;
+  grid-template-columns: 48px 1fr 48px;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ⬅ Flechas redondas */
+.arrow{
+  width: 48px; height: 48px;
+  border-radius: 999px;
+  border: none;
+  background: #e9eef7;
+  color: #1b2745;
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform .1s ease, filter .15s ease;
+}
+.arrow:hover{ filter: brightness(1.05); }
+.arrow:active{ transform: scale(.96); }
+
+/* 🖼 Marco del avatar + etiqueta */
+.avatarBox{
+  height: 136px;
+  background: #f2f5fb;
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,.08);
+  display: grid;
+  grid-template-rows: 1fr auto; /* imagen arriba, etiqueta abajo */
+  place-items: center;
+  padding: 8px;
+}
+.avatarImg{
+  height: 100px;
+  image-rendering: pixelated; /* respeta el look retro */
+}
+.avatarLabel{
+  margin-top: 6px;
+  font-weight: 800;
+  color: #1a2546;
+}
+
+/* ⋯ Dots indicadores */
+.dots{
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 10px 0 14px;
+}
+.dot{
+  width: 10px; height: 10px;
+  border-radius: 999px;
+  background: #ccd4ea;
+}
+.dotActive{ background: #7fb5ff; }
+
+/* ✍️ Tipografía de títulos e instrucciones */
+.title{
+  margin: 4px 0 2px;
+  font-weight: 800;
+  font-size: 16px;
+  color: #10192f;
+  font-family: "Press Start 2P", system-ui, monospace; /* 👈 retro */
+  /* Si quieres usar PixelGrid aquí, cámbialo: */
+  /* font-family: 'PixelGrid', system-ui, sans-serif; */
+}
+.desc{
+  margin: 0 0 12px;
+  color: #4b5a83;
+  font-family: 'PixelGrid', system-ui, sans-serif;
+  font-size: 15px;
+}
+
+/* 📝 Campo de usuario (reusa la estética del Login) */
+.label{
+  display: block;
+  text-align: left;
+  color: #2a3557;
+  font-weight: 700;
+  margin: 8px 4px 6px;
+}
+.input{
+  width: 100%;
+  font-family: var(--font-pixel);
+  font-size: 12px;
+  padding: 14px 14px;
+  border-radius: 10px;
+  border: 2px solid #b9c2d0;
+  background: #f7f9ff;
+  color: #162032;
+  outline: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.input:focus{ border-color:#6aa7ff; box-shadow: 0 0 0 2px #d6e7ff; }
+.inputError{ border-color:#ff90a0; box-shadow: 0 0 0 2px rgba(255,144,160,.35); }
+.errorMsg{
+  color:#cf3551;
+  font-weight:700;
+  margin:6px 4px 0;
+}
+
+/* 🔵 Botón “Ingresar” — mismo patrón pixel ‘puffy’ del Login */
+.pxBtn{
+  position: relative;
+  font-family: var(--font-pixel);
+  font-size: 14px;
+  margin-top: 8px; 
+  padding: 14px 22px;
+  cursor: pointer;
+  border-radius: 10px;
+  -webkit-font-smoothing: none;
+  image-rendering: pixelated;
+  transition: transform .02s ease, box-shadow .02s ease, filter .1s ease;
+  width: 100%;
+}
+.btnCyan{
+  background:#2fd3ea; color:#072027;
+  border:2px solid #0c4a58;
+  outline:2px solid #3fb1c2; outline-offset:-4px;
+  box-shadow: 0 4px 0 #2a6672;
+}
+.pxBtn::after, .pxBtn::before{
+  content:""; position:absolute; left:8px; right:8px; height:4px; border-radius:2px; pointer-events:none;
+}
+.pxBtn::after{ top:6px; background:rgba(255,255,255,.45); }
+.pxBtn::before{ bottom:6px; background:rgba(0,0,0,.25); }
+.pxBtn:hover{ filter:brightness(1.05); box-shadow:0 5px 0 rgba(0,0,0,.3); }
+.pxBtn:active{ transform:translateY(1px); box-shadow:0 3px 0 rgba(0,0,0,.35); }
+.pxBtn:disabled{
+  opacity:.65; cursor:not-allowed; filter:grayscale(.2);
+}
+
+/* 📱 Ajustes móviles */
+@media (max-width: 560px){
+  .card{ padding: 20px 16px 14px; }
+  .pxBtn{ font-size: 12px; padding: 12px 14px; }
+}

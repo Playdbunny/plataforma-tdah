@@ -1,0 +1,161 @@
+/* ─────────────────────────────────────────────────────────
+   PALETA Y TOKENS (ajústalos a tu theme)
+   ───────────────────────────────────────────────────────── */
+:root{
+  --fcc-bg:        #0c1428;            /* fondo del cuerpo */
+  --fcc-text:      #eaf0ff;            /* texto principal */
+  --fcc-muted:     #b7c4df;            /* texto secundario */
+  --fcc-border:    #2a3650;            /* borde base de 1px */
+  --fcc-border-hi: #6fb6ff;            /* acento clarito para esquinas */
+  --fcc-shadow:    0 10px 28px rgba(0,0,0,.35);
+  --fcc-shadow-h:  0 18px 38px rgba(0,0,0,.45);
+
+  /* Tipos (activa tus fuentes si las importaste) */
+  /* .title usa Press Start 2P si quieres (hero ya la tiene; aquí suele quedar mejor sans bold) */
+}
+
+/* ─────────────────────────────────────────────────────────
+   CARD CONTENEDORA
+   ───────────────────────────────────────────────────────── */
+.card{
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;               /* <Link> sin subrayado */
+  color: var(--fcc-text);
+  background: transparent;
+  border-radius: 12px;                 /* leve redondeo como referencia */
+  overflow: hidden;                    /* recorta banner/shine */
+  box-shadow: var(--fcc-shadow);
+  transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
+  isolation: isolate;                  /* para pseudo-elementos correctamente */
+}
+
+/* DIBUJO DEL BORDE + ACENTOS PIXEL
+   Usamos pseudo-elementos para:
+   • 1px de borde base en todo el contorno.
+   • "esquinas" pixel con color más claro (arriba-izq y abajo-der).
+   • doble línea en la base (look metálico).
+*/
+.card::before,
+.card::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+}
+
+/* ::before → borde base + acentos de esquina */
+.card::before{
+  /* 1) borde base */
+  box-shadow: inset 0 0 0 1px var(--fcc-border);
+
+  /* 2) acentos pixelados en esquinas usando múltiples gradients */
+  background:
+    /* esquinas claritas (2px x 2px) */
+    linear-gradient(var(--fcc-border-hi), var(--fcc-border-hi)) top 8px left 8px/2px 2px no-repeat,
+    linear-gradient(var(--fcc-border-hi), var(--fcc-border-hi)) bottom 8px right 8px/2px 2px no-repeat,
+
+    /* trazo fino interior (linea clara superior e inferior para relieve) */
+    linear-gradient(to bottom, rgba(255,255,255,.06), rgba(255,255,255,0)) top/100% 10px no-repeat,
+    linear-gradient(to top, rgba(255,255,255,.04), rgba(255,255,255,0)) bottom/100% 10px no-repeat;
+  border-radius: 12px; /* que coincida con la card */
+}
+
+/* ::after → doble línea inferior (notch) */
+.card::after{
+  left: 6px;
+  right: 6px;
+  bottom: 6px;
+  top: auto;
+  height: 8px;
+  border-radius: 4px;
+  background:
+    linear-gradient(var(--fcc-border), var(--fcc-border)) top/100% 1px no-repeat,
+    linear-gradient(#7aa8d9, #7aa8d9) bottom/100% 1px no-repeat; /* línea clara abajo */
+  opacity:.9;
+}
+
+/* Hover (elevación + leve saturación) */
+.card:hover{
+  transform: translateY(-4px);
+  box-shadow: var(--fcc-shadow-h);
+  filter: saturate(1.02);
+}
+
+/* ─────────────────────────────────────────────────────────
+   BANNER 16:9 con parallax sutil
+   ───────────────────────────────────────────────────────── */
+.banner{
+  position: relative;
+  height: 168px;                       /* 16:9 aprox para ancho ~300px */
+  background: #0a1021;
+  overflow: hidden;
+}
+.banner img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: pixelated;          /* por si son pixel art */
+  transform: translateY(0) scale(1);
+  transition: transform .35s ease;
+}
+/* Parallax al hover */
+.card:hover .banner img{
+  transform: translateY(-3px) scale(1.03);
+}
+
+/* ─────────────────────────────────────────────────────────
+   CUERPO
+   ───────────────────────────────────────────────────────── */
+.body{
+  background: var(--fcc-bg);
+  padding: 16px 16px 18px;
+  border-top: 1px solid rgba(255,255,255,.04); /* separa del banner */
+}
+
+.eyebrow{
+  display: block;
+  color: var(--fcc-muted);
+  letter-spacing: .12em;
+  margin: 0 0 6px 0;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.title{
+  /* Si quieres Press Start aquí, descomenta: */
+  /* font-family: "Press Start 2P", system-ui, monospace; */
+  font-size: 18px;
+  font-weight: 800;
+  margin: 2px 0 8px 0;
+  color: #ffffff;
+}
+
+.desc{
+  color: var(--fcc-muted);
+  line-height: 1.5;
+  margin: 0;
+
+  /* clamp a 2 líneas con elipsis */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.footer{
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+  color: #86b6ff;                     /* color del CTA */
+  font-weight: 700;
+}
+
+/* Respeta reduced motion */
+@media (prefers-reduced-motion: reduce){
+  .card{ transition: none; }
+  .banner img{ transition: none; }
+}

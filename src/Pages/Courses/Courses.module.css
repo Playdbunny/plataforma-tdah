@@ -1,0 +1,207 @@
+/* ─────────────────────────────────────────────────────────
+   Paleta base y superficies (puedes unificar con tu theme global)
+   ───────────────────────────────────────────────────────── */
+:root{
+  --bg:#0b1020;                /* Fondo de toda la pantalla */
+  --surface:#0f1630;           /* Superficies (no usada aquí directamente) */
+  --text:#e7edff;              /* Texto principal */
+  --muted:#a8b2d8;             /* Texto secundario */
+  --primary:#6aa8ff;           /* Color CTA */
+  --accent:#8af0ff;            /* Acento claro (subrayados/gradientes) */
+  --card:#0f1734;              /* Fondo de tarjetas */
+  --card-border:rgba(255,255,255,.06); /* Borde sutil en tarjetas y hero */
+}
+
+/* 🖥️ Lienzo base de la página */
+.screen{
+  min-height:100dvh;           /* Cubre alto completo de la ventana */
+  background:var(--bg);        /* Aplica el fondo oscuro */
+  color:var(--text);           /* Color de texto por defecto */
+  padding-top:64px;            /* ⚠️ Para no quedar oculto tras el Navbar fijo */
+}
+
+/* 🌌 HERO (franja superior con arte y textos por encima) */
+.hero{
+  position:relative;
+  overflow:hidden;
+  border-bottom:1px solid var(--card-border);
+  background:
+    radial-gradient(1200px 500px at 70% -10%, rgba(106,168,255,.25), transparent 60%),
+    radial-gradient(1200px 600px at 20% -20%, rgba(138,240,255,.18), transparent 60%),
+    linear-gradient(#0d1430, #0a1126); /* degradado sutil debajo del arte */
+}
+
+/* Capa de imagen/arte (puedes reemplazar `pixel-sky.png` por otra) */
+.heroArt{
+  height:320px;                              /* Alto de la franja */
+  background-image: url("/public/banner-image1.png"); /* ← coloca la imagen en /public/assets/ */
+  background-position:center;
+  background-repeat:repeat-x;
+  background-size: cover;
+  image-rendering: pixelated;                /* Para look retro */
+  opacity:.88;                               /* Suaviza la imagen */
+  filter:saturate(1.06) contrast(1.04);      /* Le da un punch sutil */
+}
+
+/* Capa de texto centrada verticalmente dentro del hero */
+.heroText{
+  position:absolute;
+  inset:0;                                   /* ocupa todo el hero */
+  display:flex;
+  flex-direction:column;
+  justify-content:center;                    /* centra verticalmente */
+  gap:8px;
+  padding:0 24px;                            /* espaciado lateral */
+  max-width:1200px;                          /* ancho máx de contenido */
+  margin:0 auto;                             /* centra horizontalmente */
+}
+
+/* Kicker ("Explora el mundo de") */
+.kicker {
+  font-family: 'PixelGrid', system-ui, sans-serif; /* 👈 usa tu fuente custom */
+  font-weight: bold;
+  opacity: .9;
+  margin: 0;
+}
+
+/* Título principal (SynapQuest) */
+.title {
+  font-family: "Press Start 2P", system-ui, monospace; /* 👈 retro */
+  font-size: 42px;
+  letter-spacing: 1px;
+  margin: 0;
+  text-shadow: 0 3px 0 rgba(0,0,0,.35);
+}
+
+/* Subtítulo */
+.subtitle {
+  font-family: 'PixelGrid', system-ui, sans-serif; /* 👈 fuente custom */
+  color: var(--muted);
+  max-width: 720px;
+  margin: 0;
+}
+
+/* 🧱 Contenedor del cuerpo (centra y da márgenes) */
+.container{
+  max-width:1200px;
+  margin:36px auto;
+  padding:0 24px;
+}
+
+/* Título de sección y acento de palabra */
+.sectionTitle{
+  font-family: "Press Start 2P", system-ui, monospace; /* 👈 retro */
+  font-size:15px;
+  margin:0 0 8px 0;
+  font-weight:800;
+}
+.sectionTitle span{
+  color:var(--accent);
+}
+
+/* Bajada de sección */
+.sectionLead{
+  font-family: 'PixelGrid', system-ui, sans-serif; /* 👈 usa tu fuente custom */
+  font-size: 15px;
+  color:var(--muted);
+  margin:0 0 22px 0;
+}
+
+/* 🔳 Grid responsive: 12 columnas (1→2→3 cards por fila) */
+/* Grid responsive: 1 → 2 → 3 columnas, con cards de mínimo 300px */
+.grid{
+  display: grid;
+  gap: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+
+/* CourseCard con ancho mínimo y altura auto */
+.card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+}
+
+
+/* Banner superior 16:9 (usa background-image inline para cada card) */
+.thumb{
+  height:170px;
+  background:#091026;
+  background-size:cover;
+  background-position:center;
+  image-rendering: pixelated;
+}
+
+/* Cuerpo de la tarjeta: paddings y tipografías */
+.cardBody{
+  padding:16px;
+}
+.courseIndex{
+  opacity:.7;
+  letter-spacing:.12em;                      /* look de etiqueta */
+}
+.cardTitle{
+  font-size:18px;
+  margin:6px 0 8px 0;
+  font-weight:800;
+}
+.cardBlurb{
+  color:var(--muted);
+  line-height:1.5;
+  min-height:44px;                           /* asegura 2 líneas aprox en desktop */
+}
+
+/* Pie de la tarjeta: badge + CTA a la derecha */
+.cardFooter{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-top:12px;
+}
+
+/* Badge de nivel (color cambia por clase específica) */
+.badge{
+  font-size:12px;
+  font-weight:800;
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid var(--card-border);
+  background: linear-gradient(to bottom, rgba(255,255,255,.05), rgba(255,255,255,.02));
+}
+.beginner{     color:#9af59f; }
+.intermediate{ color:#8ec7ff; }
+.advanced{     color:#ff8e8e; }
+
+/* CTA de la tarjeta: color primario y peso */
+.cta{
+  color:var(--primary);
+  font-weight:700;
+}
+
+/* Pie de página simple */
+.footer{
+  padding:40px 24px;
+  border-top:1px solid var(--card-border);
+  color:var(--muted);
+  text-align:center;
+  margin-top:40px;
+}
+
+/* 📱 Breakpoints para 2 y 3 columnas */
+@media (min-width: 640px){
+  .card{ grid-column: span 6; }              /* 2 columnas */
+}
+@media (min-width: 1024px){
+  .card{ grid-column: span 4; }              /* 3 columnas */
+  .heroArt{ height:420px; }
+  .title{ font-size:52px; }
+}

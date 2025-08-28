@@ -5,6 +5,8 @@ import Login from "./Pages/Login/Login";
 import Register from "./Pages/Register/Register";
 import Forgot from "./Pages/Forgot/Forgot";
 import Reset from "./Pages/Reset/Reset";
+import Courses from "./Pages/Courses/Courses";
+import AvatarSelect from "./Pages/AvatarSelect/AvatarSelect";
 
 export const router = createBrowserRouter([
   { path: "/", element: <Home /> },
@@ -14,4 +16,6 @@ export const router = createBrowserRouter([
   { path: "/forgot", element: <Forgot /> },
   { path: "/reset", element: <Reset /> },
   { path: "/reset/:token", element: <Reset /> },
+  { path: "/courses", element: <Courses /> },
+  { path: "/avatar", element: <AvatarSelect /> },
 ]);
