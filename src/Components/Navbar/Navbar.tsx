@@ -1,122 +1,270 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// Navbar.tsx
-// Barra de navegación fija con:
-//  - Marca SIEMPRE visible (logo + nombre) a la izquierda.
-//  - Menú opcional (links) que solo aparece si se pasan por props.
-//  - Versión móvil con hamburguesa (se anima a "X").
-//  - Accesible (aria-*), cierra el menú al navegar.
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// Navbar.tsx (internal-only avatar & coins + DEV mock user)
+// ─────────────────────────────────────────────────────────────
 
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useRef, useEffect, useMemo } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import styles from "./Navbar.module.css";
+import { useAppStore } from "../../stores/appStore";
 
-// 🔹 Tipo para cada ítem del menú (texto y ruta interna)
 export type NavItem = { label: string; to: string };
 
-// 🔹 Props del Navbar
 type NavbarProps = {
-  /**
-   * Si es true, oculta el menú y deja solo la marca (ideal para Home/Login/Register).
-   * Por compatibilidad con tu código original, mantiene el mismo nombre y comportamiento.
-   * Si quieres mostrar menú, envía homeOnly={false} + la prop `items`.
-   */
   homeOnly?: boolean;
-
-  /**
-   * Lista opcional de enlaces del menú (se muestran a la derecha).
-   * Si no envías `items` o si `homeOnly` es true, NO se muestran enlaces.
-   */
   items?: NavItem[];
+  avatarSrc?: string;
 };
 
+const SUBJECTS = [
+  { id: "matematicas", name: "Matemática" },
+  { id: "historia",    name: "Historia"   },
+  { id: "quimica",     name: "Química"    },
+];
+
+const SUBJECT_PREFIX = "/subjects";
+
+/* ============================================================
+   DEV-ONLY MOCK (opción A)
+   - Permite testear el dropdown completo sin login real.
+   - Activo SOLO en desarrollo (import.meta.env.DEV).
+   - Cómo usar:
+       a) Click en el avatar sin sesión → inyecta MOCK_USER y abre menú
+       b) Agregar ?mock=1 a la URL → inyecta MOCK_USER al cargar
+   - Para desactivar: comenta el bloque "DEV-ONLY START/END".
+   ============================================================ */
+const DEV_ONLY = import.meta.env.DEV === true;
+const MOCK_USER = {
+  id: "dev-001",
+  name: "Dev Tester",
+  email: "dev@example.com",
+  avatarUrl: "/avatar-default.png",
+};
+/* ======================= DEV-ONLY END ======================= */
+
 export default function Navbar({
-  homeOnly = true,
+  homeOnly = false,
   items = [],
+  avatarSrc = "/default-profile.jpg",
 }: NavbarProps) {
-  // Estado que controla si el menú móvil está abierto o cerrado
-  const [open, setOpen] = useState(false);
+  const [openUser, setOpenUser] = useState(false);
+  const [openSubjects, setOpenSubjects] = useState(false);
 
-  // Cierra el menú móvil cuando se navega a otra ruta
-  const handleNavigate = () => setOpen(false);
+  const userRef = useRef<HTMLDivElement | null>(null);
+  const subjectsRef = useRef<HTMLDivElement | null>(null);
 
-  // ¿Debemos mostrar el menú? (solo si NO es "homeOnly" y hay items)
-  const showMenu = !homeOnly && items.length > 0;
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+
+  // ──────────────────────────────────────────────────────────
+  // Store selectors (con cast a any para evitar error TS2339)
+  // Nota: si luego tipas tu AppState con auth/wallet, puedes
+  // remover los "as any" y usar las props tipadas.
+  // ──────────────────────────────────────────────────────────
+  const user = useAppStore((s: any) => s?.auth?.user ?? s?.user ?? null);
+  const coins = useAppStore((s: any) => s?.wallet?.coins ?? s?.points ?? 0);
+  const setUser = useAppStore((s: any) => s?.setUser ?? (() => {}));
+
+  const showMenu = !homeOnly;
+
+  // Rutas públicas donde NO se muestran avatar/monedas
+  const isPublic = useMemo(
+    () => /^\/($|login(\/|$)|register(\/|$)|forgot(\/|$)|reset(\/|$))/.test(pathname),
+    [pathname]
+  );
+
+  // ¿Estás dentro de /subjects/* ?
+  const isOnSubjectPage = pathname.startsWith(SUBJECT_PREFIX);
+
+  // Cierra menús al hacer click fuera
+  useEffect(() => {
+    const onDocClick = (e: MouseEvent) => {
+      const t = e.target as Node;
+      if (userRef.current && !userRef.current.contains(t)) setOpenUser(false);
+      if (subjectsRef.current && !subjectsRef.current.contains(t)) setOpenSubjects(false);
+    };
+    document.addEventListener("click", onDocClick);
+    return () => document.removeEventListener("click", onDocClick);
+  }, []);
+
+  /* ======================= DEV-ONLY START =======================
+     Inyecta usuario mock automáticamente si entras con ?mock=1
+     (Solo en desarrollo)
+  =============================================================== */
+  useEffect(() => {
+    if (!DEV_ONLY) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("mock") === "1" && !user) {
+      (setUser as any)(MOCK_USER);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [DEV_ONLY]);
+  /* ======================== DEV-ONLY END ======================== */
+
+  // Monedas a mostrar (si no hay, en dev muestra 999 para test)
+  const displayCoins = useMemo(
+    () => (coins && Number.isFinite(coins) ? coins : (DEV_ONLY ? 999 : 0)),
+    [coins]
+  );
 
   return (
-    // role="banner" describe semánticamente que es un encabezado de sitio
     <header className={styles.navbar} role="banner">
       <div className={styles.inner}>
-        {/* ───────────────────────
-            MARCA (SIEMPRE visible)
-           ─────────────────────── */}
-        <Link to="/" className={styles.brand} aria-label="Ir al inicio" onClick={handleNavigate}>
-          {/*
-            ⚠️ IMPORTANTE:
-            - Si el archivo está en /public/Logo.png, la ruta correcta en React es "/Logo.png"
-              (NO uses "/public/Logo.png" dentro de src).
-          */}
-          <img
-            src="/Logo.png"                // ← ruta correcta si el archivo está en /public
-            alt="SynapQuest logo"
-            className={styles.logoSlot}
-          />
+        {/* Marca */}
+        <Link to="/" className={styles.brand} aria-label="Ir al inicio">
+          <img src="/Logo.png" alt="SynapQuest logo" className={styles.logoSlot} />
           <span className={styles.brandText}>SynapQuest</span>
         </Link>
 
-        {/* ─────────────────────────────
-            BOTÓN HAMBURGUESA (solo móvil)
-            - Solo se renderiza si hay menú que mostrar.
-           ───────────────────────────── */}
+        {/* Menú derecho */}
         {showMenu && (
-          <button
-            className={`${styles.burger} ${open ? styles.burgerOpen : ""}`}
-            aria-label={open ? "Cerrar menú" : "Abrir menú"}
-            aria-expanded={open}
-            aria-controls="navbar-menu-mobile"
-            onClick={() => setOpen((v) => !v)}          // Alterna abierto/cerrado
-          >
-            {/* 3 líneas que forman la hamburguesa / X (se animan con CSS) */}
-            <span aria-hidden="true" />
-            <span aria-hidden="true" />
-            <span aria-hidden="true" />
-          </button>
-        )}
+          <div className={styles.right}>
+            <nav className={styles.menu} aria-label="Navegación principal">
+              {items.map((it) => {
+                const isMaterias =
+                  it.label.toLowerCase() === "materias" || it.to === "/subjects";
 
-        {/* ─────────────────────────────
-            MENÚ DESKTOP (links en fila)
-            - Solo se muestra cuando hay items y homeOnly=false.
-            - En móvil se oculta con media query.
-           ───────────────────────────── */}
-        {showMenu && (
-          <nav className={styles.menu} aria-label="Navegación principal (desktop)">
-            {items.map((it) => (
-              <Link key={it.to} to={it.to} onClick={handleNavigate}>
-                {it.label}
-              </Link>
-            ))}
-          </nav>
+                if (!isMaterias || !isOnSubjectPage) {
+                  return (
+                    <Link key={it.to} to={it.to}>
+                      {it.label}
+                    </Link>
+                  );
+                }
+
+                // "Materias" como trigger solo dentro de /subjects/*
+                return (
+                  <div
+                    key="materias-trigger"
+                    className={styles.subjectsItem}
+                    ref={subjectsRef}
+                  >
+                    <Link
+                      to="/subjects"
+                      className={styles.subjectsTrigger}
+                      aria-haspopup="menu"
+                      aria-expanded={openSubjects}
+                      onClick={(e) => {
+                        if (!e.ctrlKey && !e.metaKey && e.button === 0) {
+                          e.preventDefault();
+                          setOpenSubjects((v) => !v);
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape") setOpenSubjects(false);
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          setOpenSubjects((v) => !v);
+                        }
+                      }}
+                    >
+                      Materias ▾
+                    </Link>
+
+                    {openSubjects && (
+                      <ul
+                        className={styles.dropList}
+                        role="menu"
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {SUBJECTS.map((s) => {
+                          const href = `${SUBJECT_PREFIX}/${s.id}`;
+                          const isActive = pathname.startsWith(href);
+                          return (
+                            <li key={s.id} role="none">
+                              <Link
+                                role="menuitem"
+                                to={href}
+                                className={`${styles.dropLink} ${isActive ? styles.active : ""}`}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setOpenSubjects(false);
+                                  navigate(href);
+                                }}
+                              >
+                                {s.name}
+                              </Link>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </div>
+                );
+              })}
+            </nav>
+
+            {/* Monedas: visibles solo en páginas internas */}
+            {!isPublic && (
+              <div className={styles.coins} title="Tus monedas">
+                <span className={styles.coinIcon}>🪙</span>
+                <span className={styles.coinValue}>{displayCoins}</span>
+              </div>
+            )}
+
+            {/* Avatar + dropdown: visible solo en páginas internas */}
+            {!isPublic && (
+              <div className={styles.user} ref={userRef}>
+                <button
+                  type="button"
+                  className={styles.userBtn}
+                  onClick={(e) => {
+                    /* ======================= DEV-ONLY START =======================
+                       Alt + click en avatar → inyecta MOCK_USER y abre menú
+                       Click normal:
+                         - si ya hay user: toggle
+                         - si no hay user: (en dev) inyecta y abre / (en prod) solo toggle
+                    =============================================================== */
+                    if (DEV_ONLY && !user && (e as any).altKey) {
+                      (setUser as any)(MOCK_USER);
+                      setOpenUser(true);
+                      return;
+                    }
+                    if (DEV_ONLY && !user) {
+                      (setUser as any)(MOCK_USER);
+                      setOpenUser(true);
+                      return;
+                    }
+                    /* ======================== DEV-ONLY END ======================== */
+                    setOpenUser((v) => !v);
+                  }}
+                  aria-haspopup="menu"
+                  aria-expanded={openUser}
+                >
+                  <img
+                    src={(user as any)?.avatarUrl ?? avatarSrc}
+                    alt="Avatar usuario"
+                    className={styles.avatarImg}
+                  />
+                </button>
+
+                {openUser && (
+                  <div role="menu" className={styles.userMenu}>
+                    {user ? (
+                      <>
+                        <Link to="/profile" role="menuitem" className={styles.userItem}>Perfil</Link>
+                        <Link to="/settings" role="menuitem" className={styles.userItem}>Configuración</Link>
+                        <div className={styles.sep} />
+                        <button
+                          role="menuitem"
+                          className={`${styles.userItem} ${styles.danger}`}
+                          onClick={() => setUser(null)}
+                        >
+                          Cerrar sesión
+                        </button>
+                      </>
+                    ) : (
+                      <Link to="/login" role="menuitem" className={styles.userItem}>
+                        Iniciar sesión
+                      </Link>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         )}
       </div>
-
-      {/* ─────────────────────────────
-          MENÚ MÓVIL (desplegable bajo el header)
-          - Se controla con `open`.
-          - En desktop se oculta por media query.
-         ───────────────────────────── */}
-      {showMenu && (
-        <nav
-          id="navbar-menu-mobile"
-          className={`${styles.menuMobile} ${open ? styles.menuMobileOpen : ""}`}
-          aria-label="Navegación principal (móvil)"
-        >
-          {items.map((it) => (
-            <Link key={it.to} to={it.to} onClick={handleNavigate}>
-              {it.label}
-            </Link>
-          ))}
-        </nav>
-      )}
     </header>
   );
 }

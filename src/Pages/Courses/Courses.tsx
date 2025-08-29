@@ -5,8 +5,6 @@
 //  - Grid de tarjetas CourseCard (banner, eyebrow, título, descripción y CTA).
 //  - Uso de tu Navbar mostrando menú SOLO aquí (items + homeOnly={false}).
 // ─────────────────────────────────────────────────────────────
-
-import { useNavigate } from "react-router-dom";        // ← Para navegación programática
 import Navbar from "../../Components/Navbar/Navbar";   // ← Tu Navbar
 import FancyCourseCard from "../../Components/FancyCourseCard/FancyCourseCard"; // ← Nueva card limpia
 import styles from "./Courses.module.css";             // ← Estilos locales
@@ -24,22 +22,22 @@ const courses: Course[] = [
     id: "Htry-01",
     title: "Historia",
     blurb: "Lorem ipsum dolor sit amet.",
-    image: "/public/Gifs/3banner.gif",  // 🔹 aquí pones tus banners
-    path: "/course/historia",
+    image: "/Gifs/3banner.gif",  // 🔹 aquí pones tus banners
+    path: "/subjects/historia",
   },
   {
     id: "Chm-02",
     title: "Quimica",
     blurb: "Lorem ipsum dolor sit amet.",
-    image: "/public/Gifs/6banner.gif",
-    path: "/course/quimica",
+    image: "/Gifs/6banner.gif",
+    path: "/subjects/quimica",
   },
   {
     id: "Mths-01",
     title: "Matemáticas",
     blurb: "Lorem ipsum dolor sit amet.",
-    image: "/public/Gifs/8banner.gif",
-    path: "/course/matematicas",
+    image: "/Gifs/8banner.gif",
+    path: "/subjects/matematicas",
   },
 ];
 
@@ -48,11 +46,10 @@ export default function Courses() {
     <div className={styles.screen}>
       <Navbar
         homeOnly={false}
-        items={[
-          { label: "Perfil", to: "/profile" },
-          { label: "Materias", to: "/subjects" },
-        ]}
+        items={[{ label: "Materias", to: "/courses" }]}
+        avatarSrc="/public/default-profile.jpg"   // ruta a la imagen en /public
       />
+
 
       <section className={styles.hero}>
         <div className={styles.heroArt} aria-hidden="true" />
