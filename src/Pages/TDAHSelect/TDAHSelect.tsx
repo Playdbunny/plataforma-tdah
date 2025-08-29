@@ -1,14 +1,12 @@
+import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
 import Navbar from "../../Components/Navbar/Navbar";
 import { useAppStore } from "../../stores/appStore";
+import type { TDAHType } from "../../stores/appStore";
 import styles from "./TdahSelect.module.css";
 
-// Definimos los tres tipos de TDAH posibles
-type TdahType = "inatento" | "hiperactivo" | "combinado";
-
 export default function TdahSelect() {
-  /* Bloquea el scroll*/
+  // Bloquea el scroll mientras está esta pantalla
   useEffect(() => {
     document.documentElement.classList.add("no-scroll");
     return () => document.documentElement.classList.remove("no-scroll");
@@ -17,19 +15,28 @@ export default function TdahSelect() {
   const navigate = useNavigate();
   const setTdahType = useAppStore((s) => s.setTdahType);
 
-  // Función para seleccionar tipo de TDAH
-  const pick = (t: TdahType) => {
-    setTdahType(t);        // guarda el valor en Zustand (y se persiste gracias a persist)
-    navigate("/register"); // luego navega a la pantalla de registro
+  const options = useMemo(
+    () =>
+      ([
+        { key: "inatento", label: "Inatento" },
+        { key: "hiperactivo", label: "Hiperactivo" },
+        { key: "combinado", label: "Combinado" },
+      ] as { key: TDAHType; label: string }[]),
+    []
+  );
+
+  const pick = (t: TDAHType) => {
+    setTdahType(t);
+    navigate("/register");
   };
 
   return (
     <>
-      {/* Navbar fijo arriba */}
-      <Navbar />
+      {/* Solo la marca arriba */}
+      <Navbar homeOnly />
 
       <section className={styles.hero} aria-label="Elige tu tipo de TDAH">
-        {/* ===== FONDO EN CAPAS (igual que Home) ===== */}
+        {/* Fondo en capas */}
         <div className={styles.bg} aria-hidden>
           <div className={`${styles.layer} ${styles.sky}`} />
           <div className={`${styles.layer} ${styles.mountains}`} />
@@ -37,22 +44,21 @@ export default function TdahSelect() {
           <div className={`${styles.layer} ${styles.grass}`} />
         </div>
 
-        {/* ===== CONTENIDO PRINCIPAL ===== */}
+        {/* Contenido */}
         <div className={styles.center}>
           <h1 className={styles.title}>ELIGE TU TIPO</h1>
           <p className={styles.subtitle}>Hay tres tipos de TDAH</p>
 
-          {/* Botones (cards) para elegir */}
           <div className={styles.grid}>
-            <button className={styles.card} onClick={() => pick("inatento")}>
-              Inatento
-            </button>
-            <button className={styles.card} onClick={() => pick("hiperactivo")}>
-              Hiperactivo
-            </button>
-            <button className={styles.card} onClick={() => pick("combinado")}>
-              Combinado
-            </button>
+            {options.map((o) => (
+              <button
+                key={o.key}
+                className={styles.card}
+                onClick={() => pick(o.key)}
+              >
+                {o.label}
+              </button>
+            ))}
           </div>
         </div>
       </section>

@@ -12,6 +12,8 @@ type AppState = {
   setTdahType: (t: TDAHType) => void;
   setUser: (u: User) => void;
   addPoints: (n: number) => void;
+
+    logout: () => void;
 };
 
 // 👇 ESTA exportación es la clave
@@ -24,6 +26,8 @@ export const useAppStore = create<AppState>()(
       setTdahType: (t) => set({ tdahType: t }),
       setUser: (u) => set({ user: u }),
       addPoints: (n) => set((s) => ({ points: s.points + n })),
+
+       logout: () => set({ user: null }),
     }),
     { name: "synapquest-store" }
   )
