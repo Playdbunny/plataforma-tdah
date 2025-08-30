@@ -1,0 +1,32 @@
+.barWrapper {
+  width: 100%;
+  max-width: 400px;
+}
+
+.bar {
+  position: relative;
+  width: 100%;
+  height: 18px;
+  background: #2a2f46;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ffb27b, #ff4f8b);
+  transition: width 0.4s ease;
+}
+
+.label {
+  position: absolute;
+  right: 8px;      /* 👈 pega el texto a la derecha */
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 11px;
+  font-weight: bold;
+  color: #fff;
+  opacity: 0.85;
+  pointer-events: none; /* para no bloquear clics en la barra */
+}
