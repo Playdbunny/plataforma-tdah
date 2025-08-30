@@ -1,21 +1,25 @@
 // ===== Registro de usuario con estilo pixel, fondo por capas y lectura del TDAH desde el store =====
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";       // ⬅️ usamos navigate
 import Navbar from "../../Components/Navbar/Navbar";
-import { useAppStore } from "../../stores/appStore";     // Zustand con persist
+import { useAppStore } from "../../stores/appStore";        // Zustand con persist
 import styles from "./Register.module.css";
 
 export default function Register() {
-
   /* Bloquea el scroll */
   useEffect(() => {
     document.documentElement.classList.add("no-scroll");
     return () => document.documentElement.classList.remove("no-scroll");
   }, []);
 
-  // 1) Leemos el tipo de TDAH que eligió el usuario en /tdah.
-  //    Como tu store usa `persist`, este valor se rehidrata solo al recargar la app.
+  // 1) Leemos el tipo de TDAH que eligió el usuario en /tdah (rehidratado por persist).
   const tdahType = useAppStore((s) => s.tdahType); // "inatento" | "hiperactivo" | "combinado" | null
+
+  // 1.1) Acciones de la store
+  const setUser = useAppStore((s) => s.setUser);
+
+  // 1.2) Router
+  const navigate = useNavigate();
 
   // 2) Estado local del formulario (controlado)
   const [name, setName]   = useState("");
@@ -39,22 +43,38 @@ export default function Register() {
     pw === pw2 &&
     !!tdahType; // Debe existir un TDAH elegido
 
-  // 6) Handler de submit (por ahora demo). Aquí conectarás tu API real.
+  // 6) Handler de submit: guarda usuario en la store y redirige a /profile/edit
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!valid) return;
     setLoading(true);
 
-    // TODO: Reemplázalo con tu llamada real:
-    // await fetch("/auth/register", {
-    //   method: "POST",
-    //   headers: { "Content-Type": "application/json" },
-    //   body: JSON.stringify({ name, email, password: pw, tdahType }),
-    // });
+    // TODO: Reemplazar por tu llamada real a la API
+    // const res = await fetch("/auth/register", { ... });
+    await new Promise((r) => setTimeout(r, 600)); // simulación
 
-    await new Promise((r) => setTimeout(r, 800)); // simulación
+    // ✓ Guarda usuario mínimo en la store (fuente de verdad: s.user)
+    setUser({
+      id: crypto.randomUUID?.() ?? String(Date.now()),
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      username: name.trim().toLowerCase(),           // puedes pedirlo en /profile/edit
+      avatarUrl: "/Images/default-profile.jpg",      // se podrá cambiar en /profile/edit
+      character: {                                   // personaje por defecto; editable luego
+        id: "bunny",
+        name: "Bunny",
+        sprite: "/characters/bunny_idle.png",
+      },
+      level: 1,
+      xp: 0,
+      nextXp: 1000,
+      tdahType,                                      // guarda el TDAH elegido
+    } as any);
+
     setLoading(false);
-    alert("Registro demo — conecta tu API aquí 🤝");
+
+    // ➜ Redirige al onboarding de perfil
+    navigate("/profile/edit");
   };
 
   // 7) Texto amigable para mostrar el TDAH en la UI
@@ -87,8 +107,7 @@ export default function Register() {
             className={styles.googleBtn}
             onClick={() => alert("Google OAuth demo")}
           >
-            {/* Icono local en /public/google.svg (o quítalo si no lo tienes) */}
-            <img src="/google.png" alt="" aria-hidden className={styles.gIcon} />
+            <img src="/Images/google.png" alt="" aria-hidden className={styles.gIcon} />
             Google
           </button>
 
@@ -127,7 +146,7 @@ export default function Register() {
             <label className={styles.inputWrap}>
               <input
                 className={styles.input}
-                type={show1 ? "text" : "password"}       // alterna mostrar/ocultar
+                type={show1 ? "text" : "password"}
                 placeholder="Contraseña"
                 value={pw}
                 onChange={(e) => setPw(e.target.value)}
@@ -135,7 +154,6 @@ export default function Register() {
                 minLength={minLen}
                 autoComplete="new-password"
               />
-              {/* Botón “ojo” para ver/ocultar */}
               <button
                 type="button"
                 className={styles.eyeBtn}

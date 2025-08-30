@@ -47,7 +47,7 @@ export default function Courses() {
       <Navbar
         homeOnly={false}
         items={[{ label: "Materias", to: "/courses" }]}
-        avatarSrc="/public/default-profile.jpg"   // ruta a la imagen en /public
+        avatarSrc="/Images/default-profile.jpg"   // ruta a la imagen en /public
       />
 
 

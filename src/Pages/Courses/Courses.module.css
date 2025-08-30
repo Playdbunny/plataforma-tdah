@@ -34,7 +34,7 @@
 /* Capa de imagen/arte (puedes reemplazar `pixel-sky.png` por otra) */
 .heroArt{
   height:320px;                              /* Alto de la franja */
-  background-image: url("/public/banner-image1.png"); /* ← coloca la imagen en /public/assets/ */
+  background-image: url("/Images/banner-image1.png"); /* ← coloca la imagen en /public/assets/ */
   background-position:center;
   background-repeat:repeat-x;
   background-size: cover;

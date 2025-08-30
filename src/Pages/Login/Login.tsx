@@ -32,7 +32,7 @@ export default function Login() {
         {/* Card */}
         <div className={styles.card} role="form">
           <button className={styles.googleBtn} type="button" onClick={() => alert("Google OAuth (demo)")}>
-            <img src="/google.png" alt="" aria-hidden className={styles.gIcon} />
+            <img src="/Images/google.png" alt="" aria-hidden className={styles.gIcon} />
             Google
           </button>
 

@@ -23,8 +23,8 @@
   background-size: auto 100%;
   image-rendering: pixelated;
 }
-.sky{ background-image:url("/sky.png"); background-position: top center; z-index:1; }
-.mountains{ background-image:url("/mountain-grass.png"); z-index:2; }
+.sky{ background-image:url("/Images/sky.png"); background-position: top center; z-index:1; }
+.mountains{ background-image:url("/Images/mountain-grass.png"); z-index:2; }
 .hills{ background-image:url("/Gifs/hills.gif"); z-index:3; }
 .grass{ background-image:url("/Gifs/LandingGrass.gif"); z-index:4; }
 

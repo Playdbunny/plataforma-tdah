@@ -31,12 +31,12 @@
 }
 
 .sky{ 
-  background-image: url("/public/sky-stars.png"); 
+  background-image: url("/Images/sky-stars.png"); 
   background-position: top center; 
 }
 
 .clouds{ 
-  background-image: url("/public/dark-cloud.webp"); 
+  background-image: url("/Images/dark-cloud.webp"); 
   background-position: center bottom; 
   background-repeat: no-repeat;   /* ← evita el corte */
   background-size: 100% auto;     /* ← “acerca” la imagen para cubrir ancho */

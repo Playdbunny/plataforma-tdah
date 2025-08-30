@@ -10,8 +10,10 @@ import Forgot from "./Pages/Forgot/Forgot";
 import Reset from "./Pages/Reset/Reset";
 import TdahSelect from "./Pages/TDAHSelect/TDAHSelect";
 import Courses from "./Pages/Courses/Courses";
-import AvatarSelect from "./Pages/AvatarSelect/AvatarSelect";
-import SubjectPage from "./Pages/SubjectPage/SubjectPage"; // 👈 AÑADIDO
+import SubjectPage from "./Pages/SubjectPage/SubjectPage";
+import Profile from "./Pages/Profile/Profile";
+import EditProfile from "./Pages/Profile/EditProfile";
+import ProtectedLayout from "./Layouts/ProtectedLayout";
 
 export const router = createBrowserRouter([
   // Públicas
@@ -24,14 +26,23 @@ export const router = createBrowserRouter([
 
   // Flujos
   { path: "/tdah", element: <TdahSelect /> },
-  { path: "/avatar", element: <AvatarSelect /> },
-
-  // Cursos
-  { path: "/courses", element: <Courses /> },
 
   // ⭐ Ruta DINÁMICA de materias
   //    /subjects/historia   /subjects/quimica   /subjects/matematicas
   { path: "/subjects/:subjectId", element: <SubjectPage /> },
+
+   {
+    element: <ProtectedLayout />,  // 👈 hook aquí
+    children: [
+      { path: "/profile", element: <Profile /> },//publicas
+      { path: "/profile/edit", element: <EditProfile /> },//publicas
+      { path: "/courses", element: <Courses /> }, //Cursos
+
+        // ⭐ Ruta DINÁMICA de materias
+       //subjects/historia   /subjects/quimica   /subjects/matematicas
+      { path: "/subjects/:subjectId", element: <SubjectPage /> },
+    ],
+  },
 
   // (Opcional) 404
   // { path: "*", element: <NotFound /> },

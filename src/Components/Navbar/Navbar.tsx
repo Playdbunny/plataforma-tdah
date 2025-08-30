@@ -25,26 +25,23 @@ const SUBJECT_PREFIX = "/subjects";
 
 /* ============================================================
    DEV-ONLY MOCK (opción A)
-   - Permite testear el dropdown completo sin login real.
-   - Activo SOLO en desarrollo (import.meta.env.DEV).
-   - Cómo usar:
-       a) Click en el avatar sin sesión → inyecta MOCK_USER y abre menú
-       b) Agregar ?mock=1 a la URL → inyecta MOCK_USER al cargar
-   - Para desactivar: comenta el bloque "DEV-ONLY START/END".
    ============================================================ */
 const DEV_ONLY = import.meta.env.DEV === true;
 const MOCK_USER = {
   id: "dev-001",
   name: "Dev Tester",
   email: "dev@example.com",
-  avatarUrl: "/avatar-default.png",
+  avatarUrl: "/Images/default-profile.jpg",
 };
 /* ======================= DEV-ONLY END ======================= */
+
+// Fallback seguro (asegúrate que exista en /public)
+const FALLBACK_AVATAR = "/Images/default-profile.jpg";
 
 export default function Navbar({
   homeOnly = false,
   items = [],
-  avatarSrc = "/default-profile.jpg",
+  avatarSrc = "/Images/default-profile.jpg",
 }: NavbarProps) {
   const [openUser, setOpenUser] = useState(false);
   const [openSubjects, setOpenSubjects] = useState(false);
@@ -55,27 +52,24 @@ export default function Navbar({
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
-  // ──────────────────────────────────────────────────────────
-  // Store selectors (con cast a any para evitar error TS2339)
-  // Nota: si luego tipas tu AppState con auth/wallet, puedes
-  // remover los "as any" y usar las props tipadas.
-  // ──────────────────────────────────────────────────────────
-  const user = useAppStore((s: any) => s?.auth?.user ?? s?.user ?? null);
+  const user  = useAppStore((s:any) => s?.user ?? null);
   const coins = useAppStore((s: any) => s?.wallet?.coins ?? s?.points ?? 0);
   const setUser = useAppStore((s: any) => s?.setUser ?? (() => {}));
 
   const showMenu = !homeOnly;
 
-  // Rutas públicas donde NO se muestran avatar/monedas
   const isPublic = useMemo(
     () => /^\/($|login(\/|$)|register(\/|$)|forgot(\/|$)|reset(\/|$))/.test(pathname),
     [pathname]
   );
 
-  // ¿Estás dentro de /subjects/* ?
-  const isOnSubjectPage = pathname.startsWith(SUBJECT_PREFIX);
+  // Guard visual: si el perfil está incompleto, restringimos los ítems del menú
+  const mustSetup = !!user && (!user.username || !user.character);
+  const effectiveItems = useMemo<NavItem[]>(
+    () => (mustSetup ? [{ label: "Perfil", to: "/profile/edit" }] : items),
+    [mustSetup, items]
+  );
 
-  // Cierra menús al hacer click fuera
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
       const t = e.target as Node;
@@ -86,21 +80,15 @@ export default function Navbar({
     return () => document.removeEventListener("click", onDocClick);
   }, []);
 
-  /* ======================= DEV-ONLY START =======================
-     Inyecta usuario mock automáticamente si entras con ?mock=1
-     (Solo en desarrollo)
-  =============================================================== */
+  // Inyección mock con ?mock=1
   useEffect(() => {
     if (!DEV_ONLY) return;
     const params = new URLSearchParams(window.location.search);
     if (params.get("mock") === "1" && !user) {
       (setUser as any)(MOCK_USER);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [DEV_ONLY]);
-  /* ======================== DEV-ONLY END ======================== */
+  }, [DEV_ONLY, user, setUser]);
 
-  // Monedas a mostrar (si no hay, en dev muestra 999 para test)
   const displayCoins = useMemo(
     () => (coins && Number.isFinite(coins) ? coins : (DEV_ONLY ? 999 : 0)),
     [coins]
@@ -111,7 +99,7 @@ export default function Navbar({
       <div className={styles.inner}>
         {/* Marca */}
         <Link to="/" className={styles.brand} aria-label="Ir al inicio">
-          <img src="/Logo.png" alt="SynapQuest logo" className={styles.logoSlot} />
+          <img src="/Images/Logo.png" alt="SynapQuest logo" className={styles.logoSlot} />
           <span className={styles.brandText}>SynapQuest</span>
         </Link>
 
@@ -119,11 +107,12 @@ export default function Navbar({
         {showMenu && (
           <div className={styles.right}>
             <nav className={styles.menu} aria-label="Navegación principal">
-              {items.map((it) => {
+              {effectiveItems.map((it) => {
                 const isMaterias =
                   it.label.toLowerCase() === "materias" || it.to === "/subjects";
 
-                if (!isMaterias || !isOnSubjectPage) {
+                // Si estamos en modo "perfil incompleto", no mostramos dropdown de Materias
+                if (mustSetup || !isMaterias) {
                   return (
                     <Link key={it.to} to={it.to}>
                       {it.label}
@@ -131,13 +120,9 @@ export default function Navbar({
                   );
                 }
 
-                // "Materias" como trigger solo dentro de /subjects/*
+                // Materias como trigger con dropdown
                 return (
-                  <div
-                    key="materias-trigger"
-                    className={styles.subjectsItem}
-                    ref={subjectsRef}
-                  >
+                  <div key="materias-trigger" className={styles.subjectsItem} ref={subjectsRef}>
                     <Link
                       to="/subjects"
                       className={styles.subjectsTrigger}
@@ -194,7 +179,6 @@ export default function Navbar({
               })}
             </nav>
 
-            {/* Monedas: visibles solo en páginas internas */}
             {!isPublic && (
               <div className={styles.coins} title="Tus monedas">
                 <span className={styles.coinIcon}>🪙</span>
@@ -202,39 +186,34 @@ export default function Navbar({
               </div>
             )}
 
-            {/* Avatar + dropdown: visible solo en páginas internas */}
             {!isPublic && (
               <div className={styles.user} ref={userRef}>
                 <button
                   type="button"
                   className={styles.userBtn}
                   onClick={(e) => {
-                    /* ======================= DEV-ONLY START =======================
-                       Alt + click en avatar → inyecta MOCK_USER y abre menú
-                       Click normal:
-                         - si ya hay user: toggle
-                         - si no hay user: (en dev) inyecta y abre / (en prod) solo toggle
-                    =============================================================== */
-                    if (DEV_ONLY && !user && (e as any).altKey) {
-                      (setUser as any)(MOCK_USER);
-                      setOpenUser(true);
-                      return;
-                    }
                     if (DEV_ONLY && !user) {
                       (setUser as any)(MOCK_USER);
                       setOpenUser(true);
                       return;
                     }
-                    /* ======================== DEV-ONLY END ======================== */
                     setOpenUser((v) => !v);
                   }}
                   aria-haspopup="menu"
                   aria-expanded={openUser}
                 >
                   <img
-                    src={(user as any)?.avatarUrl ?? avatarSrc}
+                    src={(user as any)?.avatarUrl || avatarSrc || FALLBACK_AVATAR}
                     alt="Avatar usuario"
                     className={styles.avatarImg}
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      const t = e.currentTarget as HTMLImageElement;
+                      if (!t.dataset.fbk) {
+                        t.dataset.fbk = "1";
+                        t.src = FALLBACK_AVATAR;
+                      }
+                    }}
                   />
                 </button>
 
@@ -243,7 +222,6 @@ export default function Navbar({
                     {user ? (
                       <>
                         <Link to="/profile" role="menuitem" className={styles.userItem}>Perfil</Link>
-                        <Link to="/settings" role="menuitem" className={styles.userItem}>Configuración</Link>
                         <div className={styles.sep} />
                         <button
                           role="menuitem"

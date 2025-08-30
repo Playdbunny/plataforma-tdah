@@ -42,7 +42,7 @@
 
 /* --- SKY: se repite en X, ancla TOP --- */
 .sky{
-  background-image: url("/sky.png");
+  background-image: url("/Images/sky.png");
   background-position: top center;             /* top */
   background-repeat: repeat-x;
   z-index: 1;
@@ -50,7 +50,7 @@
 
 /* --- MOUNTAINS --- */
 .mountains{
-  background-image: url("/mountain-grass.png");
+  background-image: url("/Images/mountain-grass.png");
   background-position: center bottom;
   z-index: 2;
 }
