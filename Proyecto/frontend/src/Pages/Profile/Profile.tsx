@@ -4,6 +4,7 @@ import styles from "./Profile.module.css";
 import { useAppStore } from "../../stores/appStore";
 import Navbar from "../../Components/Navbar/Navbar";
 import XPBar from "../../Components/XPBar/XPBar";
+import PetEvolution from "../../Components/PetEvolution/PetEvolution";
 
 type Stat = { label: string; value: number; icon?: string; accent?: "blue"|"orange"|"green"|"pink" };
 
@@ -99,6 +100,8 @@ export default function Profile() {
             ))}
           </div>
         </section>
+
+        <PetEvolution />
       </div>
     </>
   );
