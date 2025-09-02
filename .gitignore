@@ -12,6 +12,7 @@ Proyecto/frontend/node_modules/
 Proyecto/frontend/dist/
 Proyecto/frontend/dist-ssr/
 Proyecto/frontend/*.local
+node_modules/
 
 # Configuración de editores
 .vscode/*
