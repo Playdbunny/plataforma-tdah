@@ -134,6 +134,22 @@
   text-align:center; color: var(--muted);
 }
 
+/* Enlaces de administración (solo se muestran si isAdmin === true) */
+.adminLinks { margin-top: 14px; }
+.adminBtn {
+  display: inline-block;
+  background: #1e203b;
+  color: #f1f3ff;
+  font-weight: 800;
+  border: 0;
+  border-radius: 12px;
+  padding: 8px 12px;
+  text-decoration: none;
+  box-shadow: 0 2px 6px rgba(0,0,0,.2);
+}
+.adminBtn:hover { filter: brightness(.98); }
+
+
 /* Responsive */
 @media (max-width: 760px){
   .tray{ padding: 18px 56px 18px 16px; }

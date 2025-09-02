@@ -1,56 +1,46 @@
 // ─────────────────────────────────────────────────────────────
 // Courses.tsx
-// Página de “Cursos” con:
-//  - Hero superior con título y subtítulo.
-//  - Grid de tarjetas CourseCard (banner, eyebrow, título, descripción y CTA).
-//  - Uso de tu Navbar mostrando menú SOLO aquí (items + homeOnly={false}).
+// Página de “Cursos” que toma las materias desde subjectsStore.
+// - Mantiene tu Navbar y el hero actual.
+// - Reemplaza el array hardcodeado por items del store.
+// - Usa el banner subido en Admin (bannerUrl) o un GIF de fallback por slug.
+// - Cada card navega a /subjects/:slug
 // ─────────────────────────────────────────────────────────────
-import Navbar from "../../Components/Navbar/Navbar";   // ← Tu Navbar
-import FancyCourseCard from "../../Components/FancyCourseCard/FancyCourseCard"; // ← Nueva card limpia
-import styles from "./Courses.module.css";             // ← Estilos locales
 
-type Course = {
-  id: string;
-  title: string;
-  blurb: string;
-  image: string;  // 🔹 aquí pones tus banners
-  path: string;
+import { useEffect } from "react";
+import Navbar from "../../Components/Navbar/Navbar";
+import FancyCourseCard from "../../Components/FancyCourseCard/FancyCourseCard";
+import styles from "./Courses.module.css";
+
+// 👇 Store con las materias creadas/gestionadas en Admin
+import { useSubjectsStore } from "../../stores/subjectsStore";
+
+// Fallbacks de banner por slug (mismos que usas en SubjectPage)
+const DEFAULT_HERO_BY_SLUG: Record<string, string> = {
+  historia: "/Gifs/3banner.gif",
+  quimica: "/Gifs/6banner.gif",
+  matematicas: "/Gifs/8banner.gif",
 };
 
-const courses: Course[] = [
-  {
-    id: "Htry-01",
-    title: "Historia",
-    blurb: "Lorem ipsum dolor sit amet.",
-    image: "/Gifs/3banner.gif",  // 🔹 aquí pones tus banners
-    path: "/subjects/historia",
-  },
-  {
-    id: "Chm-02",
-    title: "Quimica",
-    blurb: "Lorem ipsum dolor sit amet.",
-    image: "/Gifs/6banner.gif",
-    path: "/subjects/quimica",
-  },
-  {
-    id: "Mths-01",
-    title: "Matemáticas",
-    blurb: "Lorem ipsum dolor sit amet.",
-    image: "/Gifs/8banner.gif",
-    path: "/subjects/matematicas",
-  },
-];
-
 export default function Courses() {
+  // Leemos materias del store + acción para “listar”
+  const { items, list } = useSubjectsStore();
+
+  // Si entras con memoria “fría”, pedimos al store rehidratar/listar
+  useEffect(() => {
+    if (!items || items.length === 0) list();
+  }, [items, list]);
+
   return (
     <div className={styles.screen}>
+      {/* Navbar con menú visible en Courses */}
       <Navbar
         homeOnly={false}
         items={[{ label: "Materias", to: "/courses" }]}
-        avatarSrc="/Images/default-profile.jpg"   // ruta a la imagen en /public
+        avatarSrc="/Images/default-profile.jpg"
       />
 
-
+      {/* HERO superior (igual al tuyo) */}
       <section className={styles.hero}>
         <div className={styles.heroArt} aria-hidden="true" />
         <div className={styles.heroText}>
@@ -63,23 +53,36 @@ export default function Courses() {
       </section>
 
       <main className={styles.container}>
-        <h2 className={styles.sectionTitle}>The Lorem <span>ipsum</span></h2>
-        <p className={styles.sectionLead}>
-          lorem ipsum dolor sit amet.
-        </p>
+        <h2 className={styles.sectionTitle}>
+          The Lorem <span>ipsum</span>
+        </h2>
+        <p className={styles.sectionLead}>lorem ipsum dolor sit amet.</p>
+
+        {/* Estado vacío: invita a crear materias en Admin */}
+        {(!items || items.length === 0) && (
+          <div className={styles.empty}>
+            Aún no hay materias. Crea alguna en <a href="/admin/gestion/materias">Admin → Materias</a>.
+          </div>
+        )}
 
         {/* Grid responsive 1→2→3 columnas */}
         <div className={styles.grid}>
-          {courses.map((c, i) => (
-            <FancyCourseCard
-              key={c.id}
-              to={c.path}
-              eyebrow={`MATERIA`}
-              title={c.title}
-              description={c.blurb}
-              bannerSrc={c.image}                          /* 👈 tu banner */
-            />
-          ))}
+          {items.map((s) => {
+            // Banner: primero el subido en Admin, si no, fallback por slug, si no, genérico
+            const banner =
+              s.bannerUrl || DEFAULT_HERO_BY_SLUG[s.slug] || "/Gifs/8banner.gif";
+
+            return (
+              <FancyCourseCard
+                key={s.id}
+                to={`/subjects/${s.slug}`}          // 👉 navega a la página pública de la materia
+                eyebrow="MATERIA"
+                title={s.name}
+                description={s.description ?? "Lorem ipsum dolor sit amet."}
+                bannerSrc={banner}
+              />
+            );
+          })}
         </div>
       </main>
 
@@ -89,5 +92,3 @@ export default function Courses() {
     </div>
   );
 }
-
-

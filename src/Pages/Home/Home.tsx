@@ -16,7 +16,7 @@ export default function Home() {
   return (
     <>
       {/* El navbar va fuera del hero, así ocupa su altura normal */}
-      <Navbar />
+      <Navbar homeOnly/>
 
       <section className={styles.hero} aria-label="Portada SynapQuest">
         {/* FONDO EN CAPAS */}

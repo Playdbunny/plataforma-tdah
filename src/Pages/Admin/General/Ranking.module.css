@@ -1,0 +1,136 @@
+/* Contenedor principal de la página */
+.screen { display: flex; flex-direction: column; gap: 16px; }
+
+/* Header superior */
+.header { display: flex; align-items: center; justify-content: space-between; }
+.title {
+  font-weight: 800;
+  font-family: "Press Start 2P", system-ui, sans-serif;
+  background: #e6ebff;
+  border: 2px solid #c6d1ff;
+  color: #111827;
+  padding: 6px 12px;
+  border-radius: 14px;
+}
+.actions { display: flex; gap: 8px; align-items: center; }
+
+/* Input de búsqueda */
+.search {
+  background: #fff;
+  border: 2px solid #c6d1ff;
+  border-radius: 12px;
+  padding: 8px 10px;
+  width: 260px;
+}
+
+/* Selector de tamaño de página */
+.pageSize {
+  background: #fff;
+  border: 2px solid #c6d1ff;
+  border-radius: 12px;
+  padding: 8px 10px;
+}
+
+/* Contenedor de tabla */
+.tableWrap {
+  background: #fff;
+  border: 2px solid #c6d1ff;
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+/* Tabla en sí */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #111827; /* 👈 Forzamos texto negro en toda la tabla */
+}
+
+.table thead th {
+  background: #f3f5ff;
+  border-bottom: 2px solid #c6d1ff;
+  color: #111827; /* encabezados en negro */
+}
+
+.table th,
+.table td {
+  padding: 12px;
+  text-align: left;
+  color: #111827; /* aseguramos negro en celdas */
+}
+
+
+/* Botón de encabezado clickeable (sort) */
+.thBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 800;
+  background: transparent;
+  border: 0;
+  padding: 8px 4px;
+  cursor: pointer;
+  font-family: "PixelGrid", system-ui, sans-serif;
+}
+.thBtn:hover { filter: brightness(0.95); }
+.thBtn:focus { outline: 3px solid #93c5fd; outline-offset: 2px; }
+.active { color: #2a2d58; }
+.caret { font-size: 10px; }
+
+/* Filas */
+tbody tr:nth-child(odd) { background: #f8f5ff; }
+tbody tr:nth-child(even) { background: #edf2ff; }
+tbody tr:hover { background: #e7ecff; }
+
+/* Celda vacía */
+.empty {
+  text-align: center;
+  padding: 20px;
+  background: #fff;
+  color: #374151;
+  font-weight: 600;
+}
+
+/* Columnas específicas */
+.pos { width: 120px; font-weight: 800; }
+.medal { margin-right: 8px; }
+.name { min-width: 200px; }
+.xp { width: 140px; }
+.progress { width: 220px; display: flex; align-items: center; gap: 10px; }
+.bar { height: 10px; width: 120px; background: #e5e7eb; border-radius: 999px; overflow: hidden; }
+.fill { height: 100%; background: #7c90ff; }
+.pct { font-weight: 700; }
+.last { width: 160px; }
+
+.pos, .name, .xp, .progress, .pct, .last {
+  color: #111827; /* todas las columnas en negro */
+}
+
+
+/* Paginador */
+.pager { display: flex; gap: 12px; align-items: center; justify-content: center; color: #111827;}
+.btn {
+  background: #ffffff;
+  border: 2px solid #c6d1ff;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-weight: 800;
+  cursor: pointer;
+  color: #01040c;
+}
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.pageInfo { font-weight: 800; }
+
+/* Responsive */
+@media (max-width: 900px) {
+  .search { width: 180px; }
+  .progress { width: 180px; }
+  .bar { width: 100px; }
+}
+@media (max-width: 640px) {
+  .screen { gap: 12px; }
+  .title { font-size: 12px; }
+  .search { width: 160px; }
+  .table th, .table td { padding: 10px; }
+  .last { display: none; } /* Ocultamos la col de "última actividad" en móvil */
+}
