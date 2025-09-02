@@ -1,69 +1,29 @@
-# React + TypeScript + Vite
+# SynapQuest
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## 👥 Integrantes
+- Javiera Bustamante  
+- Franco Constanzo  
+- Fernanda Marín  
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 📚 ¿De qué se trata SynapQuest?
+SynapQuest es una plataforma en línea que permite a estudiantes con diagnóstico de TDAH aprender de manera personalizada, acorde a sus necesidades.
+El propósito es mejorar la atención y el desempeño académico ajustando los contenidos, sosteniendo el interés con gamificación y proporcionando informes de progreso.
+> 🧑‍🎓 **Importante:** SynapQuest está diseñado como una herramienta de apoyo para los estudiantes, enfocada en el aprendizaje autónomo, y no como una plataforma para que profesores impartan clases.
 
-## Expanding the ESLint configuration
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+---
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## 📎 Enlaces Importantes
+- 📂 [Carpeta OneDrive del Proyecto](https://duoccl0-my.sharepoint.com/:f:/g/personal/fern_marin_duocuc_cl/EhsV9XinkHBAtZarUwyhHHoB36Hf3NnAKVcGf_oNenDvTw?e=79oKTv)  
+- 💻 [Repositorio en GitHub](https://github.com/Playdbunny/plataforma-tdah)  
+- 📌 [Tablero de Gestión (Trello)](https://trello.com/invite/b/68ae70cd449318426dc8f72e/ATTI5df8a3b36e4a26b0c7cc05e2c899d074ADAB78DB/capstone-synapquest-scrum)
+---
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## 🚀 Tecnologías principales
+- **Frontend:** React + Vite + TypeScript  
+- **Backend:** Node.js / Express (a definir)  
+- **Base de Datos:** MongoDB o PostgreSQL
+- **Gestión de proyecto:** Scrum con Sprints  
+<!-- - **Machine Learning:** TensorFlow / Scikit-learn-->
