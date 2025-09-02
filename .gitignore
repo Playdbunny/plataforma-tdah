@@ -7,12 +7,13 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# Dependencias y build del frontend
+Proyecto/frontend/node_modules/
+Proyecto/frontend/dist/
+Proyecto/frontend/dist-ssr/
+Proyecto/frontend/*.local
 
-# Editor directories and files
+# Configuración de editores
 .vscode/*
 !.vscode/extensions.json
 .idea
@@ -22,3 +23,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Otros (si usan pruebas u otras herramientas)
+coverage
