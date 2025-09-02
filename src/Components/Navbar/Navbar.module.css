@@ -173,6 +173,21 @@
 }
 .dropLink:hover{ background: rgba(255,255,255,.06); }
 
+/* Opción “Ver todas” con un poquito más de énfasis */
+.dropAll{
+  font-weight: 800;
+  letter-spacing: 0.4px;
+}
+
+/* Separador fino dentro del dropdown */
+.dropSep{
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--border);
+  border-radius: 999px;
+}
+
+
 /* Materia activa */
 .active{
   background: rgba(42,160,255,.15);

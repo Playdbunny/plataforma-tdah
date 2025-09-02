@@ -1,0 +1,90 @@
+.card {
+  position: relative;
+  width: 160px;
+  height: 180px;
+  padding: 12px;
+  border-radius: 16px;
+  border: 2px solid #444;
+  background: #111827;
+  color: #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: box-shadow .2s, transform .06s;
+  overflow: hidden;
+}
+.card:hover { box-shadow: 0 0 0 2px #2563eb55; }
+.selected { box-shadow: 0 0 0 2px #60a5fa; }
+
+.sprite { width: 72px; height: 72px; image-rendering: pixelated; object-fit: contain; }
+.name { font-weight: 700; color: #cbd5e1; text-transform: lowercase; }
+
+/* Badge rareza (arriba izq) */
+.rarityBadge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 4px 6px;
+  border-radius: 999px;
+  background: #0f172a;
+  border: 1px solid rgba(255,255,255,.12);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+
+/* Chip precio (arriba der) */
+.priceChip{
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 4px 8px;
+  border-radius: 10px;
+  background: #0b1220;
+  border: 1px solid rgba(255,255,255,.12);
+}
+
+/* Overlay bloqueo */
+.lockOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(2,6,23,.6);
+  backdrop-filter: blur(2px);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Botón desbloquear (color por rareza) */
+.unlockBtn {
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-weight: 900;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  transition: transform .15s, filter .15s;
+}
+.unlockBtn:hover { filter: brightness(1.1); transform: scale(1.05); }
+
+/* Colores por rareza: borde + glow al seleccionar */
+.common    { border-color: #9ca3af; }
+.rare      { border-color: #3b82f6; }
+.epic      { border-color: #8b5cf6; }
+.legendary { border-color: #fbbf24; }
+
+.rare.selected      { box-shadow: 0 0 12px #3b82f6aa; }
+.epic.selected      { box-shadow: 0 0 14px #8b5cf6aa; }
+.legendary.selected { box-shadow: 0 0 16px #fbbf24aa; }
+
+/* Colores del botón por rareza */
+.btn_common    { background: #6b7280; } /* gris */
+.btn_rare      { background: #2563eb; } /* azul */
+.btn_epic      { background: #7c3aed; } /* morado */
+.btn_legendary { background: #d97706; } /* dorado */

@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────
 // Navbar.tsx (internal-only avatar & coins + DEV mock user)
 // ─────────────────────────────────────────────────────────────
-
+import CoinsBadge from "../CoinsBadge/CoinsBadge"; // ✅ usando el componente
 import { useState, useRef, useEffect, useMemo } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import styles from "./Navbar.module.css";
@@ -19,6 +19,7 @@ const SUBJECTS = [
   { id: "matematicas", name: "Matemática" },
   { id: "historia",    name: "Historia"   },
   { id: "quimica",     name: "Química"    },
+  
 ];
 
 const SUBJECT_PREFIX = "/subjects";
@@ -32,6 +33,8 @@ const MOCK_USER = {
   name: "Dev Tester",
   email: "dev@example.com",
   avatarUrl: "/Images/default-profile.jpg",
+  role: "admin" as const,
+  xp: 1000,
 };
 /* ======================= DEV-ONLY END ======================= */
 
@@ -53,7 +56,6 @@ export default function Navbar({
   const { pathname } = useLocation();
 
   const user  = useAppStore((s:any) => s?.user ?? null);
-  const coins = useAppStore((s: any) => s?.wallet?.coins ?? s?.points ?? 0);
   const setUser = useAppStore((s: any) => s?.setUser ?? (() => {}));
 
   const showMenu = !homeOnly;
@@ -88,11 +90,6 @@ export default function Navbar({
       (setUser as any)(MOCK_USER);
     }
   }, [DEV_ONLY, user, setUser]);
-
-  const displayCoins = useMemo(
-    () => (coins && Number.isFinite(coins) ? coins : (DEV_ONLY ? 999 : 0)),
-    [coins]
-  );
 
   return (
     <header className={styles.navbar} role="banner">
@@ -152,6 +149,21 @@ export default function Navbar({
                         onMouseDown={(e) => e.stopPropagation()}
                         onClick={(e) => e.stopPropagation()}
                       >
+                        {/* ───── Opción: Ver todas las materias ───── */}
+                          <li role="none">
+                            <Link
+                              role="menuitem"
+                              to="/courses"
+                              className={`${styles.dropLink} ${styles.dropAll}`}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setOpenSubjects(false);
+                                navigate("/courses");
+                              }}
+                            >
+                              Ver todas
+                            </Link>
+                          </li>
                         {SUBJECTS.map((s) => {
                           const href = `${SUBJECT_PREFIX}/${s.id}`;
                           const isActive = pathname.startsWith(href);
@@ -179,11 +191,12 @@ export default function Navbar({
               })}
             </nav>
 
+            {/* 👇 Coins globales: ahora con componente */}
             {!isPublic && (
-              <div className={styles.coins} title="Tus monedas">
-                <span className={styles.coinIcon}>🪙</span>
-                <span className={styles.coinValue}>{displayCoins}</span>
-              </div>
+              <CoinsBadge
+                compact
+                // onClick={() => navigate("/shop")} // descomenta si quieres que abra tienda
+              />
             )}
 
             {!isPublic && (

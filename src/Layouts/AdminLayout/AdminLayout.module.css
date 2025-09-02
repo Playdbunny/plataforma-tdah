@@ -1,0 +1,141 @@
+/* Grid de 2 columnas: sidebar + contenido */
+.shell {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: 100vh;
+  background: #dfe7ff; /* fondo suave (puedes cambiar) */
+}
+
+/* Sidebar oscuro con tipografía clara */
+.sidebar {
+  background: #141526;
+  color: #e6e6ff;
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 800;
+  font-size: 18px;
+  margin-bottom: 10px;
+  font-family: "Press Start 2P", system-ui, sans-serif;
+  font-size: 16px;
+}
+
+.logoSlot {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+/* Título de sección (“General”, “Gestión”) */
+.sectionTitle {
+  margin-top: 8px;
+  color: #f3cd55;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  font-family: "Press Start 2P", system-ui, sans-serif;
+  font-size: 14px;
+}
+
+/* Navegación vertical */
+.nav { display: flex; flex-direction: column; margin-top: 6px; }
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #c9c9ff;
+  text-decoration: none;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-family: "PixelGrid", system-ui, sans-serif;
+  font-size: 20px;
+}
+
+.item:hover { background: #1f2140; color: #fff; }
+
+.active { background: #2a2d58; color: #fff; }
+
+.icon { width: 20px; text-align: center; }
+
+/* Botón de logout abajo del todo */
+.logout {
+  margin-top: auto;
+  background: #2a2d58;
+  border: 0;
+  color: #fff;
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: "Press Start 2P", system-ui, sans-serif;
+  font-size: 14px;
+}
+.logout:hover { filter: brightness(1.1); }
+
+/* Contenedor principal (topbar + main) */
+.content { display: flex; flex-direction: column; }
+
+/* Topbar con borde inferior */
+.topbar {
+  height: 56px;
+  background: #e6ebff;
+  border-bottom: 2px solid #c6d1ff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+}
+
+.searchWrap { flex: 1; max-width: 600px; }
+
+/* Buscador con borde redondo */
+.search {
+  width: 100%;
+  height: 36px;
+  border-radius: 999px;
+  border: 2px solid #c6d1ff;
+  padding: 0 14px;
+  background: #f5f7ff;
+}
+
+/* Lado derecho de la topbar */
+.topRight { display: flex; align-items: center; gap: 12px; }
+
+/* Botón de campana (notificaciones) con badge */
+.bell { position: relative; background: transparent; border: 0; font-size: 20px; cursor: pointer; }
+.badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #ff4d6d;
+  color: #fff;
+  border-radius: 999px;
+  padding: 0 6px;
+  font-size: 11px;
+  line-height: 18px;
+}
+
+/* Etiqueta “Admin” */
+.adminTag {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: #111827;
+  background: #ffffff;
+  border: 2px solid #c6d1ff;
+  padding: 6px 10px;
+  border-radius: 10px;
+}
+
+.adminDot { font-size: 18px; }
+
+/* Área de contenido */
+.main { padding: 18px; }

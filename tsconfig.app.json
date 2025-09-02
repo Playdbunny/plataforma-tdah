@@ -1,27 +1,29 @@
 {
   "compilerOptions": {
-    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
-    "target": "ES2022",
+    "target": "ES2020",
     "useDefineForClassFields": true,
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
 
-    /* Bundler mode */
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "verbatimModuleSyntax": true,
-    "moduleDetection": "force",
-    "noEmit": true,
+    // 🔑 React 17+/18 con JSX automático
     "jsx": "react-jsx",
 
-    /* Linting */
+    // Resolución moderna para Vite
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+
+    // Calidad de tipos
     "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "erasableSyntaxOnly": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noEmit": true,
+
+    // Compatibilidad
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+
+    // 🔑 Asegura tipos de React y Vite en el proyecto
+    "types": ["vite/client", "react", "react-dom"]
   },
   "include": ["src"]
 }

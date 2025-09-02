@@ -1,0 +1,157 @@
+/* Contenedor general del dashboard */
+.screen { display: flex; flex-direction: column; gap: 18px; }
+
+/* ───── KPIs ───── */
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.kpi {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #181a2f;
+  color: #e8e9ff;
+  padding: 14px 16px;
+  border-radius: 18px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.kpi:hover { transform: translateY(-1px); transition: .15s ease; }
+.kpi:focus-within { outline: 2px solid #93c5fd; outline-offset: 2px; }
+
+.kpiIcon { font-size: 22px; }
+.kpiText { display: flex; flex-direction: column; line-height: 1.1; }
+.kpiNumber {
+  font-weight: 800;
+  font-family: "Press Start 2P", system-ui, sans-serif;
+  font-size: 14px; /* (quitamos duplicado) */
+}
+.kpiLabel {
+  font-size: 12px;
+  opacity: 0.85;
+  font-family: "PixelGrid", system-ui, sans-serif;
+}
+
+/* ───── Gráfico ───── */
+.chartCard {
+  background: #ffffff;
+  border: 2px solid #c6d1ff;
+  border-radius: 22px;
+  padding: 12px 12px 16px 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.chartHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.tabTitle {
+  display: inline-block;
+  background: #e6ebff;
+  border: 2px solid #c6d1ff;
+  color: #111827;
+  padding: 6px 12px;
+  border-radius: 14px;
+  font-weight: 800;
+  font-family: "Press Start 2P", system-ui, sans-serif;
+  font-size: 12px;
+}
+
+.range { display: flex; gap: 6px; }
+.rangeBtn {
+  border: 2px solid #c6d1ff;
+  background: #fff;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.rangeBtn:hover { filter: brightness(0.98); }
+.rangeBtn:focus { outline: 3px solid #93c5fd; outline-offset: 2px; }
+.active { background: #2a2d58; color: #fff; border-color: #2a2d58; }
+
+.chartInner {
+  overflow-x: auto; /* si la pantalla es pequeña permite scroll */
+  padding: 8px;
+}
+
+.empty {
+  padding: 12px;
+  border: 2px dashed #c6d1ff;
+  background: #fff;
+  border-radius: 12px;
+  color: #374151;
+}
+
+/* ───── Actividad reciente ───── */
+.activityCard {
+  background: #181a2f;
+  color: #e8e9ff;
+  padding: 16px;
+  border-radius: 18px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.timeline { list-style: none; margin: 0; padding: 0; }
+.timeline li {
+  display: grid;
+  grid-template-columns: 20px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px dashed rgba(255,255,255,0.1);
+}
+.timeline li:last-child { border-bottom: 0; }
+
+/* puntitos de color */
+.dot { width: 10px; height: 10px; border-radius: 999px; display: inline-block; }
+.dotBlue { background: #3b82f6; }
+.dotGreen { background: #22c55e; }
+.dotYellow { background: #f59e0b; }
+
+.event {
+  font-weight: 600;
+  font-family: "PixelGrid", system-ui, sans-serif;
+  font-size: 18px;
+}
+.time {
+  font-size: 12px;
+  opacity: 0.85;
+  font-family: "PixelGrid", system-ui, sans-serif;
+  font-size: 18px;
+}
+
+/* ───── Skeleton rápido ───── */
+.skelRow {
+  height: 72px;
+  background: linear-gradient(90deg,#eceff4,#f6f7fb,#eceff4);
+  background-size: 200% 100%;
+  border-radius: 18px;
+  animation: sk 1.2s infinite;
+}
+@keyframes sk {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ───── Responsive ───── */
+@media (max-width: 1100px) {
+  .kpis { grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+@media (max-width: 640px) {
+  .kpis { grid-template-columns: 1fr; }
+}
+ 
+/* ───── Error banner ───── */
+.error {
+  padding: 12px;
+  border: 2px solid #fecaca;
+  background: #fee2e2;
+  color: #7f1d1d;
+  border-radius: 12px;
+}
