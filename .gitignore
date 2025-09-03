@@ -14,6 +14,11 @@ Proyecto/frontend/dist-ssr/
 Proyecto/frontend/*.local
 node_modules/
 
+# Dependencias y build del backend
+Proyecto/backend/node_modules/
+Proyecto/backend/dist/
+Proyecto/backend/.env
+
 # Configuración de editores
 .vscode/*
 !.vscode/extensions.json
