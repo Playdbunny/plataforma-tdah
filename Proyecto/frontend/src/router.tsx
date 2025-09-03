@@ -105,9 +105,7 @@ export const router = createBrowserRouter([
       { path: "dashboard", element: <AdminDashboard /> },
       { path: "ranking", element: <AdminRanking /> },
       { path: "materias", element: <MateriasPage /> },
-
       { path: "materiales", element: <MaterialesPage />},
-
       { path: "estudiantes", element: <EstudiantesPage /> },
       { path: "gestion/estudiantes/:id", element: <EstudianteDetallePage /> },
 
