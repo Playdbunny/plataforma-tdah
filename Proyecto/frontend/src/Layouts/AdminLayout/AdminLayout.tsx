@@ -93,7 +93,7 @@ export default function AdminLayout() {
           </NavLink>
 
           <NavLink
-            to="/admin/materials"
+            to="/admin/materiales"
             className={({ isActive }) =>
               isActive ? `${styles.item} ${styles.active}` : styles.item
             }
