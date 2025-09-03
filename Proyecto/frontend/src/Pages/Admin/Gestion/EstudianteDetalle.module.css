@@ -1,0 +1,55 @@
+.screen{ color:#e8e9ff; }
+
+.topRow{ margin:10px 0 12px; }
+.back{ color:#8cc1ff; text-decoration:none; font-weight:800; }
+.back:hover{ text-decoration:underline; }
+
+.headerCard{
+  display:grid; grid-template-columns: 72px 1fr auto; gap:16px;
+  align-items:center;
+  background:#0f1730; border:1px solid rgba(255,255,255,.08);
+  border-radius:16px; padding:14px;
+}
+.avatar{ width:72px; height:72px; border-radius:999px; object-fit:cover; }
+.meta{}
+.name{
+  margin:0 0 6px 0; font-size:18px; font-weight:800;
+  color:#ffffff;
+}
+.email{ color:#c7d5ff; }
+
+.badges{ display:flex; gap:8px; }
+.badge{
+  background:#0c1428; border:1px solid rgba(255,255,255,.1);
+  padding:8px 12px; border-radius:999px; color:#ffec9f; font-weight:800;
+}
+
+.panels{
+  display:grid; grid-template-columns: 1fr 1fr; gap:16px;
+  margin: 14px 0;
+}
+.card{
+  background:#0f1730; border:1px solid rgba(255,255,255,.08);
+  border-radius:16px; padding:12px 14px;
+}
+.cardTitle{
+  font-weight:800; color:#dfe8ff; margin-bottom:8px;
+  font-family: "PixelGrid", system-ui, sans-serif;
+}
+
+.progressList{ list-style:none; padding:0; margin:0; display:grid; gap:10px; }
+.progressItem{ display:grid; grid-template-columns: 140px 1fr 50px; align-items:center; gap:10px; }
+.pLabel{ color:#c7d5ff; }
+.pBar{ height:10px; background:#1a2850; border-radius:999px; overflow:hidden; }
+.pFill{ height:100%; background:#8ab4ff; }
+.pPct{ text-align:right; color:#c7d5ff; }
+
+.chartWrap{ overflow-x:auto; }
+.empty{ color:#a9b8de; }
+
+.activity{
+  background:#0f1730; border:1px solid rgba(255,255,255,.08);
+  border-radius:16px; padding:12px 14px; margin-bottom:16px;
+}
+.activityList{ margin:8px 0 0 0; padding-left:12px; }
+.activityList li{ margin:6px 0; }

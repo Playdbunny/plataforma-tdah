@@ -1,0 +1,45 @@
+.screen { color:#e8e9ff; }
+.headerRow{
+  display:flex; align-items:center; justify-content:space-between;
+  margin: 10px 0 14px;
+}
+.title{
+  font-family: "Press Start 2P", system-ui, sans-serif;
+  font-size: 16px; color:#e8e9ff; margin:0;
+}
+.search{
+  width: 260px; max-width: 56vw;
+  background:#0f1730; color:#dbe9ff;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:12px; padding:10px 12px;
+}
+
+.tableWrap{ background:#0f1730; border:1px solid rgba(255,255,255,.08); border-radius:16px; }
+.table{ width:100%; border-collapse: collapse; }
+.table thead th{
+  text-align:left; padding:12px; font-size:13px; color:#bcd0ff; border-bottom:1px solid rgba(255,255,255,.08);
+}
+.table tbody td{
+  padding:12px; border-bottom:1px dashed rgba(255,255,255,.08);
+}
+.muted{ color:#a9b8de; }
+.mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+
+.empty{ text-align:center; padding:28px !important; color:#c7d5ff; }
+
+.linkBtn{
+  background:none; border:none; color:#8cc1ff; cursor:pointer;
+  font-weight:800; padding:0; text-decoration: none;
+}
+.linkBtn:hover{ text-decoration: underline; }
+
+.pager{
+  display:flex; align-items:center; justify-content:center;
+  gap:14px; margin: 12px 0 6px;
+}
+.pill{
+  background:#0f1730; border:1px solid rgba(255,255,255,.12);
+  color:#dbe9ff; border-radius:999px; padding:8px 14px; cursor:pointer;
+}
+.pill:disabled{ opacity:.4; cursor:not-allowed; }
+.pageInfo{ color:#c7d5ff; }
