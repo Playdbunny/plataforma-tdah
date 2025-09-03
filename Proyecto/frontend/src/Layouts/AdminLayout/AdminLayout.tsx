@@ -69,7 +69,7 @@ export default function AdminLayout() {
         <div className={styles.sectionTitle}>Gestión</div>
         <nav className={styles.nav}>
           <NavLink
-            to="/admin/users"
+            to="/admin/estudiantes"
             className={({ isActive }) =>
               isActive ? `${styles.item} ${styles.active}` : styles.item
             }

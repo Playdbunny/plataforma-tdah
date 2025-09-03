@@ -28,7 +28,8 @@ import AdminLayout from "./Layouts/AdminLayout/AdminLayout";
 import AdminDashboard from "./Pages/Admin/General/Dashboard";
 import AdminRanking from "./Pages/Admin/General/Ranking";
 import MateriasPage from "./Pages/Admin/Gestion/Materias";
-
+import EstudiantesPage from "./Pages/Admin/Gestion/EstudiantesPage";
+import EstudianteDetallePage from "./Pages/Admin/Gestion/EstudianteDetallePage";
 
 // ─────────────────────────────────────────────────────────────
 // Guard de ADMIN — espera hidratación y valida role === 'admin'
@@ -101,6 +102,9 @@ export const router = createBrowserRouter([
       { path: "dashboard", element: <AdminDashboard /> },
       { path: "ranking", element: <AdminRanking /> },
       { path: "materias", element: <MateriasPage /> },
+      { path: "estudiantes", element: <EstudiantesPage /> },
+      { path: "gestion/estudiantes/:id", element: <EstudianteDetallePage /> },
+
 
       // Agrega aquí más secciones cuando las tengas listas:
       // { path: "users", element: <AdminUsers /> },
