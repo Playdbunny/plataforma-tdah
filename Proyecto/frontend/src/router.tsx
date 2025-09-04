@@ -28,6 +28,10 @@ import AdminLayout from "./Layouts/AdminLayout/AdminLayout";
 import AdminDashboard from "./Pages/Admin/General/Dashboard";
 import AdminRanking from "./Pages/Admin/General/Ranking";
 import MateriasPage from "./Pages/Admin/Gestion/Materias";
+import MaterialesPage from "./Pages/Admin/Gestion/Materiales";
+
+import EstudiantesPage from "./Pages/Admin/Gestion/EstudiantesPage";
+import EstudianteDetallePage from "./Pages/Admin/Gestion/EstudianteDetallePage";
 
 
 // ─────────────────────────────────────────────────────────────
@@ -43,7 +47,7 @@ function RequireAdmin({ children }: GuardProps) {
   // Mientras no se hidrate el store, aún no sabemos si hay sesión → no redirigimos.
   // Puedes renderizar un loader si prefieres.
   //if (!hydrated) return null;
-  if (!hydrated) return <div style={{padding:16}}>Cargando…</div>;
+  if (!hydrated) return <div className="loading-container">Cargando…</div>;
 
 
   if (!user) return <Navigate to="/login" replace />;
@@ -101,6 +105,11 @@ export const router = createBrowserRouter([
       { path: "dashboard", element: <AdminDashboard /> },
       { path: "ranking", element: <AdminRanking /> },
       { path: "materias", element: <MateriasPage /> },
+      { path: "materiales", element: <MaterialesPage />},
+      { path: "estudiantes", element: <EstudiantesPage /> },
+      { path: "gestion/estudiantes/:id", element: <EstudianteDetallePage /> },
+
+
 
       // Agrega aquí más secciones cuando las tengas listas:
       // { path: "users", element: <AdminUsers /> },
