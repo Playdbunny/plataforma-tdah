@@ -4,7 +4,7 @@
 // - Usa el bannerUrl subido desde el Admin; si no hay, cae a tu GIF por defecto.
 // - Muestra actividades "mock" por materia (puedes migrarlas a backend luego).
 
-import { useParams, Navigate, Link } from "react-router-dom";
+import { useParams, Navigate, Link, useNavigate } from "react-router-dom";
 import { useRef, useCallback, useMemo, useEffect } from "react";
 
 
@@ -19,11 +19,9 @@ import { useSubjectsStore } from "../../stores/subjectsStore";
 // ✅ Store de app para saber si el usuario es admin
 import { useAppStore } from "../../stores/appStore";
 
-// ===============================================
-// 1) Datos "legacy" (fallbacks) que ya tenías
-//    - héroes por defecto y actividades mock
-// ===============================================
-type Activity = { id: string; title: string; thumb?: string };
+
+// Agrega el tipo de actividad para navegación
+type Activity = { id: string; title: string; type?: string; thumb?: string };
 
 const DEFAULT_HERO_BY_SLUG: Record<string, string> = {
   historia: "/Gifs/3banner.gif",
@@ -33,21 +31,25 @@ const DEFAULT_HERO_BY_SLUG: Record<string, string> = {
 
 const DEFAULT_ACTIVITIES_BY_SLUG: Record<string, Activity[]> = {
   historia: [
-    { id: "a1", title: "Línea del tiempo" },
-    { id: "a2", title: "Civilizaciones" },
-    { id: "a3", title: "Mapa interactivo" },
-    { id: "a4", title: "Quiz rápido" },
-    { id: "a5", title: "Personajes clave" },
+    { id: "a1", title: "Infografía", type: "infografia" },
+    { id: "a2", title: "Quiz", type: "quiz" },
+    { id: "a3", title: "PPT Animada", type: "ppt-animada" },
+    { id: "a4", title: "Video", type: "video" },
+    { id: "a5", title: "Juego", type: "juego" },
   ],
   quimica: [
-    { id: "b1", title: "Tabla periódica" },
-    { id: "b2", title: "Enlaces químicos" },
-    { id: "b3", title: "Reacciones" },
+    { id: "b1", title: "Infografía", type: "infografia" },
+    { id: "b2", title: "Quiz", type: "quiz" },
+    { id: "b3", title: "PPT Animada", type: "ppt-animada" },
+    { id: "b4", title: "Video", type: "video" },
+    { id: "b5", title: "Juego", type: "juego" },
   ],
   matematicas: [
-    { id: "c1", title: "Álgebra básica" },
-    { id: "c2", title: "Geometría" },
-    { id: "c3", title: "Fracciones" },
+    { id: "c1", title: "Infografía", type: "infografia" },
+    { id: "c2", title: "Quiz", type: "quiz" },
+    { id: "c3", title: "PPT Animada", type: "ppt-animada" },
+    { id: "c4", title: "Video", type: "video" },
+    { id: "c5", title: "Juego", type: "juego" },
   ],
 };
 
@@ -63,6 +65,7 @@ export default function SubjectPage() {
   // 2) Param y normalización del slug
   // ===============================================
   const { subjectId } = useParams<{ subjectId: string }>();
+  const navigate = useNavigate();
   const slug = useMemo(() => {
     const raw = (subjectId || "").toLowerCase();
     return ALIASES[raw] ?? raw; // convierte "math" -> "matematicas", etc.
@@ -136,7 +139,6 @@ export default function SubjectPage() {
         </div>
       </section>
 
-      {/* CONTENIDO */}
       <main className={styles.container}>
         <div className={styles.sectionHead}>
           <span className={styles.rule} aria-hidden />
@@ -157,6 +159,8 @@ export default function SubjectPage() {
                   role="listitem"
                   tabIndex={0}
                   title={a.title}
+                  onClick={() => navigate(`/${slug}/${a.type}`)}
+                  style={{ cursor: "pointer" }}
                 >
                   <div className={styles.pill} />
                   <div className={styles.pillLabel}>{a.title}</div>
@@ -170,21 +174,20 @@ export default function SubjectPage() {
             aria-label="Anterior"
             onClick={prev}
           >
-            ‹
+            
           </button>
           <button
             className={`${styles.navBtn} ${styles.navNext}`}
             aria-label="Siguiente"
             onClick={next}
           >
-            ›
+            
           </button>
         </section>
 
         {/* 🔒 Solo admins: acceso rápido a edición en Admin */}
         {isAdmin && (
           <div className={styles.adminLinks}>
-            {/* Deep-link con query para que, si luego quieres, el Admin abra directo esa materia */}
             <Link
               className={styles.adminBtn}
               to={`/admin/gestion/materias?focus=${encodeURIComponent(slug)}`}

@@ -33,6 +33,12 @@ import MaterialesPage from "./Pages/Admin/Gestion/Materiales";
 import EstudiantesPage from "./Pages/Admin/Gestion/EstudiantesPage";
 import EstudianteDetallePage from "./Pages/Admin/Gestion/EstudianteDetallePage";
 
+//Actividades de Historia
+import HistoriaInfografia from "./Pages/Activity/Historia/Infografia/Infografia";
+//import HistoriaQuiz from "./Pages/Activity/Historia/Quiz/Quiz";
+//import HistoriaPptAnimada from "./Pages/Activity/Historia/PptAnimada/PptAnimada";
+//import HistoriaVideo from "./Pages/Activity/Historia/Video/Video";
+//import HistoriaJuego from "./Pages/Activity/Historia/Juego/Juego";
 
 // ─────────────────────────────────────────────────────────────
 // Guard de ADMIN — espera hidratación y valida role === 'admin'
@@ -117,6 +123,14 @@ export const router = createBrowserRouter([
       // { path: "ranking", element: <AdminRanking /> },
     ],
   },
+
+// ── Actividades de Historia ───────────────────────────────
+  { path: "/historia/infografia", element: <HistoriaInfografia /> },
+  //{ path: "/historia/quiz", element: <HistoriaQuiz /> },
+  //{ path: "/historia/ppt-animada", element: <HistoriaPptAnimada /> },
+  //{ path: "/historia/video", element: <HistoriaVideo /> },
+  //{ path: "/historia/juego", element: <HistoriaJuego /> },
+
 
   // ── (Opcional) 404 Not Found ───────────────────────────────
   // { path: "*", element: <NotFound /> },
