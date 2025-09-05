@@ -1,0 +1,334 @@
+.activityTitle {
+	width: 100%;
+	text-align: center;
+	font-family: 'Press Start 2P', 'VT323', monospace;
+	font-size: 2.1rem;
+	color: #bfc8ff;
+	letter-spacing: 0.08em;
+	margin-top: 5.2rem;
+	margin-bottom: 0.5rem;
+	text-shadow: 3px 3px 0 #23244a, 6px 6px 0 #fff, 9px 9px 0 #23244a;
+}
+.finishedBtn {
+	position: absolute;
+	right: 32px;
+	bottom: 18px;
+	background: #23244a;
+	color: #fff;
+	font-family: 'Press Start 2P', 'VT323', monospace;
+	font-size: 1rem;
+	border: none;
+	border-radius: 22px;
+	padding: 0.6rem 1.5rem 0.6rem 1.2rem;
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+	box-shadow: 2px 2px 0 #23244a, 4px 4px 0 #000000, 6px 6px 0 #23244a;
+	cursor: pointer;
+	z-index: 5;
+  position: relative;
+  top: 30px;
+  margin-left: 800px;
+}
+.coinIcon {
+	font-size: 1.3rem;
+	margin-left: 0.3rem;
+	margin-right: 0.1rem;
+	filter: drop-shadow(0 1px 0 #000);
+}
+.coinValue {
+	color: #ffe066;
+	font-size: 1.1rem;
+	font-weight: bold;
+	margin-left: 0.1rem;
+}
+.paginationBar {
+	width: 100%;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	gap: 1.5rem;
+	margin-top: 2.2rem;
+	margin-bottom: 0.5rem;
+}
+
+.paginationBtn {
+	background: #bfc8ff;
+	color: #23244a;
+	font-family: 'Press Start 2P', 'VT323', monospace;
+	font-size: 0.95rem;
+	border: 3px solid #fff;
+	box-shadow: 2px 2px 0 #23244a, 4px 4px 0 #fff, 6px 6px 0 #23244a;
+	border-radius: 8px;
+	padding: 0.5rem 1.2rem;
+	cursor: pointer;
+	transition: background 0.2s, border 0.2s;
+}
+.paginationBtn:disabled {
+	opacity: 0.5;
+	cursor: default;
+}
+
+.paginationInfo {
+	font-family: 'Press Start 2P', 'VT323', monospace;
+	color: #fff;
+	font-size: 1rem;
+	margin: 0 0.5rem;
+}
+
+.progressIndicator {
+	display: flex;
+	gap: 0.3rem;
+	margin-left: 1.2rem;
+}
+.progressDot {
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	background: #bfc8ff;
+	border: 2px solid #fff;
+	box-shadow: 1px 1px 0 #23244a;
+	opacity: 0.5;
+}
+.progressDot.active {
+	background: #ffe066;
+	opacity: 1;
+	border-color: #23244a;
+}
+.panelAzul1 {
+	background: #23244a;
+	border-radius: 18px;
+	box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+	padding: 1.5rem 1rem;
+	width: 400px;
+	height: 570px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	align-self: flex-start;
+	margin-top: 2.5rem;
+	border: 4px solid #000;
+	margin-left: -40px;
+	position: relative;
+}
+
+.panelTopControls {
+	width: 100%;
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	justify-content: flex-start;
+	gap: 0.7rem;
+	position: relative;
+	z-index: 3;
+}
+
+.zoomControls {
+	display: flex;
+	flex-direction: row;
+	gap: 0.3rem;
+	margin-left: 9.2rem;
+}
+
+.zoomBtn {
+	width: 32px;
+	height: 32px;
+	background: #bfc8ff;
+	color: #23244a;
+	font-family: 'Press Start 2P', 'VT323', monospace;
+	font-size: 1.3rem;
+	border: 3px solid #ffffff;
+	box-shadow: 2px 2px 0 #23244a, 4px 4px 0 #000000, 6px 6px 0 #23244a;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	transition: background 0.2s, border 0.2s;
+	margin-top: 2px;
+	margin-bottom: 2px;
+	padding: 0;
+}
+
+.zoomBtn:active {
+	background: #ffe066;
+	color: #23244a;
+	border-color: #23244a;
+}
+
+.backButton {
+	position: absolute;
+	top: 18px;
+	left: 18px;
+	background: none;
+	border: none;
+	cursor: pointer;
+	z-index: 2;
+	padding: 0;
+}
+
+.arrow {
+	display: inline-block;
+	font-size: 2rem;
+	color: #fff;
+	text-shadow: 2px 2px 0 #23244a, 4px 4px 0 #575454, 6px 6px 0 #23244a;
+	filter: drop-shadow(0 0 2px #000);
+	
+}
+.flexRow {
+	display: flex;
+	gap: 2rem;
+	justify-content: center;
+	align-items: flex-start;
+	margin-top: 2rem;
+}
+
+.panelAzul2 {
+	background: #23244a;
+	border-radius: 18px;
+	box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+	padding: 1.5rem 1rem;
+	width: 770px;
+	height: 480px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	margin-top: 3.5rem; /* baja el panel más al centro */
+	margin-left: 100px;
+  border: 4px solid #000;
+}
+
+
+.questionBox {
+		
+	width: 620px;
+	height: 280px;
+  background: #23244a;
+}
+
+.question {
+	background: #bfc8ff;
+	color: #23244a;
+	font-family: 'Press Start 2P', 'VT323', monospace;
+	font-size: 1rem;
+	border-radius: 0;
+	border: 4px solid #fff;
+	box-shadow: 4px 4px 0 #23244a, 8px 8px 0 #fff, 12px 12px 0 #23244a;
+	padding: .2rem 1.5rem 0.8rem 1.5rem;
+	margin-bottom: 2.5rem;
+	text-align: center;
+	width: 70%;
+	box-sizing: border-box;
+	margin-top: 0;
+	height: auto;
+}
+	.options1{
+		display: flex;
+		flex-wrap: wrap;
+		gap: 1.2rem 1.2rem;
+		justify-content: center;
+		margin-right: 350px;
+		width: 40%;
+		position: relative;
+		top: 20px;
+	}
+	.option1 {
+		background: #bfc8ff;
+		color: #23244a;
+		font-family: 'Press Start 2P', 'VT323', monospace;
+		font-size: 1rem;
+		border: 4px solid #fff;
+		box-shadow: 4px 4px 0 #23244a, 8px 8px 0 #fff, 9px px 0 #23244a;
+		border-radius: 0;
+		padding: 1.2rem 1.5rem 0.8rem 1.5rem;
+		margin-bottom: 0.5rem;
+		cursor: pointer;
+		width: 100%;
+		text-align: left;
+		position: relative;
+		transition: background 0.2s, border 0.2s;
+		box-sizing: border-box;
+	}
+
+.options2{
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1.2rem 1.2rem;
+	justify-content: center;
+	width: 40%;
+	margin-left: 350px;
+	position: relative;
+	top: -90px;
+}
+  .option2 {
+		background: #bfc8ff;
+		color: #23244a;
+		font-family: 'Press Start 2P', 'VT323', monospace;
+		font-size: 1rem;
+		border: 4px solid #fff;
+		box-shadow: 4px 4px 0 #23244a, 8px 8px 0 #fff, 9px px 0 #23244a;
+		border-radius: 0;
+		padding: 1.2rem 1.5rem 0.8rem 1.5rem;
+		margin-bottom: 0.5rem;
+		cursor: pointer;
+		width: 100%;
+		text-align: left;
+		position: relative;
+		transition: background 0.2s, border 0.2s;
+		box-sizing: border-box;
+	}
+.options3{
+		display: flex;
+		flex-wrap: wrap;
+		gap: 1.2rem 1.2rem;
+		justify-content: center;
+		width: 50%;
+		margin-bottom: -30px;
+		position: relative;
+		top: -70px;
+	}
+  .option3 {
+    background: #bfc8ff;
+    color: #23244a;
+    font-family: 'Press Start 2P', 'VT323', monospace;
+    font-size: 1rem;
+    border: 4px solid #fff;
+    box-shadow: 4px 4px 0 #23244a, 8px 8px 0 #fff, 9px px 0 #23244a;
+    border-radius: 0;
+    padding: 1.2rem 1.5rem 0.8rem 1.5rem;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+    position: relative;
+    transition: background 0.2s, border 0.2s;
+    box-sizing: border-box;
+  }
+	.option:hover {
+		background: #ffe066;
+		color: #23244a;
+		border-color: #23244a;
+	}
+	.option strong {
+		color: #3a7cff;
+		font-size: 1.2em;
+		margin-right: 0.5em;
+		font-family: inherit;
+	}
+
+.option:hover {
+	background: #ffe066;
+	color: #23244a;
+	border-color: #fff;
+}
+.container {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		height: 80vh;
+		background: rgba(34, 36, 74, 0.7); /* fondo semitransparente */
+		border-radius: 18px;
+		box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+		padding: 2rem;
+}
