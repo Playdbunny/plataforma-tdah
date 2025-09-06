@@ -1,0 +1,22 @@
+/* Estilos básicos para el Quiz */
+.container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	min-height: 400px;
+	background: #23244a;
+	border-radius: 18px;
+	box-shadow: 0 2px 8px #0008;
+	padding: 2rem 2.5rem;
+	margin-top: 2.5rem;
+}
+
+.title {
+	font-family: 'Press Start 2P', 'VT323', monospace;
+	font-size: 2rem;
+	color: #fdef5c;
+	text-shadow: 2px 2px 0 #23244a, 4px 4px 0 #fff, 6px 6px 0 #23244a;
+	margin-bottom: 1.5rem;
+	text-align: center;
+}
