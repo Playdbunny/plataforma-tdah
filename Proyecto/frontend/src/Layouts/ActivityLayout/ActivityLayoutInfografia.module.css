@@ -1,0 +1,226 @@
+
+
+/* Fondo estrellado y layout principal */
+.bg {
+  height: 120vh;
+  background: #181a2f url('/Images/star-bg.png') repeat;
+  font-family: 'Press Start 2P', 'VT323', monospace;
+}
+
+/* Navbar (usa el mismo que el proyecto) */
+.main {
+  width: 100vw;
+  min-height: 600px;
+  background: rgba(248, 249, 250, 0);
+  color: #fff;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+  justify-content: center;
+}
+/* Panel izquierdo (infografía) */
+.panel {
+  background: #181a2f;
+  border-radius: 24px;
+  padding: 2rem 1.5rem;
+  width: 350px;
+  height: 600px;
+  /* box-shadow: 0 2px 16px rgba(0,0,0,0.18); */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 8px solid #000;
+  justify-content: center;
+  margin-left: -200px;
+}
+
+/* Panel derecho (contenido interactivo) */
+.content {
+  background: #23244a;
+  border-radius: 18px;
+  padding: 1.5rem 2rem;
+  flex: 1;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2rem;
+  border: 4px solid #000; /* Borde negro visible */
+}
+.content {
+  background: #181a2f;
+  border-radius: 24px;
+  padding: 2rem 2.5rem;
+  width: 700px;
+  height: 600px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.18);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 8px solid #000;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.title {
+  font-size: 2rem;
+  font-family: 'Press Start 2P', 'VT323', monospace;
+  color: #ffe066;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  letter-spacing: 2px;
+}
+
+.question {
+  background: #181a2f;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.2rem;
+  font-size: 1.1rem;
+  color: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  text-align: center;
+}
+
+.options {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1.2rem;
+  justify-content: center;
+}
+.option {
+  background: #23244a;
+  border: 2px solid #ffe066;
+  border-radius: 10px;
+  padding: 1rem 2rem;
+  color: #fff;
+  font-size: 1.1rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.2s, border 0.2s;
+}
+.option:hover {
+  background: #ffe066;
+  color: #23244a;
+  border-color: #fff;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  margin-top: 1.5rem;
+  font-size: 1rem;
+  color: #fff;
+}
+.pagination .current {
+  color: #ff4e4e;
+  font-weight: bold;
+}
+.pagination button {
+  background: #23244a;
+  color: #ffe066;
+  border: none;
+  border-radius: 8px;
+  padding: 0.4rem 1.2rem;
+  font-family: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.pagination button:hover {
+  background: #ffe066;
+  color: #23244a;
+}
+
+.finished {
+  background: #23244a;
+  color: #ffe066;
+  border-radius: 8px;
+  padding: 0.4rem 1.2rem;
+  font-family: inherit;
+  font-size: 1rem;
+  margin-left: auto;
+  margin-top: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.question {
+  font-size: 1.1rem;
+  background: #181a2f;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1.2rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.options {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.option {
+  background: #2e2f5c;
+  border-radius: 10px;
+  padding: 1rem 2rem;
+  font-size: 1rem;
+  color: #fff;
+  cursor: pointer;
+  border: 2px solid #3a3a6c;
+  transition: background 0.2s, border 0.2s;
+}
+.option:hover {
+  background: #3a3a6c;
+  border-color: #ffe066;
+  color: #ffe066;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.paginationBtn {
+  background: #23244a;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1.5rem;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background 0.2s;
+}
+.paginationBtn:disabled {
+  background: #44476a;
+  color: #bfc8e6;
+  cursor: not-allowed;
+}
+
+.finished {
+  background: #ffe066;
+  color: #23244a;
+  border-radius: 8px;
+  padding: 0.5rem 1.2rem;
+  font-weight: bold;
+  margin-left: 1rem;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .main {
+    flex-direction: column;
+    padding: 1rem;
+  }
+  .leftPanel, .rightPanel {
+    max-width: 100%;
+    padding: 1rem;
+  }
+}

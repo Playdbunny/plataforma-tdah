@@ -1,3 +1,4 @@
+import NotFound from "./Pages/NotFound";
 // ─────────────────────────────────────────────────────────────
 // router.tsx — Define TODAS las rutas con createBrowserRouter
 // ─────────────────────────────────────────────────────────────
@@ -35,8 +36,8 @@ import EstudianteDetallePage from "./Pages/Admin/Gestion/EstudianteDetallePage";
 
 //Actividades de Historia
 import HistoriaInfografia from "./Pages/Activity/Historia/Infografia/Infografia";
-//import HistoriaQuiz from "./Pages/Activity/Historia/Quiz/Quiz";
-//import HistoriaPptAnimada from "./Pages/Activity/Historia/PptAnimada/PptAnimada";
+import HistoriaQuiz from "./Pages/Activity/Historia/Quiz/Quiz";
+import HistoriaPptAnimada from "./Pages/Activity/Historia/PPT-Animada/PPT-Animada";
 //import HistoriaVideo from "./Pages/Activity/Historia/Video/Video";
 //import HistoriaJuego from "./Pages/Activity/Historia/Juego/Juego";
 
@@ -126,14 +127,14 @@ export const router = createBrowserRouter([
 
 // ── Actividades de Historia ───────────────────────────────
   { path: "/historia/infografia", element: <HistoriaInfografia /> },
-  //{ path: "/historia/quiz", element: <HistoriaQuiz /> },
-  //{ path: "/historia/ppt-animada", element: <HistoriaPptAnimada /> },
+  { path: "/historia/quiz", element: <HistoriaQuiz /> },
+  { path: "/historia/ppt-animada", element: <HistoriaPptAnimada /> },
   //{ path: "/historia/video", element: <HistoriaVideo /> },
   //{ path: "/historia/juego", element: <HistoriaJuego /> },
 
 
-  // ── (Opcional) 404 Not Found ───────────────────────────────
-  // { path: "*", element: <NotFound /> },
+  // ── 404 Not Found ───────────────────────────────
+  { path: "*", element: <NotFound /> },
 ]);
 
 /* ─────────────────────────────────────────────────────────────
