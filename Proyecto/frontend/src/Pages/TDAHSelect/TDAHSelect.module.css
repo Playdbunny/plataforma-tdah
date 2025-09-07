@@ -1,10 +1,11 @@
+/* src/Pages/TDAHSelect/TdahSelect.module.css */
+/* === MISMOS TOKENS Y CAPAS QUE EN HOME PARA QUE LUZCAN IGUAL === */
 :root{
   --font-pixel: "Press Start 2P", system-ui, sans-serif;
   --bg-dark: #0a0f16;
-  --navH: 64px; /* alineado con tu navbar (.inner height: 64px) */
+  --navH: 56px;
 }
 
-/* Sección full-height */
 .hero{
   position: relative;
   margin-top: var(--navH);
@@ -12,9 +13,9 @@
   background: var(--bg-dark);
   overflow: hidden;
   color: #fff;
+  padding-top: clamp(40px, 12vh, 120px);
 }
 
-/* Fondo en capas */
 .bg{ position:absolute; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
 .layer{
   position:absolute; inset:0;
@@ -28,37 +29,39 @@
 .hills{ background-image:url("/Gifs/hills.gif"); z-index:3; }
 .grass{ background-image:url("/Gifs/LandingGrass.gif"); z-index:4; }
 
-/* Contenido */
 .center{
   position:relative; z-index:5;
   min-height:inherit;
   display:flex; flex-direction:column; align-items:center;
-  gap:18px;
-  text-align:center;
+  gap:18px; text-align:center;
   padding: clamp(16px, 6vh, 48px) 16px clamp(32px, 12vh, 96px);
 }
 
+/* Título con el mismo estilo dorado del Home */
 .title{
   margin:0;
-  font-family:var(--font-pixel);
-  font-size:clamp(28px, 7vw, 72px);
-  color:#796739;
+  font-family: var(--font-pixel);
+  font-size: clamp(40px, 8vw, 100px);
+  text-transform: uppercase;
+
+  background: linear-gradient(180deg, #fff9c4 0%, #ffeb3b 40%, #fbc02d 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+
+  filter: drop-shadow(2px 2px 0 #000);
   text-shadow:
-    -2px -2px 0 #2a1d00, 0 -2px 0 #2a1d00, 2px -2px 0 #2a1d00,
-    -2px  0   0 #2a1d00,                   2px  0   0 #2a1d00,
-    -2px  2px 0 #2a1d00, 0  2px 0 #2a1d00, 2px  2px 0 #2a1d00,
-    -3px -3px 0 #000,    0 -3px 0 #000,    3px -3px 0 #000,
-    -3px  0   0 #000,                    3px  0   0 #000,
-    -3px  3px 0 #000,    0  3px 0 #000,    3px  3px 0 #000;
+    0 2px 4px rgba(0,0,0,.35),
+    0 0 10px rgba(255, 245, 157, .5);
 }
+
 .subtitle{
   margin:0 0 8px;
   font-weight:700;
-  color:#cfe0ff; /* mejor contraste sobre fondo oscuro */
+  color:#060708;
+  font-size: 19px;
   text-shadow:0 1px 0 rgba(0,0,0,.35);
 }
 
-/* Grid de opciones */
 .grid{
   display:grid;
   grid-template-columns: repeat(3, minmax(200px, 1fr));
@@ -66,13 +69,11 @@
   width:min(980px, 92vw);
 }
 
-/* Botón tipo card */
 .card{
   display:flex; align-items:center; justify-content:center;
   background:#fff; color:#121212;
   border:2px solid #2a2a2a;
-  outline:2px solid #d9d9d9;
-  outline-offset:-4px;
+  outline:2px solid #d9d9d9; outline-offset:-4px;
   border-radius:14px;
   padding: clamp(16px, 2.8vw, 24px);
   box-shadow: 0 6px 0 rgba(0,0,0,.35);
