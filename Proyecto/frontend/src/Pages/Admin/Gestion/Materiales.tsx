@@ -50,10 +50,8 @@ export default function MaterialesPage() {
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
           className={styles.busqueda}
+          
         />
-        <label htmlFor="materia-select" className={styles.visuallyHidden}>
-          Filtrar por materia
-        </label>
         <select
           id="materia-select"
           aria-label="Filtrar por materia"

@@ -15,11 +15,11 @@ export default function Home() {
 
   return (
     <>
-      {/* El navbar va fuera del hero, así ocupa su altura normal */}
-      <Navbar homeOnly/>
+      {/* Solo la marca arriba */}
+      <Navbar homeOnly />
 
       <section className={styles.hero} aria-label="Portada SynapQuest">
-        {/* FONDO EN CAPAS */}
+        {/* ⬇️ MISMO FONDO EN CAPAS QUE TDAH (inline, sin componente) */}
         <div className={styles.bg} aria-hidden>
           <div className={`${styles.layer} ${styles.sky}`} />
           <div className={`${styles.layer} ${styles.mountains}`} />
@@ -27,36 +27,28 @@ export default function Home() {
           <div className={`${styles.layer} ${styles.grass}`} />
         </div>
 
-        {/* CONTENIDO CENTRADO */}
+        {/* Contenido centrado */}
         <div className={styles.center}>
-          <h1 className={styles.title}>
-            <span className={styles.titleFill}>SynapQuest</span>
-          </h1>
+          {/* Título con gradiente dorado + borde oscuro sutil */}
+          <h1 className={styles.title}>SynapQuest</h1>
 
           <p className={styles.subtitle}>
             Emprende tu aventura hacia un aprendizaje personalizado para ti!
           </p>
 
-          {/* contenedor con borde pixelado */}
-          <div className={styles.ctaPanel}>
-            <div className={styles.btnRow}>
-              <button className={`${styles.pxBtn} ${styles.btnYellow}`} 
-                onClick={start}>
-                Iniciar aventura
-              </button>
-              <button
-                className={`${styles.pxBtn} ${styles.btnCyan}`}
-                onClick={() => navigate("/login")}
-              >
-                Continuar aventura
-              </button>
-            </div>
+          <div className={styles.btnRow}>
+            <button className={`${styles.pxBtn} ${styles.btnYellow}`} onClick={start}>
+              Iniciar aventura
+            </button>
+            <button
+              className={`${styles.pxBtn} ${styles.btnCyan}`}
+              onClick={() => navigate("/login")}
+            >
+              Continuar aventura
+            </button>
           </div>
         </div>
       </section>
     </>
   );
 }
-
-
-

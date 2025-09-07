@@ -1,216 +1,136 @@
+/* src/Pages/Home/Home.module.css */
+/* =================== TOKENS COMPARTIDOS =================== */
 :root{
   --font-pixel: "Press Start 2P", system-ui, sans-serif;
   --bg-dark: #0a0f16;
   --navH: 56px;
-
-  /* TAMAÑOS BASE DE TUS IMÁGENES (px) */
-  --tileW: 450;       /* sky.png, mountain-grass.png, hills.gif  = 480x320 */
-  --tileH: 320;
-  --foreW: 220;       /* LandingGrass.gif = 300x300 */
-
-  /* ESCALA ENTERA (para no perder nitidez) */
-  --scale: 1;
 }
-@media (min-width: 960px){ :root{ --scale: 2; } }      /* 2× */
-@media (min-width: 1440px){ :root{ --scale: 3; } }     /* 3× */
 
-/* ==================== HERO ==================== */
+/* =================== SECCIÓN / LAYOUT =================== */
 .hero{
   position: relative;
-  margin-top: var(--navH);                 /* Navbar fixed arriba */
-  min-height: calc(100dvh - var(--navH));  /* ocupa el resto de pantalla */
+  margin-top: var(--navH);
+  min-height: calc(100dvh - var(--navH));
   background: var(--bg-dark);
   overflow: hidden;
   color: #fff;
+
+  /* misma separación superior que en TdahSelect */
+  padding-top: clamp(40px, 12vh, 120px);
 }
 
-/* ==================== FONDO EN CAPAS ==================== */
+/* =================== FONDO EN CAPAS (MISMO QUE TDAH) =================== */
 .bg{
-  position:absolute; inset:0; z-index:0; overflow:hidden;
+  position:absolute; inset:0;
+  z-index:0; overflow:hidden; pointer-events:none;
 }
-
-/* helper para capas con repeat-x */
 .layer{
   position:absolute; inset:0;
   background-repeat: repeat-x;
   background-position: center bottom;
+  background-size: auto 100%;
   image-rendering: pixelated;
-  will-change: transform;
-  background-size: auto 100% !important;  /* alto fijo = 100% del contenedor fondo */
-  
 }
-
-/* --- SKY: se repite en X, ancla TOP --- */
 .sky{
-  background-image: url("/Images/sky.png");
-  background-position: top center;             /* top */
-  background-repeat: repeat-x;
-  z-index: 1;
+  background-image:url("/Images/sky.png");
+  background-position: top center;   /* sky anclado arriba */
+  z-index:1;
 }
-
-/* --- MOUNTAINS --- */
 .mountains{
-  background-image: url("/Images/mountain-grass.png");
-  background-position: center bottom;
-  z-index: 2;
+  background-image:url("/Images/mountain-grass.png");
+  z-index:2;
 }
-
-/* --- HILLS (gif intermedio) --- */
 .hills{
-  background-image: url("/Gifs/hills.gif");
-  background-position: center bottom;
-  z-index: 3;
+  background-image:url("/Gifs/hills.gif");
+  z-index:3;
 }
-
-/* --- GRASS DELANTERO (gif 300x300) --- */
 .grass{
-  background-image: url("/Gifs/LandingGrass.gif");;
-  background-position: center bottom;
-  z-index: 4;
+  background-image:url("/Gifs/LandingGrass.gif");
+  z-index:4;
 }
 
-/* (Opcional) Parallax muy suave
-.hills{ animation: moveHills 24s linear infinite; }
-.grass{ animation: moveGrass 16s linear infinite; }
-@keyframes moveHills{ from{ background-position: 0 bottom; } to{ background-position: -480px bottom; } }
-@keyframes moveGrass{ from{ background-position: 0 bottom; } to{ background-position: -300px bottom; } }
-*/
-
-/* ==================== CONTENIDO ==================== */
+/* =================== CONTENIDO =================== */
 .center{
-  position: relative; z-index: 5;
-  min-height: inherit;
-  display:grid; place-items:center;
-  grid-template-rows: 1fr auto auto 2fr;
-  text-align: center;
-  padding: 0 16px;
-  .center{
-  /* responsivo */
-  max-width: 720px;
-  margin-inline: auto;
-  padding: clamp(16px, 6vh, 48px) 16px clamp(24px, 12vh, 96px);
+  position:relative; z-index:5;
+  min-height:inherit;
+
+  /* centrado vertical suave (algo más abajo como pediste) */
+  display:flex; flex-direction:column; align-items:center; text-align:center;
+  gap: 18px;
+  padding: clamp(16px, 6vh, 48px) 16px clamp(32px, 12vh, 96px);
 }
 
-}
-
-/* ==================== TÍTULO ==================== */
-.title {
-  margin: 0 16px;
-  line-height: .9;
-  display: flex;
-  justify-content: center;
-}
-
-.titleFill {
+/* Título con gradiente dorado + “borde” oscuro (drop-shadow) */
+.title{
+  margin:0;
   font-family: var(--font-pixel);
-  font-size: clamp(28px, 7vw, 72px);
-  letter-spacing: 1px;
+  font-size: clamp(40px, 10vw, 100px);
+  text-transform: uppercase;
 
-  /* Color fijo */
-  color: #796739;
+  background: linear-gradient(180deg, #fff9c4 0%, #ffeb3b 40%, #fbc02d 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 
-  /* Contorno pixelado (oscuro) */
+  /* borde oscuro sutil + brillo */
+  filter: drop-shadow(2px 2px 0 #000);
   text-shadow:
-    -2px -2px 0 #2a1d00, 0 -2px 0 #2a1d00, 2px -2px 0 #2a1d00,
-    -2px  0   0 #2a1d00,                   2px  0   0 #2a1d00,
-    -2px  2px 0 #2a1d00, 0  2px 0 #2a1d00, 2px  2px 0 #2a1d00,
-    /* Segundo borde negro más afuera */
-    -3px -3px 0 #000,    0 -3px 0 #000,    3px -3px 0 #000,
-    -3px  0   0 #000,                    3px  0   0 #000,
-    -3px  3px 0 #000,    0  3px 0 #000,    3px  3px 0 #000;
-
-  -webkit-font-smoothing: none;
-  image-rendering: pixelated;
+    0 2px 4px rgba(0,0,0,.35),
+    0 0 10px rgba(255, 245, 157, .5);
 }
-
 
 .subtitle{
-  margin: 16px 0 24px;
-  font-weight: 600;
-  opacity: .95;
-  color: #000000;
+  margin: 0 0 8px;
+  font-weight:700;
+  color:#000000; /* buen contraste sobre fondo oscuro */
+  text-shadow:0 1px 0 rgba(0,0,0,.35);
+  font-size: 19px;
 }
 
-/* =========================================================
-   Botones (placeholders estilo píxel)
-========================================================= */
-/* fila de botones dentro del panel */
+/* =================== BOTONES =================== */
 .btnRow{
   display:flex;
-  flex-direction: column;    /* como en tu captura: uno bajo el otro */
+  flex-direction: column;
   gap: 14px;
   align-items: stretch;
 }
 
-/* ===== Botón pixelado con relieve ===== */
-/* === Botón pixelado con doble borde y brillo superior === */
 .pxBtn{
   position: relative;
   font-family: var(--font-pixel);
   font-size: 14px;
   padding: 14px 22px;
   cursor: pointer;
-  border-radius: 10px;             /* leve “puffy” */
-  -webkit-font-smoothing: none;
+  border-radius: 10px;
   image-rendering: pixelated;
   transition: transform .02s ease, box-shadow .02s ease, filter .1s ease;
 }
-
-/* Amarillo estilo “Get started” */
-.btnYellow{
-  background:#ffd34a;              /* relleno */
-  color:#1a1a1a;
-  border:2px solid #6b4700;        /* borde exterior oscuro */
-  outline:2px solid #dfa21a;       /* segunda línea (más clara) */
-  margin-bottom: 20px;
-  outline-offset:-4px;             /* hacia adentro para crear doble borde */
-  /* base/relieve */
-  box-shadow:
-    0 4px 0 #9b7a2a;               /* sombra debajo del botón */
-}
-
-/* Cian, mismo estilo */
-.btnCyan{
-  background:#2fd3ea;
-  color:#072027;
-  border:2px solid #0c4a58;
-  outline:2px solid #3fb1c2;
-  margin-bottom: 12px;
-  outline-offset:-4px;
-  box-shadow:
-    0 4px 0 #2a6672;
-}
-
-/* Brillo superior y sombra interior (líneas pixel) */
-.pxBtn::after,
-.pxBtn::before{
+.pxBtn::after, .pxBtn::before{
   content:"";
-  position:absolute; left:8px; right:8px; height:4px; border-radius:2px;
-  pointer-events:none;
+  position:absolute; left:8px; right:8px; height:4px; border-radius:2px; pointer-events:none;
 }
-.pxBtn::after{ top:6px; background:rgba(255,255,255,.45); }   /* highlight */
-.pxBtn::before{ bottom:6px; background:rgba(0,0,0,.25); }     /* sombra */
+.pxBtn::after{ top:6px; background:rgba(255,255,255,.45); }
+.pxBtn::before{ bottom:6px; background:rgba(0,0,0,.25); }
 
-/* Hover: un pelín más brillante y sombra un poco mayor */
-.pxBtn:hover{
-  filter: brightness(1.05);
-  box-shadow:
-    0 5px 0 rgba(0,0,0,.3);
+.btnYellow{
+  background:#ffd34a; color:#1a1a1a;
+  border:2px solid #6b4700;
+  outline:2px solid #dfa21a; outline-offset:-4px;
+  box-shadow: 0 4px 0 #9b7a2a;
 }
-
-/* Active: “presionado” (baja 1px y reduce sombra) */
-.pxBtn:active{
-  transform: translateY(1px);
-  box-shadow:
-    0 3px 0 rgba(0,0,0,.35);
+.btnCyan{
+  background:#2fd3ea; color:#072027;
+  border:2px solid #0c4a58;
+  outline:2px solid #3fb1c2; outline-offset:-4px;
+  box-shadow: 0 4px 0 #2a6672;
 }
+.pxBtn:hover{ filter: brightness(1.05); box-shadow:0 5px 0 rgba(0,0,0,.3); }
+.pxBtn:active{ transform: translateY(1px); box-shadow:0 3px 0 rgba(0,0,0,.35); }
 
 @media (max-width: 560px){
-  .titleFill{ font-size: clamp(24px, 9vw, 56px); letter-spacing: .5px; }
-  .ctaPanel{ border-width: 12px; border-image-slice: 18 fill; padding: 12px; }
   .pxBtn{ font-size: 12px; padding: 10px 14px; border-radius: 6px; }
   .pxBtn::after, .pxBtn::before{ left:6px; right:6px; height:3px; }
 }
+
 
 
 
