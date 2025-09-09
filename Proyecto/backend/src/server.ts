@@ -5,6 +5,10 @@ import { connectDB } from "./db";
 import authRouter from "./routes/auth.routes";
 import { requireAuth, requireRole } from "./middleware/requireAuth";
 import adminRouter from "./routes/admin.routes";
+import session from "express-session";
+import passport from "passport";
+import { initGoogleStrategy } from "./auth/google";
+import googleRouter from "./routes/google.routes";
 
 const app = express();
 app.use(cors());
@@ -28,6 +32,19 @@ app.get("/me", requireAuth, (req: any, res) => {
 app.get("/admin/ping", requireAuth, requireRole("admin"), (_req, res) => {
   res.json({ pong: true });
 });
+
+// 1) Sesión mínima para el handshake de OAuth (no para proteger APIs)
+app.use(session({
+  secret: process.env.SESSION_SECRET as string,
+  resave: false,
+  saveUninitialized: false,
+}));
+// 2) Passport
+app.use(passport.initialize());
+app.use(passport.session());
+initGoogleStrategy();
+// 3) Rutas de Google OAuth
+app.use("/auth", googleRouter);
 
 const PORT = process.env.PORT || 4000;
 
