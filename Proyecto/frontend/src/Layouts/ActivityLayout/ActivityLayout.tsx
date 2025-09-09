@@ -9,9 +9,10 @@ interface ActivityLayoutProps {
   children?: React.ReactNode;
   pagination?: React.ReactNode;
   finished?: React.ReactNode;
+  backTo?: string; // Nueva prop para la ruta de regreso
 }
 
-export default function ActivityLayout({ title, leftPanel, children, pagination, finished }: ActivityLayoutProps) {
+export default function ActivityLayout({ title, leftPanel, children, pagination, finished, backTo }: ActivityLayoutProps) {
   const navigate = useNavigate();
   return (
     <div className={styles.bg}>
@@ -20,7 +21,7 @@ export default function ActivityLayout({ title, leftPanel, children, pagination,
       ]} />
       <div className={styles.arrowContainer}>
         <div className={styles.topRow}>
-          <button className={styles.backBtn} onClick={() => navigate('/subjects/historia')} aria-label="Volver">
+          <button className={styles.backBtn} onClick={() => navigate(backTo || '/subjects/historia')} aria-label="Volver">
             {/* Flecha pixel-art SVG */}
             <svg className={styles.pixelArrow} width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
               <rect x="2" y="14" width="20" height="4" fill="#fff"/>

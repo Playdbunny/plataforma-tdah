@@ -31,10 +31,10 @@ const DEFAULT_HERO_BY_SLUG: Record<string, string> = {
 
 const DEFAULT_ACTIVITIES_BY_SLUG: Record<string, Activity[]> = {
   historia: [
-    { id: "a1", title: "Infografía", type: "infografia" },
-    { id: "a2", title: "Quiz", type: "quiz" },
-    { id: "a3", title: "PPT Animada", type: "ppt-animada" },
-    { id: "a4", title: "Video", type: "video" },
+    { id: "a1", title: "Infografía-Primera Guerra Mundial", type: "infografia" },
+    { id: "a2", title: "Quiz-El Feudalismo", type: "quiz" },
+    { id: "a3", title: "PPT Animada-La crisis de la civilizacion occidental", type: "ppt-animada" },
+    { id: "a4", title: "Video-La historia de Chile", type: "video" },
     { id: "a5", title: "Juego", type: "juego" },
   ],
   quimica: [
@@ -47,7 +47,7 @@ const DEFAULT_ACTIVITIES_BY_SLUG: Record<string, Activity[]> = {
   matematicas: [
     { id: "c1", title: "Infografía", type: "infografia" },
     { id: "c2", title: "Quiz", type: "quiz" },
-    { id: "c3", title: "PPT Animada", type: "ppt-animada" },
+    { id: "c3", title: "PPT Animada - Álgebra básica", type: "ppt-animada" },
     { id: "c4", title: "Video", type: "video" },
     { id: "c5", title: "Juego", type: "juego" },
   ],
@@ -159,7 +159,7 @@ export default function SubjectPage() {
                   role="listitem"
                   tabIndex={0}
                   title={a.title}
-                  onClick={() => navigate(`/${slug}/${a.type}`)}
+                  onClick={() => navigate(`/matematicas/${a.type}`)}
                   style={{ cursor: "pointer" }}
                 >
                   <div className={styles.pill} />

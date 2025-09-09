@@ -1,18 +1,14 @@
-
 import styles from './PPT-Animada.module.css';
 import { useRef } from 'react';
 import ActivityLayout from "../../../../Layouts/ActivityLayout/ActivityLayout";
 
-
 const PPTAnimada: React.FC = () => {
     const iframeRef = useRef<HTMLIFrameElement>(null);
     return (
-        <ActivityLayout title={
-            <div className={styles.activityTitle}>
-                La crisis de la<br />civilización occidental
-                
-            </div>
-        } backTo="/subjects/historia">
+        <ActivityLayout 
+            title={<div className={styles.activityTitle}>Funciones y Modelos</div>}
+            backTo="/subjects/matematicas"
+        >
             <div className={styles.containerRow}>
                 <div className={styles.panelAzul}>
                     <div className={styles.presentationContainer}>
@@ -60,17 +56,17 @@ const PPTAnimada: React.FC = () => {
                     </div>
                 </div>
             </div>
-                            <button
-                                className={styles.finishedBtn}
-                                type="button"
-                                onClick={() => alert('¡Actividad finalizada!')}
-                            >
-                                <span className={styles.finishedText}>Finished</span>
-                                <span className={styles.finishedReward}>
-                                    <img src="/Images/coin.png" alt="Moneda" className={styles.coinIcon} />
-                                    +5
-                                </span>
-                            </button>
+            <button
+                className={styles.finishedBtn}
+                type="button"
+                onClick={() => alert('¡Actividad finalizada!')}
+            >
+                <span className={styles.finishedText}>Finished</span>
+                <span className={styles.finishedReward}>
+                    <img src="/Images/coin.png" alt="Moneda" className={styles.coinIcon} />
+                    +5
+                </span>
+            </button>
         </ActivityLayout>
     );
 };
