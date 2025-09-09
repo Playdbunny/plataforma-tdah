@@ -43,6 +43,9 @@ export interface IUserDoc extends Document {
   createdAt: Date;
   updatedAt: Date;
 
+  googleId?: string | null;
+  authProvider?: "local" | "google";
+
   /** Métodos de instancia */
   verifyPassword(plain: string): Promise<boolean>; // Verifica si el password en texto plano coincide con el hash almacenado
   toSafe(): IUserSafe; // Convierte el documento a una vista segura (sin passwordHash)
@@ -95,6 +98,10 @@ const UserSchema = new Schema<IUserDoc>(
     streak: { type: StreakSchema, default: () => ({}) },
 
     lastLogin: { type: Date, default: null, index: true }, // para saber cuándo fue la última vez que se conectó
+
+    // Para usuarios que se registraron con Google OAuth
+    googleId: { type: String, default: null, index: true },
+    authProvider: { type: String, enum: ["local","google"], default: "local", index: true },
   },
   {
     timestamps: true, // createdAt, updatedAt automáticos
