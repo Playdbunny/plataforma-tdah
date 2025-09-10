@@ -23,7 +23,7 @@ El propósito es mejorar la atención y el desempeño académico ajustando los c
 
 ## 🚀 Tecnologías principales
 - **Frontend:** React + Vite + TypeScript  
-- **Backend:** Node.js / Express (a definir)  
-- **Base de Datos:** MongoDB o PostgreSQL
+- **Backend:** Node.js / Express
+- **Base de Datos:** MongoDB
 - **Gestión de proyecto:** Scrum con Sprints  
 <!-- - **Machine Learning:** TensorFlow / Scikit-learn-->

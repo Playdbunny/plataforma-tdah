@@ -1,64 +1,96 @@
+// src/Components/PetEvolution/PetEvolution.tsx
+// Evolución por XP TOTAL acumulado, con umbrales por pares de niveles.
+// - XP de nivel n: 1000 + (n-1)*500
+// - Baby: niveles 1..2  (2500)
+// - Juvenile: niveles 1..4 (7000)
+// - Adult: niveles 1..6 (13500)
+// - Special: niveles 1..8 (22000)
+
 import { useMemo } from "react";
 import styles from "./PetEvolution.module.css";
 import { useAppStore } from "../../stores/appStore";
+import {
+  currentTotalXP,
+  totalXPRequiredToReachLevel,
+} from "../../Lib/Levels";
 
 // ──────────────────────────────────────────────
-// Configuración de etapas por XP
+// Config por etapas usando "metas acumuladas" por niveles:
+//  egg      → se muestra siempre (desde 0 total)
+//  baby     → al completar N2 (L1 + L2)
+//  juvenile → al completar N4 (L1+L2+L3+L4)
+//  adult    → al completar N6
+//  special  → al completar N8
+// Cambia estos "cap levels" si quieres hacerla más/menos exigente.
 // ──────────────────────────────────────────────
 type Stage = "egg" | "baby" | "juvenile" | "adult" | "special";
 
 type StageCfg = {
   id: Stage;
-  minXp: number;
   label: string;
-  sprite: string; // ruta al PNG/GIF
+  sprite: string;
+  // nivel que hay que completar para "entrar" a la etapa:
+  // p.ej. babyAt = 2 => necesitas L1+L2 acumulados.
+  capLevel?: number; // undefined = 0 (egg)
 };
 
 const STAGES: StageCfg[] = [
-  { id: "egg",      minXp: 0,    label: "Huevo",     sprite: "/mascota/dino_egg.gif" },
-  { id: "baby",     minXp: 100,  label: "Bebé",      sprite: "/mascota/dino_baby.gif" },
-  { id: "juvenile", minXp: 300,  label: "Juvenil",   sprite: "/mascota/dino_juvenile.gif" },
-  { id: "adult",    minXp: 600,  label: "Adulto",    sprite: "/mascota/dino_adult.gif" },
-  { id: "special",  minXp: 1000, label: "Especial",  sprite: "/mascota/dino_special.gif" },
+  { id: "egg",      label: "Huevo",    sprite: "/mascota/dino_egg.gif" },
+  { id: "baby",     label: "Bebé",     sprite: "/mascota/dino_baby.gif",     capLevel: 2 },
+  { id: "juvenile", label: "Juvenil",  sprite: "/mascota/dino_juvenile.gif", capLevel: 4 },
+  { id: "adult",    label: "Adulto",   sprite: "/mascota/dino_adult.gif",    capLevel: 6 },
+  { id: "special",  label: "Especial", sprite: "/mascota/dino_special.gif",  capLevel: 8 },
 ];
 
-// ──────────────────────────────────────────────
-// Helpers
-// ──────────────────────────────────────────────
-function resolveStage(xp: number): StageCfg {
+// Retorna cuántos XP acumulados se requieren para “entrar” a una etapa.
+// egg: 0; baby: total hasta L2; juvenile: total hasta L4; etc.
+function requiredTotalForStage(s: StageCfg): number {
+  if (!s.capLevel) return 0;
+  return totalXPRequiredToReachLevel(s.capLevel);
+}
+
+// Dado un total XP, devuelve la etapa actual (la más alta alcanzada).
+function resolveStageByTotal(totalXP: number): StageCfg {
   let current = STAGES[0];
   for (const s of STAGES) {
-    if (xp >= s.minXp) current = s;
+    const need = requiredTotalForStage(s);
+    if (totalXP >= need) current = s;
   }
   return current;
 }
 
-function nextStageOf(current: StageCfg) {
+// Etapa siguiente (si hay)
+function nextStageOf(current: StageCfg): StageCfg | null {
   const idx = STAGES.findIndex((s) => s.id === current.id);
-  return STAGES[idx + 1] ?? null;
+  return STAGES[idx + 1] || null;
 }
 
-function progressWithinStage(xp: number, current: StageCfg) {
-  const nxt = nextStageOf(current);
-  const currentStart = current.minXp;
-  const nextStart = nxt ? nxt.minXp : current.minXp;
-  const span = Math.max(1, nextStart - currentStart);
-  const gained = Math.max(0, xp - currentStart);
-  const pct = nxt ? Math.min(100, Math.round((gained / span) * 100)) : 100;
-  const remaining = nxt ? Math.max(0, nextStart - xp) : 0;
-  return { pct, currentStart, nextStart, remaining };
+// Progreso dentro de la etapa actual, respecto al umbral de la siguiente
+function progressWithinStage(totalXP: number, current: StageCfg) {
+  const base = requiredTotalForStage(current); // inicio de la etapa actual
+  const next = nextStageOf(current);
+  const target = next ? requiredTotalForStage(next) : base; // si no hay next, se queda
+  const span = Math.max(1, target - base);
+  const gained = Math.max(0, totalXP - base);
+  const pct = next ? Math.min(100, Math.round((gained / span) * 100)) : 100;
+  const remaining = next ? Math.max(0, target - totalXP) : 0;
+  return { pct, base, target, remaining };
 }
 
-// ──────────────────────────────────────────────
-// Componente principal
-// ──────────────────────────────────────────────
 export default function PetEvolution() {
-  const xp = useAppStore((s) => s.user?.xp ?? 0);
+  // Del store (mantienes tu modelo actual):
   const level = useAppStore((s) => s.user?.level ?? 1);
+  const xpInThisLevel = useAppStore((s) => s.user?.xp ?? 0);
 
-  const current = useMemo(() => resolveStage(xp), [xp]);
+  // XP TOTAL ACUMULADO (niveles previos + xp actual)
+  const totalXP = useMemo(
+    () => currentTotalXP(level, xpInThisLevel),
+    [level, xpInThisLevel]
+  );
+
+  const current = useMemo(() => resolveStageByTotal(totalXP), [totalXP]);
   const next = useMemo(() => nextStageOf(current), [current]);
-  const prog = useMemo(() => progressWithinStage(xp, current), [xp, current]);
+  const prog = useMemo(() => progressWithinStage(totalXP, current), [totalXP, current]);
 
   return (
     <section className={styles.card}>
@@ -69,7 +101,7 @@ export default function PetEvolution() {
             : "¡Has alcanzado la etapa máxima!"}
         </span>
         <span className={styles.meta}>
-          Nivel {level} · XP {xp}
+          Nivel {level} · XP total {totalXP}
         </span>
       </header>
 
@@ -98,13 +130,19 @@ export default function PetEvolution() {
         </figure>
       </div>
 
-      <div className={styles.progressWrap} aria-label="Progreso dentro de la etapa">
+      <div className={styles.progressWrap} aria-label="Progreso hacia la siguiente etapa">
         <div className={styles.progressBar}>
           <div className={styles.progressFill} style={{ width: `${prog.pct}%` }} />
         </div>
-        <div className={styles.progressMeta}>
-          {next && <span>{xp}/{next.minXp} XP</span>}
-        </div>
+
+        {/* Para que el usuario entienda el objetivo de esta barra */}
+        {next && (
+          <div className={styles.progressMeta}>
+            <span>
+              {totalXP} / {prog.target} XP totales
+            </span>
+          </div>
+        )}
       </div>
     </section>
   );

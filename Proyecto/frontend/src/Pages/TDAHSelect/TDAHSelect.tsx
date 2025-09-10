@@ -1,3 +1,4 @@
+// src/Pages/TDAHSelect/TDAHSelect.tsx
 import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../Components/Navbar/Navbar";
@@ -6,7 +7,6 @@ import type { TDAHType } from "../../stores/appStore";
 import styles from "./TdahSelect.module.css";
 
 export default function TdahSelect() {
-  // Bloquea el scroll mientras está esta pantalla
   useEffect(() => {
     document.documentElement.classList.add("no-scroll");
     return () => document.documentElement.classList.remove("no-scroll");
@@ -32,11 +32,10 @@ export default function TdahSelect() {
 
   return (
     <>
-      {/* Solo la marca arriba */}
       <Navbar homeOnly />
 
       <section className={styles.hero} aria-label="Elige tu tipo de TDAH">
-        {/* Fondo en capas */}
+        {/* ⬇️ MISMO FONDO EN CAPAS QUE Home (inline) */}
         <div className={styles.bg} aria-hidden>
           <div className={`${styles.layer} ${styles.sky}`} />
           <div className={`${styles.layer} ${styles.mountains}`} />
@@ -44,18 +43,13 @@ export default function TdahSelect() {
           <div className={`${styles.layer} ${styles.grass}`} />
         </div>
 
-        {/* Contenido */}
         <div className={styles.center}>
           <h1 className={styles.title}>ELIGE TU TIPO</h1>
           <p className={styles.subtitle}>Hay tres tipos de TDAH</p>
 
           <div className={styles.grid}>
             {options.map((o) => (
-              <button
-                key={o.key}
-                className={styles.card}
-                onClick={() => pick(o.key)}
-              >
+              <button key={o.key} className={styles.card} onClick={() => pick(o.key)}>
                 {o.label}
               </button>
             ))}
@@ -65,5 +59,3 @@ export default function TdahSelect() {
     </>
   );
 }
-
-
