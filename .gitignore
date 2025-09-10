@@ -7,17 +7,21 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencias
+node_modules/
+
 # Dependencias y build del frontend
 Proyecto/frontend/node_modules/
 Proyecto/frontend/dist/
 Proyecto/frontend/dist-ssr/
 Proyecto/frontend/*.local
-node_modules/
 
 # Dependencias y build del backend
 Proyecto/backend/node_modules/
 Proyecto/backend/dist/
-Proyecto/backend/.env
+
+# Archivos de entorno
+**/.env
 
 # Configuración de editores
 .vscode/*
