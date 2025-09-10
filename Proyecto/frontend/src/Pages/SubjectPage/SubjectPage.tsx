@@ -45,11 +45,11 @@ const DEFAULT_ACTIVITIES_BY_SLUG: Record<string, Activity[]> = {
     { id: "b5", title: "Juego", type: "juego" },
   ],
   matematicas: [
-    { id: "c1", title: "Infografía", type: "infografia" },
-    { id: "c2", title: "Quiz", type: "quiz" },
+    { id: "c1", title: "Infografía-Algebra básica", type: "infografia" },
+    { id: "c2", title: "Quiz-Algebra básica", type: "quiz" },
     { id: "c3", title: "PPT Animada - Álgebra básica", type: "ppt-animada" },
-    { id: "c4", title: "Video", type: "video" },
-    { id: "c5", title: "Juego", type: "juego" },
+    { id: "c4", title: "Video-Algebra básica", type: "video" },
+    { id: "c5", title: "Juego-Algebra básica", type: "juego" },
   ],
 };
 
@@ -159,7 +159,11 @@ export default function SubjectPage() {
                   role="listitem"
                   tabIndex={0}
                   title={a.title}
-                  onClick={() => navigate(`/matematicas/${a.type}`)}
+                  onClick={() => {
+                    if (slug === "historia") navigate(`/historia/${a.type}`);
+                    else if (slug === "matematicas") navigate(`/matematicas/${a.type}`);
+                    else if (slug === "quimica") navigate(`/quimica/${a.type}`);
+                  }}
                   style={{ cursor: "pointer" }}
                 >
                   <div className={styles.pill} />
