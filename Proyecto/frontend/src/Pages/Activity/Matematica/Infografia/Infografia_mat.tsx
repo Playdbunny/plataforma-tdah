@@ -1,5 +1,5 @@
 import ActivityLayout from "../../../../Layouts/ActivityLayout/ActivityLayoutInfografia";
-import styles from './Infografia.module.css';
+import styles from './infografia_mat.module.css';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import ActivityLayoutInfografia from "../../../../Layouts/ActivityLayout/ActivityLayoutInfografia";
