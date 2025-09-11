@@ -30,6 +30,7 @@ export type User = {
   avatarUrl?: string;
   level?: number;
   xp?: number;
+  
   nextXp?: number;
   location?: string;
   work?: string;
