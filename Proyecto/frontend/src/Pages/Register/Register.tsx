@@ -1,9 +1,15 @@
-// ===== Registro de usuario con estilo pixel, fondo por capas y lectura del TDAH desde el store =====
+// ===== Registro real con authStore: envía a /auth/register y pasa tdahType =====
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";       // ⬅️ usamos navigate
+import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../../Components/Navbar/Navbar";
-import { useAppStore } from "../../stores/appStore";        // Zustand con persist
 import styles from "./Register.module.css";
+
+// Store donde guardas el TDAH elegido en la pantalla anterior
+import { useAppStore } from "../../stores/appStore";
+
+// Store de autenticación (axios + persist + token)
+import { useAuthStore } from "../../stores/authStore";
+import type { TDAHType } from "../../types/user";
 
 export default function Register() {
   /* Bloquea el scroll */
@@ -12,72 +18,61 @@ export default function Register() {
     return () => document.documentElement.classList.remove("no-scroll");
   }, []);
 
-  // 1) Leemos el tipo de TDAH que eligió el usuario en /tdah (rehidratado por persist).
-  const tdahType = useAppStore((s) => s.tdahType); // "inatento" | "hiperactivo" | "combinado" | null
+  // 1) TDAH elegido en /tdah (persistido en appStore)
+  const tdahType = useAppStore((s) => s.tdahType) as TDAHType;
 
-  // 1.1) Acciones de la store
-  const setUser = useAppStore((s) => s.setUser);
-
-  // 1.2) Router
+  // 2) Acciones de auth
+  const { register, loading, error } = useAuthStore();
   const navigate = useNavigate();
 
-  // 2) Estado local del formulario (controlado)
-  const [name, setName]   = useState("");
+  // 3) Estado local del formulario
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [pw, setPw]       = useState("");
-  const [pw2, setPw2]     = useState("");
+  const [pw, setPw] = useState("");
+  const [pw2, setPw2] = useState("");
 
-  // 3) Mostrar/ocultar contraseñas (solo UI)
+  // 4) Mostrar/ocultar contraseñas
   const [show1, setShow1] = useState(false);
   const [show2, setShow2] = useState(false);
 
-  // 4) Loading para deshabilitar el botón mientras “envía”
-  const [loading, setLoading] = useState(false);
-
-  // 5) Reglas de validación básicas
+  // 5) Validación básica
   const minLen = 8;
   const valid =
     name.trim().length >= 2 &&
     /\S+@\S+\.\S+/.test(email) &&
     pw.length >= minLen &&
     pw === pw2 &&
-    !!tdahType; // Debe existir un TDAH elegido
+    !!tdahType; // Debe existir TDAH elegido
 
-  // 6) Handler de submit: guarda usuario en la store y redirige a /profile/edit
+  // 6) Submit real: llama a /auth/register vía authStore y redirige
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!valid) return;
-    setLoading(true);
+    if (!valid || loading) return;
 
-    // TODO: Reemplazar por tu llamada real a la API
-    // const res = await fetch("/auth/register", { ... });
-    await new Promise((r) => setTimeout(r, 600)); // simulación
-
-    // ✓ Guarda usuario mínimo en la store (fuente de verdad: s.user)
-    setUser({
-      id: crypto.randomUUID?.() ?? String(Date.now()),
+    await register({
       name: name.trim(),
       email: email.trim().toLowerCase(),
-      username: name.trim().toLowerCase(),           // puedes pedirlo en /profile/edit
-      avatarUrl: "/Images/default-profile.jpg",      // se podrá cambiar en /profile/edit
-      character: {                                   // personaje por defecto; editable luego
-        id: "bunny",
-        name: "Bunny",
-        sprite: "/characters/bunny_idle.png",
-      },
-      level: 1,
-      xp: 0,
-      nextXp: 1000,
-      tdahType,                                      // guarda el TDAH elegido
-    } as any);
+      password: pw,
+      confirmPassword: pw2,
+      tdahType, // ← se guarda en el backend
+    });
 
-    setLoading(false);
-
-    // ➜ Redirige al onboarding de perfil
-    navigate("/profile/edit");
+    // Tras crear la cuenta, manda al onboarding de perfil
+    navigate("/profile/edit", { replace: true });
   };
 
-  // 7) Texto amigable para mostrar el TDAH en la UI
+  // 7) Google: si ya hay TDAH, lo enviamos en la query (viaja en state)
+  const handleGoogle = () => {
+    if (!tdahType) {
+      // si no eligió TDAH, invítalo a elegirlo primero
+      navigate("/tdah");
+      return;
+    }
+    const p = new URLSearchParams({ tdahType });
+    window.location.href = `/auth/google?${p.toString()}`;
+  };
+
+  // Texto amigable del TDAH
   const labelTdah =
     tdahType === "inatento"
       ? "Inatento"
@@ -89,34 +84,33 @@ export default function Register() {
 
   return (
     <>
-      {/* Navbar fijo arriba */}
       <Navbar />
 
       <section className={styles.screen} aria-label="Registro">
-        {/* ===== FONDO EN CAPAS (reciclado del Login) ===== */}
+        {/* Fondo en capas */}
         <div className={styles.bg} aria-hidden>
           <div className={`${styles.layer} ${styles.sky}`} />
           <div className={`${styles.layer} ${styles.clouds}`} />
         </div>
 
-        {/* ===== CARD con el formulario ===== */}
+        {/* Card */}
         <div className={styles.card}>
-          {/* Botón “Google” opcional (placeholder). Puedes conectar OAuth cuando quieras. */}
+          {/* Botón Google (flujo OAuth) */}
           <button
             type="button"
             className={styles.googleBtn}
-            onClick={() => alert("Google OAuth demo")}
+            onClick={handleGoogle}
+            disabled={loading}
+            aria-disabled={loading}
           >
             <img src="/Images/google.png" alt="" aria-hidden className={styles.gIcon} />
             Google
           </button>
 
-          {/* Separador “o” */}
           <div className={styles.divider}><span>o</span></div>
 
-          {/* ===== FORMULARIO ===== */}
+          {/* Formulario */}
           <form onSubmit={onSubmit} className={styles.form}>
-            {/* Nombre */}
             <label className={styles.inputWrap}>
               <input
                 className={styles.input}
@@ -126,10 +120,10 @@ export default function Register() {
                 onChange={(e) => setName(e.target.value)}
                 required
                 autoComplete="name"
+                disabled={loading}
               />
             </label>
 
-            {/* Correo */}
             <label className={styles.inputWrap}>
               <input
                 className={styles.input}
@@ -139,10 +133,10 @@ export default function Register() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
+                disabled={loading}
               />
             </label>
 
-            {/* Contraseña */}
             <label className={styles.inputWrap}>
               <input
                 className={styles.input}
@@ -153,18 +147,19 @@ export default function Register() {
                 required
                 minLength={minLen}
                 autoComplete="new-password"
+                disabled={loading}
               />
               <button
                 type="button"
                 className={styles.eyeBtn}
                 onClick={() => setShow1((v) => !v)}
                 aria-label={show1 ? "Ocultar contraseña" : "Mostrar contraseña"}
+                disabled={loading}
               >
                 {show1 ? "🙈" : "👁️"}
               </button>
             </label>
 
-            {/* Confirmar contraseña */}
             <label className={styles.inputWrap}>
               <input
                 className={styles.input}
@@ -175,18 +170,20 @@ export default function Register() {
                 required
                 minLength={minLen}
                 autoComplete="new-password"
+                disabled={loading}
               />
               <button
                 type="button"
                 className={styles.eyeBtn}
                 onClick={() => setShow2((v) => !v)}
                 aria-label={show2 ? "Ocultar confirmación" : "Mostrar confirmación"}
+                disabled={loading}
               >
                 {show2 ? "🙈" : "👁️"}
               </button>
             </label>
 
-            {/* TDAH: campo readonly + link para elegir/cambiar en /tdah */}
+            {/* TDAH: readonly + link para elegir/cambiar */}
             <div className={styles.tdahRow}>
               <input
                 className={`${styles.input} ${styles.inputReadonly}`}
@@ -200,7 +197,7 @@ export default function Register() {
               )}
             </div>
 
-            {/* Pistas visuales de validación */}
+            {/* Pistas de validación */}
             <ul className={styles.hints} aria-live="polite">
               <li className={pw.length >= minLen ? styles.ok : ""}>
                 Contraseña mínimo {minLen} caracteres
@@ -213,17 +210,20 @@ export default function Register() {
               </li>
             </ul>
 
+            {/* Error del backend (Zod/409/etc.) */}
+            {error && <p className={styles.error} role="alert">{error}</p>}
+
             {/* CTA */}
             <button
               type="submit"
               className={`${styles.pxBtn} ${styles.btnCyan}`}
               disabled={!valid || loading}
+              aria-busy={loading}
             >
-              {loading ? "Creando..." : "Inicia tu aventura!"}
+              {loading ? "Creando..." : "¡Inicia tu aventura!"}
             </button>
           </form>
 
-          {/* Nota legal (placeholder) */}
           <p className={styles.terms}>
             Al iniciar, se aceptan <a href="#t">Términos y Condiciones</a>.
           </p>
