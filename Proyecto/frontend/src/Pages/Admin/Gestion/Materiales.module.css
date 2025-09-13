@@ -7,6 +7,7 @@
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
   max-width: 1100px;
   margin: 2rem auto;
+  min-height:100vh;
 }
 
 .titulo {
@@ -47,7 +48,7 @@
   padding: 0.5rem 1.2rem;
   font-weight: bold;
   cursor: pointer;
-  transition: background 0.2s;
+ 
 }
 .nuevoBtn:hover {
   background: #5c5cb2;
@@ -111,7 +112,7 @@
   padding: 0.4rem 1.1rem;
   font-weight: bold;
   cursor: pointer;
-  transition: background 0.2s;
+
 }
 .paginacion button:disabled {
   background: #bfc8e6;
