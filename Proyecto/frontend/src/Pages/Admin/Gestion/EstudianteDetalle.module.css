@@ -1,4 +1,4 @@
-.screen{ color:#e8e9ff; }
+.screen{ color:#e8e9ff;min-height:100vh; }
 
 .topRow{ margin:10px 0 12px; }
 .back{ color:#8cc1ff; text-decoration:none; font-weight:800; }

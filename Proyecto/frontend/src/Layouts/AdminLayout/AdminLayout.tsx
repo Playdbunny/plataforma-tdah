@@ -7,11 +7,21 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import styles from "./AdminLayout.module.css";
 import { useAppStore } from "../../stores/appStore";
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 
 export default function AdminLayout() {
   // Hook para redirecciones (ej: al cerrar sesión)
   const navigate = useNavigate();
+
+  // Ajusta el color de fondo de <body> para que coincida con el área de administración.
+  // Esto evita que se vea el color oscuro global cuando la ventana se reduce.
+  useEffect(() => {
+    const prevBg = document.body.style.background;
+    document.body.style.background = "#dfe7ff";
+    return () => {
+      document.body.style.background = prevBg;
+    };
+  }, []);
 
   // Obtenemos usuario y acción de logout desde el store global
   const user = useAppStore((s) => s.user);

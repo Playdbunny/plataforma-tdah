@@ -1,4 +1,4 @@
-.screen { color:#e8e9ff; }
+.screen { color:#e8e9ff; min-height:100vh; }
 .headerRow{
   display:flex; align-items:center; justify-content:space-between;
   margin: 10px 0 14px;

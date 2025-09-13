@@ -1,5 +1,5 @@
 /* Contenedor general */
-.screen { display: flex; flex-direction: column; gap: 14px; }
+.screen { display: flex; flex-direction: column; gap: 14px; min-height:100vh; }
 
 /* Acciones superiores (crear / buscar / orden) */
 .actions { display: flex; 
@@ -193,6 +193,7 @@ tbody tr:hover { background: #eef2ff; }
 }
 
 .modalFooter { display:flex; justify-content:flex-end; gap: 8px; }
+
 
 /* Responsive */
 @media (max-width: 900px) {
