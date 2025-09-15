@@ -125,15 +125,6 @@ export default function AdminLayout() {
       <div className={styles.content}>
         {/* Topbar con búsqueda + notificaciones + etiqueta Admin */}
         <header className={styles.topbar}>
-          <div className={styles.searchWrap}>
-            {/* input de búsqueda no funcional aún (lo conectas a futuro) */}
-            <input
-              className={styles.search}
-              type="search"
-              placeholder="Buscar..."
-              aria-label="Buscar en panel"
-            />
-          </div>
 
           <div className={styles.topRight}>
             <button

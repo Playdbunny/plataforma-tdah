@@ -5,7 +5,7 @@
 // - Muestra actividades "mock" por materia (puedes migrarlas a backend luego).
 
 import { useParams, Navigate, Link, useNavigate } from "react-router-dom";
-import { useRef, useCallback, useMemo, useEffect } from "react";
+import { useMemo, useEffect, useState } from "react";
 
 
 // Navbar y estilos existentes
@@ -94,6 +94,11 @@ export default function SubjectPage() {
   // Actividades: mock por slug (hasta que migres a backend)
   const activities: Activity[] = DEFAULT_ACTIVITIES_BY_SLUG[slug] ?? [];
 
+  const [query, setQuery] = useState("");
+  const filteredActivities = activities.filter((a) =>
+    a.title.toLowerCase().includes(query.toLowerCase())
+  );
+
   // Si no hay slug válido, redirige a listado
   if (!slug) return <Navigate to="/subjects" replace />;
 
@@ -104,24 +109,7 @@ export default function SubjectPage() {
     useAppStore((s) => s.isAdmin?.() ?? (s.user?.role === "admin"));
 
   // ===============================================
-  // 5) Navegación horizontal del carrusel
-  // ===============================================
-  const stripRef = useRef<HTMLDivElement | null>(null);
-
-  const next = useCallback(() => {
-    const el = stripRef.current;
-    if (!el) return;
-    el.scrollBy({ left: el.clientWidth * 0.9, behavior: "smooth" });
-  }, []);
-
-  const prev = useCallback(() => {
-    const el = stripRef.current;
-    if (!el) return;
-    el.scrollBy({ left: -el.clientWidth * 0.9, behavior: "smooth" });
-  }, []);
-
-  // ===============================================
-  // 6) Render
+  // 5) Render
   // ===============================================
   return (
     <div className={styles.screen}>
@@ -147,15 +135,25 @@ export default function SubjectPage() {
           </span>
         </div>
 
+        <div className={styles.searchBar}>
+          <input
+            type="text"
+            placeholder="Buscar..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            aria-label="Buscar actividades"
+          />
+        </div>
+
         <section className={styles.tray} aria-label={`Actividades de ${title}`}>
-          <div className={styles.actStrip} ref={stripRef} role="list">
-            {activities.length === 0 ? (
-              <div className={styles.empty}>Aún no hay actividades para esta materia.</div>
-            ) : (
-              activities.map((a) => (
+          {filteredActivities.length === 0 ? (
+            <div className={styles.empty}>Aún no hay actividades para esta materia.</div>
+          ) : (
+            <div className={styles.grid} role="list">
+              {filteredActivities.map((a) => (
                 <article
                   key={a.id}
-                  className={styles.actCard}
+                  className={styles.card}
                   role="listitem"
                   tabIndex={0}
                   title={a.title}
@@ -166,40 +164,14 @@ export default function SubjectPage() {
                   }}
                   style={{ cursor: "pointer" }}
                 >
-                  <div className={styles.pill} />
-                  <div className={styles.pillLabel}>{a.title}</div>
+                  <div className={styles.cardThumb} />
+                  <h3 className={styles.cardTitle}>{a.title}</h3>
                 </article>
-              ))
-            )}
-          </div>
-
-          <button
-            className={`${styles.navBtn} ${styles.navPrev}`}
-            aria-label="Anterior"
-            onClick={prev}
-          >
-            
-          </button>
-          <button
-            className={`${styles.navBtn} ${styles.navNext}`}
-            aria-label="Siguiente"
-            onClick={next}
-          >
-            
-          </button>
+              ))}
+            </div>
+          )}
         </section>
 
-        {/* 🔒 Solo admins: acceso rápido a edición en Admin */}
-        {isAdmin && (
-          <div className={styles.adminLinks}>
-            <Link
-              className={styles.adminBtn}
-              to={`/admin/gestion/materias?focus=${encodeURIComponent(slug)}`}
-            >
-              ✏️ Editar esta materia
-            </Link>
-          </div>
-        )}
       </main>
 
       <footer className={styles.footer}>
