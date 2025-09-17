@@ -91,7 +91,7 @@ export default function AdminLayout() {
           </NavLink>
 
           <NavLink
-            to="/admin/Materias"
+            to="/admin/materias"
             className={({ isActive }) =>
               isActive ? `${styles.item} ${styles.active}` : styles.item
             }
@@ -100,6 +100,18 @@ export default function AdminLayout() {
               📚
             </span>
             <span>Materias</span>
+          </NavLink>
+
+          <NavLink
+            to="/admin/actividades"
+            className={({ isActive }) =>
+              isActive ? `${styles.item} ${styles.active}` : styles.item
+            }
+          >
+            <span className={styles.icon} aria-hidden>
+              🎮
+            </span>
+            <span>Actividades</span>
           </NavLink>
 
           <NavLink

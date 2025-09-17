@@ -1,0 +1,127 @@
+.screen {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.header {
+  text-align: center;
+  display: grid;
+  gap: 8px;
+  color: #111827;
+}
+
+.title {
+  font-family: "Press Start 2P", system-ui, sans-serif;
+  font-size: 26px;
+  letter-spacing: 1px;
+}
+
+.subtitle {
+  font-family: "PixelGrid", system-ui, sans-serif;
+  font-size: 18px;
+  color: #374151;
+}
+
+/* Grilla de tarjetas */
+.grid {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+}
+
+/* 2 columnas en pantallas medianas */
+@media (max-width: 960px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* 1 columna en móviles + ajustes tipográficos (UNIFICADO) */
+@media (max-width: 600px) {
+  .grid { grid-template-columns: 1fr; }
+  .title { font-size: 20px; }
+  .subtitle { font-size: 16px; }
+  .card { min-height: 180px; }
+  .cardTitle { font-size: 18px; }
+}
+
+.card {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  min-height: 190px;
+  border-radius: 24px;
+  overflow: hidden;
+  border: 3px solid #1e203b;
+  text-decoration: none;
+  color: inherit;
+  box-shadow: 0 12px 24px rgba(20, 21, 38, 0.22);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 32px rgba(20, 21, 38, 0.3);
+}
+
+.cardBackdrop {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  filter: saturate(1.1);
+}
+
+.cardOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(13, 16, 35, 0.15) 0%, rgba(13, 16, 35, 0.85) 100%);
+}
+
+.cardContent {
+  position: relative;
+  display: grid;
+  gap: 10px;
+  padding: 28px 24px;
+  color: #f9fafb;
+  width: 100%;
+  align-content: end;
+}
+
+.cardLabel {
+  font-family: "Press Start 2P", system-ui, sans-serif;
+  font-size: 11px;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: #c7d2fe;
+}
+
+.cardTitle {
+  font-family: "Press Start 2P", system-ui, sans-serif;
+  font-size: 20px;
+  text-shadow: 0 3px 6px rgba(0, 0, 0, 0.35);
+}
+
+.cardDescription {
+  font-family: "PixelGrid", system-ui, sans-serif;
+  font-size: 16px;
+  color: #e5e7eb;
+}
+
+.empty {
+  background: #ffffff;
+  border: 2px dashed #c6d1ff;
+  border-radius: 18px;
+  padding: 32px;
+  text-align: center;
+  font-family: "PixelGrid", system-ui, sans-serif;
+  font-size: 18px;
+  color: #374151;
+}
+
+.empty a {
+  color: #1f3fff;
+  font-weight: 700;
+}

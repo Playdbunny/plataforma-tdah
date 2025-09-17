@@ -37,11 +37,8 @@ type SubjectsState = {
 // ========================
 // Datos iniciales (seed)
 // ========================
-const SEED: Subject[] = [
-  { id: crypto.randomUUID(), slug: "matematicas", name: "Matemáticas", description: "Descripción corta", bannerUrl: null },
-  { id: crypto.randomUUID(), slug: "historia",    name: "Historia",    description: "Descripción corta", bannerUrl: null },
-  { id: crypto.randomUUID(), slug: "quimica",     name: "Química",     description: "Descripción corta", bannerUrl: null },
-];
+
+const SEED: Subject[] =   [];
 
 // ========================
 // Utilidad para crear slug
