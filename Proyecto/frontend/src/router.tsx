@@ -30,6 +30,7 @@ import AdminDashboard from "./Pages/Admin/General/Dashboard";
 import AdminRanking from "./Pages/Admin/General/Ranking";
 import MateriasPage from "./Pages/Admin/Gestion/Materias";
 import MaterialesPage from "./Pages/Admin/Gestion/Materiales";
+import ActividadesPage from "./Pages/Admin/Gestion/Actividades";
 
 import EstudiantesPage from "./Pages/Admin/Gestion/EstudiantesPage";
 import EstudianteDetallePage from "./Pages/Admin/Gestion/EstudianteDetallePage";
@@ -126,6 +127,7 @@ export const router = createBrowserRouter([
       { path: "dashboard", element: <AdminDashboard /> },
       { path: "ranking", element: <AdminRanking /> },
       { path: "materias", element: <MateriasPage /> },
+      { path: "actividades", element: <ActividadesPage /> },
       { path: "materiales", element: <MaterialesPage />},
       { path: "estudiantes", element: <EstudiantesPage /> },
       { path: "gestion/estudiantes/:id", element: <EstudianteDetallePage /> },
