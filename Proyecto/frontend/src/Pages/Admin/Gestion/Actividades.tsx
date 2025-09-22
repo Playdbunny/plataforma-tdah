@@ -42,7 +42,7 @@ export default function ActividadesPage() {
         <h1 className={styles.title}>Actividades</h1>
         <p className={styles.subtitle}>
           Visualiza las materias disponibles y accede rápidamente a sus
-          actividades públicas.
+          actividades para gestionarlas.
         </p>
       </header>
 
@@ -62,7 +62,7 @@ export default function ActividadesPage() {
             return (
               <Link
                 key={subject.id}
-                to={`/subjects/${subject.slug}`}
+                to={`/admin/actividades/${subject.slug}`}
                 className={styles.card}
               >
                 <span

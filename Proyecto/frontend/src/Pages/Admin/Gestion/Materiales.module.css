@@ -48,7 +48,7 @@
   padding: 0.5rem 1.2rem;
   font-weight: bold;
   cursor: pointer;
- 
+
 }
 .nuevoBtn:hover {
   background: #5c5cb2;
@@ -83,7 +83,7 @@
   border-bottom: none;
 }
 
-.tabla button {
+.accionBtn {
   background: none;
   border: none;
   cursor: pointer;
@@ -92,7 +92,7 @@
   color: #3a3a6c;
   transition: color 0.2s;
 }
-.tabla button:hover {
+.accionBtn:hover {
   color: #5c5cb2;
 }
 
@@ -121,4 +121,183 @@
 .paginacion span {
   font-size: 1.1rem;
   color: #3a3a6c;
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(7, 11, 34, 0.45);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  z-index: 1000;
+}
+
+.modal {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(24, 32, 77, 0.18);
+  max-width: 520px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  background: linear-gradient(135deg, #3a3a6c, #5c5cb2);
+  color: #fff;
+}
+
+.modalHeader h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.cerrarModalBtn {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.modalContenido {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.buscadorMaterias {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.buscadorMaterias label {
+  font-weight: 600;
+  color: #3a3a6c;
+}
+
+.buscadorMaterias input {
+  padding: 0.6rem 0.9rem;
+  border: 1px solid #ccd4f5;
+  border-radius: 10px;
+  font-size: 0.95rem;
+}
+
+.resultadosMaterias {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.4rem;
+}
+
+.resultadosMaterias li button {
+  width: 100%;
+  padding: 0.4rem 0.6rem;
+  border-radius: 10px;
+  border: 1px solid #ccd4f5;
+  background: #f5f8ff;
+  font-size: 0.85rem;
+  color: #3a3a6c;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.resultadosMaterias li button:hover {
+  background: #3a3a6c;
+  color: #fff;
+}
+
+.crearNuevaMateriaBtn {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  color: #5c5cb2;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.materiaSeleccionada {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #394078;
+}
+
+.campoFormulario {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.95rem;
+  color: #3a3a6c;
+}
+
+.campoFormulario span {
+  font-weight: 600;
+}
+
+.campoFormulario input,
+.campoFormulario select {
+  padding: 0.6rem 0.9rem;
+  border: 1px solid #ccd4f5;
+  border-radius: 10px;
+  font-size: 0.95rem;
+}
+
+.campoFormulario input[type="file"] {
+  padding: 0.4rem 0.2rem;
+}
+
+.archivoSeleccionado {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #5c5cb2;
+}
+
+.ayudaCampo {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #6b74aa;
+}
+
+.modalAcciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.modalAcciones button {
+  border-radius: 10px;
+  border: none;
+  padding: 0.55rem 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.modalAcciones button:first-of-type {
+  background: #e8ecff;
+  color: #3a3a6c;
+}
+
+.guardarBtn {
+  background: linear-gradient(135deg, #3a3a6c, #5c5cb2);
+  color: #fff;
+}
+
+.guardarBtn:disabled {
+  background: #cbd2f3;
+  cursor: not-allowed;
+  color: #fff;
+  opacity: 0.7;
 }
