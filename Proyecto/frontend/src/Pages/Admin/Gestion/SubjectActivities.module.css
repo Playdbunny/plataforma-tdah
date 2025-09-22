@@ -1,0 +1,122 @@
+.screen {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.header { display: grid; gap: 16px; color: #101827; }
+
+.breadcrumb { font-family: "PixelGrid", system-ui, sans-serif; font-size: 14px; }
+.breadcrumb a { color: #4f46e5; text-decoration: none; }
+.breadcrumb a:hover { text-decoration: underline; }
+
+.titleRow {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 24px; flex-wrap: wrap;
+}
+
+.title {
+  font-family: "Press Start 2P", system-ui, sans-serif;
+  font-size: 24px; letter-spacing: 0.04em;
+}
+
+.subtitle {
+  margin-top: 12px; font-family: "PixelGrid", system-ui, sans-serif;
+  font-size: 18px; color: #4b5563; max-width: 640px;
+}
+
+.newButton {
+  font-family: "Press Start 2P", system-ui, sans-serif;
+  border: none; padding: 14px 20px; border-radius: 18px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #f9fafb;
+  box-shadow: 0 10px 24px rgba(79, 70, 229, 0.35);
+  cursor: pointer; transition: transform .2s ease, box-shadow .2s ease, filter .2s;
+}
+.newButton:hover { transform: translateY(-2px); box-shadow: 0 16px 28px rgba(79,70,229,.45); }
+.newButton:focus-visible { outline: 3px solid #a5b4fc; outline-offset: 2px; }
+
+.toolbar { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+
+.search { position: relative; flex: 1 1 320px; }
+.searchIcon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-size: 16px; }
+.search input {
+  width: 100%; padding: 12px 16px 12px 44px;
+  border: 2px solid #1e203b; border-radius: 16px; background: #fff;
+  font-family: "PixelGrid", system-ui, sans-serif; font-size: 16px; color: #111827;
+}
+.search input:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.2); }
+
+.filter, .sort {
+  display: grid; gap: 6px; font-family: "PixelGrid", system-ui, sans-serif; font-size: 15px;
+}
+.filter select, .sort select {
+  min-width: 200px; padding: 10px 14px; border: 2px solid #1e203b; border-radius: 14px;
+  background: #eef2ff; font-size: 15px; color: #111827; cursor: pointer;
+}
+.filter select:focus, .sort select:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.2); }
+
+.clearBtn {
+  padding: 10px 12px; border-radius: 14px; background: #f3f4f6; color: #1f2937;
+  border: 2px solid #1e203b; font-family: "PixelGrid", system-ui, sans-serif; cursor: pointer;
+}
+.clearBtn:hover { background: #e5e7eb; }
+
+.resultCount { margin-left: auto; font-family: "PixelGrid", system-ui, sans-serif; color: #4b5563; }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 24px;
+}
+
+.card {
+  display: grid; gap: 14px; padding: 20px; border-radius: 20px;
+  background: #ffffff; border: 3px solid #1e203b;
+  box-shadow: 0 14px 32px rgba(20,21,38,.2);
+  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+.card:hover { transform: translateY(-2px); box-shadow: 0 18px 36px rgba(20,21,38,.26); }
+.card:focus-visible { outline: 3px solid #a5b4fc; outline-offset: 2px; }
+
+.cardHeader { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.cardType {
+  font-family: "Press Start 2P", system-ui, sans-serif; font-size: 12px; color: #4f46e5; text-transform: uppercase;
+}
+.status {
+  font-family: "PixelGrid", system-ui, sans-serif; font-size: 13px; padding: 6px 10px; border-radius: 999px;
+  background: #e0e7ff; color: #1e1b4b;
+}
+.statusPublished { background: #dcfce7; color: #14532d; }
+.statusDraft { background: #fef3c7; color: #92400e; }
+.statusArchived { background: #f3f4f6; color: #111827; }
+
+.cardTitle {
+  font-family: "Press Start 2P", system-ui, sans-serif; font-size: 18px; line-height: 1.4; color: #111827;
+}
+
+.cardDescription { font-family: "PixelGrid", system-ui, sans-serif; font-size: 15px; color: #4b5563; }
+
+.cardFooter {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  font-family: "PixelGrid", system-ui, sans-serif; font-size: 14px; color: #6b7280;
+}
+
+.manageButton {
+  padding: 10px 14px; border-radius: 14px; background: #1f2937; color: #f9fafb; border: none;
+  cursor: pointer; font-family: "PixelGrid", system-ui, sans-serif; transition: background .2s ease, transform .1s ease;
+}
+.manageButton:hover { background: #111827; transform: translateY(-1px); }
+.manageButton:focus-visible { outline: 3px solid #a5b4fc; outline-offset: 2px; }
+
+.empty {
+  padding: 36px; border-radius: 20px; border: 2px dashed #c7d2fe; background: #f9fafb;
+  font-family: "PixelGrid", system-ui, sans-serif; font-size: 16px; text-align: center; color: #4b5563;
+}
+
+@media (max-width: 720px) {
+  .title { font-size: 20px; }
+  .subtitle { font-size: 16px; }
+  .cardTitle { font-size: 16px; }
+  .resultCount { width: 100%; text-align: right; }
+}
+
