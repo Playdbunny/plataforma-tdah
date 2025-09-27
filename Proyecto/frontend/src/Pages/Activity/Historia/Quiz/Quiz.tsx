@@ -1,111 +1,61 @@
 
-import styles from "./Quiz.module.css";
 import ActivityLayout from "../../../../Layouts/ActivityLayout/ActivityLayout";
-import { useState } from "react";
+import styles from "./Quiz.module.css";
 
-const questions = [
-  {
-    text: "El feudalismo fue el sistema político, económico y social que predominó en:",
-    options: [
-      "Grecia clásica",
-      "Revolución industrial",
-      "Europa medieval",
-      "Roma antigua"
-    ],
-    correct: 2
-  },
-  {
-    text: "¿Cuál fue la principal actividad económica durante la Edad Media?",
-    options: [
-      "Comercio marítimo",
-      "Agricultura",
-      "Minería",
-      "Industria textil"
-    ],
-    correct: 1
-  },
-  {
-    text: "¿Qué institución tenía mayor poder en la Europa medieval?",
-    options: [
-      "La Iglesia",
-      "El Parlamento",
-      "Los gremios",
-      "La Monarquía"
-    ],
-    correct: 0
-  }
-];
+const QUIZ_TEMPLATE = {
+  title: "Título del quiz",
+  description:
+    "Personaliza esta plantilla con la temática de tu materia. Puedes reemplazar el texto por instrucciones específicas o añadir elementos multimedia.",
+  question: "Redacta aquí la pregunta o desafío principal del quiz.",
+  options: ["Respuesta A", "Respuesta B", "Respuesta C", "Respuesta D"],
+};
 
-const HistoriaQuiz = () => {
-  const [page, setPage] = useState(0);
-  const question = questions[page];
-  const totalPages = questions.length;
-
-  const handlePrev = () => setPage((p) => (p > 0 ? p - 1 : p));
-  const handleNext = () => setPage((p) => (p < totalPages - 1 ? p + 1 : p));
-
+const HistoriaQuizTemplate = () => {
   return (
-    <ActivityLayout title={<span className={styles.quizTitle}>El Feudalismo</span>}>
-      <div className={styles.quizBg}>
-        <div className={styles.quizContent}>
-          <div className={styles.scrollRow}>
-            <div className={styles.optionCol}>
-              <button className={styles.optionBtn} type="button" tabIndex={0} aria-label={question.options[0]}>
-                <img src="/Images/opciones.png" alt="opción" className={styles.optionFrame} />
-                <span className={styles.optionText}>{question.options[0]}</span>
+    <ActivityLayout title={QUIZ_TEMPLATE.title} backTo="/subjects">
+      <div className={styles.container}>
+        <p className={styles.instructions}>
+          <strong>¿Cómo usar esta plantilla?</strong>
+          {" "}
+          {QUIZ_TEMPLATE.description}
+          {" "}
+          Duplica el archivo y reemplaza el contenido con tus preguntas reales. Si tu quiz necesita varias pantallas, puedes
+          controlar el estado con hooks o integrarlo con un gestor de formularios.
+        </p>
+
+        <section className={styles.card}>
+          <header className={styles.cardHeader}>
+            <label>Pregunta 1</label>
+            <h2>{QUIZ_TEMPLATE.question}</h2>
+          </header>
+
+          <div className={styles.options}>
+            {QUIZ_TEMPLATE.options.map((option, index) => (
+              <button key={option} type="button" className={styles.optionButton}>
+                <span className={styles.badge}>{String.fromCharCode(65 + index)}</span>
+                {option}
               </button>
-              <button className={styles.optionBtn} type="button" tabIndex={0} aria-label={question.options[2]}>
-                <img src="/Images/opciones.png" alt="opción" className={styles.optionFrame} />
-                <span className={styles.optionText}>{question.options[2]}</span>
-              </button>
-            </div>
-            <div className={styles.scrollContainer}>
-              <img src="/Images/Pergamino.png" alt="Pergamino" className={styles.scrollImg} />
-              <div className={styles.scrollText}>{question.text}</div>
-            </div>
-            <div className={styles.optionCol}>
-              <button className={styles.optionBtn} type="button" tabIndex={0} aria-label={question.options[1]}>
-                <img src="/Images/opciones.png" alt="opción" className={styles.optionFrame} />
-                <span className={styles.optionText}>{question.options[1]}</span>
-              </button>
-              <button className={styles.optionBtn} type="button" tabIndex={0} aria-label={question.options[3]}>
-                <img src="/Images/opciones.png" alt="opción" className={styles.optionFrame} />
-                <span className={styles.optionText}>{question.options[3]}</span>
-              </button>
-            </div>
+            ))}
           </div>
-          <div className={styles.quizFooter}>
-            <button
-              className={styles.footerNav}
-              onClick={handlePrev}
-              disabled={page === 0}
-              aria-disabled={page === 0 ? "true" : "false"}
-              type="button"
-            >
-              Anterior
-            </button>
-            <span className={styles.footerPage}>Página <b>{page + 1}</b> de {totalPages}</span>
-            <button
-              className={styles.footerNav}
-              onClick={handleNext}
-              disabled={page === totalPages - 1}
-              aria-disabled={page === totalPages - 1 ? "true" : "false"}
-              type="button"
-            >
-              Siguiente
-            </button>
-            <button
-              className={styles.finishedBtn}
-              type="button"
-              onClick={() => alert('¡Actividad finalizada!')}
-            >
-              Finished <img src="/Images/coin.png" alt="Moneda" className={styles.coinIcon} /> +5
-            </button>
-          </div>
-        </div>
+
+          <footer className={styles.footer}>
+            <span className={styles.progress}>Página 1 de n</span>
+            <div className={styles.buttonRow}>
+              <button type="button" className={styles.navButton}>
+                Anterior
+              </button>
+              <button type="button" className={styles.navButton}>
+                Siguiente
+              </button>
+              <button type="button" className={styles.finishButton}>
+                Finalizar
+              </button>
+            </div>
+          </footer>
+        </section>
       </div>
     </ActivityLayout>
   );
 };
 
-export default HistoriaQuiz;
+export default HistoriaQuizTemplate;

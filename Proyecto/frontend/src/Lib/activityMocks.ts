@@ -21,6 +21,7 @@ export type SubjectActivity = {
   status: SubjectActivityStatus;
   updatedAt: string; // ISO string para mostrar fecha legible
   description?: string;
+  linkTo?: string; // Ruta interna o URL externa asociada a la actividad
 };
 
 export const SUBJECT_ACTIVITY_TYPE_LABELS: Record<SubjectActivityType, string> = {
@@ -45,110 +46,41 @@ export const DEFAULT_ACTIVITIES_BY_SLUG: Record<string, SubjectActivity[]> = {
       type: "infografia",
       status: "published",
       updatedAt: "2025-02-01T12:00:00Z",
-      description: "Cronología visual de los hechos claves del conflicto.",
+      description: "Plantilla base para crear una nueva infografía interactiva.",
+      linkTo: "/historia/infografia",
     },
     {
       id: "hist-2",
-      title: "Quiz - El Feudalismo",
+      title: "Quiz - Plantilla editable",
       type: "quiz",
       status: "published",
       updatedAt: "2025-01-25T15:30:00Z",
+      linkTo: "/historia/quiz",
     },
     {
       id: "hist-3",
-      title: "PPT Animada - Crisis de Occidente",
+      title: "PPT Animada - Plantilla editable",
       type: "ppt-animada",
       status: "draft",
       updatedAt: "2025-02-10T09:45:00Z",
-      description: "Presentación interactiva sobre la crisis del siglo XX.",
+      description: "Estructura sugerida para embebidos y notas de apoyo.",
+      linkTo: "/historia/ppt-animada",
     },
     {
       id: "hist-4",
-      title: "Video - La Historia de Chile",
+      title: "Video - Plantilla editable",
       type: "video",
       status: "published",
       updatedAt: "2025-01-12T18:20:00Z",
+      description: "Modelo para incrustar videos con acciones complementarias.",
+      linkTo: "/historia/video",
     },
     {
       id: "hist-5",
-      title: "Juego - Ruta de los Exploradores",
+      title: "Juego - Próximamente",
       type: "juego",
       status: "archived",
       updatedAt: "2024-12-10T10:05:00Z",
-    },
-  ],
-  matematicas: [
-    {
-      id: "mat-1",
-      title: "Infografía - Álgebra básica",
-      type: "infografia",
-      status: "published",
-      updatedAt: "2025-02-09T11:00:00Z",
-    },
-    {
-      id: "mat-2",
-      title: "Quiz - Álgebra básica",
-      type: "quiz",
-      status: "draft",
-      updatedAt: "2025-02-08T08:30:00Z",
-    },
-    {
-      id: "mat-3",
-      title: "PPT Animada - Funciones lineales",
-      type: "ppt-animada",
-      status: "published",
-      updatedAt: "2025-01-28T14:10:00Z",
-    },
-    {
-      id: "mat-4",
-      title: "Video - Resolución de ecuaciones",
-      type: "video",
-      status: "published",
-      updatedAt: "2025-01-15T16:50:00Z",
-    },
-    {
-      id: "mat-5",
-      title: "Juego - Desafío mental",
-      type: "juego",
-      status: "draft",
-      updatedAt: "2024-12-20T19:00:00Z",
-    },
-  ],
-  quimica: [
-    {
-      id: "quim-1",
-      title: "Infografía - Tabla periódica",
-      type: "infografia",
-      status: "published",
-      updatedAt: "2025-02-03T10:25:00Z",
-    },
-    {
-      id: "quim-2",
-      title: "Quiz - Enlaces químicos",
-      type: "quiz",
-      status: "published",
-      updatedAt: "2025-01-30T13:15:00Z",
-    },
-    {
-      id: "quim-3",
-      title: "PPT Animada - Reacciones ácido-base",
-      type: "ppt-animada",
-      status: "draft",
-      updatedAt: "2025-01-22T09:00:00Z",
-    },
-    {
-      id: "quim-4",
-      title: "Video - Laboratorio seguro",
-      type: "video",
-      status: "published",
-      updatedAt: "2025-01-05T17:40:00Z",
-    },
-    {
-      id: "quim-5",
-      title: "Juego - Mezclas y soluciones",
-      type: "juego",
-      status: "archived",
-      updatedAt: "2024-11-28T12:30:00Z",
     },
   ],
 };

@@ -104,8 +104,21 @@
   align-items: center;
   gap: 12px;
   transition: transform .1s ease, filter .15s ease;
+  outline: none;
 }
-.card:hover{ filter: brightness(1.05); }
+.cardInteractive{
+  cursor: pointer;
+}
+.cardInteractive:hover{ filter: brightness(1.05); }
+.cardInteractive:focus-visible{
+  outline: 2px solid #5b7bff;
+  outline-offset: 4px;
+  filter: brightness(1.08);
+}
+.cardDisabled{
+  cursor: default;
+  opacity: .7;
+}
 
 .cardThumb{
   width: 100%;
@@ -121,6 +134,22 @@
   font-weight:800;
   text-align:center;
   font-family:"PixelGrid", system-ui, sans-serif;
+}
+
+.cardAction,
+.cardActionDisabled{
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .4px;
+  text-transform: uppercase;
+}
+
+.cardAction{
+  color: #9fb4ff;
+}
+
+.cardActionDisabled{
+  color: var(--muted);
 }
 
 /* Footer */

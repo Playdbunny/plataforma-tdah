@@ -173,6 +173,11 @@
 }
 .dropLink:hover{ background: rgba(255,255,255,.06); }
 
+.dropEmpty {
+  pointer-events: none;
+  color: var(--text-dim);
+}
+
 /* Opción “Ver todas” con un poquito más de énfasis */
 .dropAll{
   font-weight: 800;

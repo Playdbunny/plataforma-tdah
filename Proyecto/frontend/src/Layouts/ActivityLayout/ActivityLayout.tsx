@@ -16,18 +16,31 @@ export default function ActivityLayout({ title, leftPanel, children, pagination,
   const navigate = useNavigate();
   return (
     <div className={styles.bg}>
-      <Navbar items={[
-        { label: "Materias", to: "/subjects" },
-      ]} />
+      <Navbar
+        items={[
+          { label: "Materias", to: "/subjects" },
+        ]}
+      />
       <div className={styles.arrowContainer}>
         <div className={styles.topRow}>
-          <button className={styles.backBtn} onClick={() => navigate(backTo || '/subjects/historia')} aria-label="Volver">
+          <button
+            className={styles.backBtn}
+            onClick={() => navigate(backTo || "/subjects")}
+            aria-label="Volver"
+          >
             {/* Flecha pixel-art SVG */}
-            <svg className={styles.pixelArrow} width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="2" y="14" width="20" height="4" fill="#fff"/>
-              <rect x="2" y="14" width="10" height="4" fill="#d1d1d1"/>
-              <rect x="2" y="10" width="8" height="12" fill="#fff"/>
-              <rect x="2" y="10" width="4" height="12" fill="#d1d1d1"/>
+            <svg
+              className={styles.pixelArrow}
+              width="32"
+              height="32"
+              viewBox="0 0 32 32"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <rect x="2" y="14" width="20" height="4" fill="#fff" />
+              <rect x="2" y="14" width="10" height="4" fill="#d1d1d1" />
+              <rect x="2" y="10" width="8" height="12" fill="#fff" />
+              <rect x="2" y="10" width="4" height="12" fill="#d1d1d1" />
             </svg>
           </button>
           <div className={styles.title}>{title}</div>
@@ -35,11 +48,7 @@ export default function ActivityLayout({ title, leftPanel, children, pagination,
         <div className={styles.arrowLine}></div>
       </div>
       <div className={styles.main}>
-        {leftPanel && (
-          <div className={styles.panel}>
-            {leftPanel}
-          </div>
-        )}
+        {leftPanel && <div className={styles.panel}>{leftPanel}</div>}
         {children}
         {pagination && <div className={styles.pagination}>{pagination}</div>}
         {finished && <div className={styles.finished}>{finished}</div>}

@@ -60,6 +60,18 @@ export default function SubjectPage() {
   // Actividades: mock por slug (hasta que migres a backend)
   const activities: SubjectActivity[] = DEFAULT_ACTIVITIES_BY_SLUG[slug] ?? [];
 
+  const handleActivityActivate = (activity: SubjectActivity) => {
+    const target = activity.linkTo?.trim();
+    if (!target) return;
+
+    if (/^https?:\/\//i.test(target)) {
+      window.open(target, "_blank", "noopener,noreferrer");
+      return;
+    }
+
+    navigate(target);
+  };
+
   const [query, setQuery] = useState("");
   const filteredActivities = activities.filter((a) =>
     a.title.toLowerCase().includes(query.toLowerCase())
@@ -110,24 +122,43 @@ export default function SubjectPage() {
             <div className={styles.empty}>Aún no hay actividades para esta materia.</div>
           ) : (
             <div className={styles.grid} role="list">
-              {filteredActivities.map((a) => (
-                <article
-                  key={a.id}
-                  className={styles.card}
-                  role="listitem"
-                  tabIndex={0}
-                  title={a.title}
-                  onClick={() => {
-                    if (slug === "historia") navigate(`/historia/${a.type}`);
-                    else if (slug === "matematicas") navigate(`/matematicas/${a.type}`);
-                    else if (slug === "quimica") navigate(`/quimica/${a.type}`);
-                  }}
-                  style={{ cursor: "pointer" }}
-                >
-                  <div className={styles.cardThumb} />
-                  <h3 className={styles.cardTitle}>{a.title}</h3>
-                </article>
-              ))}
+              {filteredActivities.map((activity) => {
+                const hasLink = !!activity.linkTo;
+                const isExternal = hasLink && /^https?:\/\//i.test(activity.linkTo!);
+
+                return (
+                  <article
+                    key={activity.id}
+                    className={`${styles.card} ${
+                      hasLink ? styles.cardInteractive : styles.cardDisabled
+                    }`}
+                    role="listitem"
+                    tabIndex={hasLink ? 0 : -1}
+                    aria-disabled={hasLink ? undefined : true}
+                    title={activity.title}
+                    onClick={() => hasLink && handleActivityActivate(activity)}
+                    onKeyDown={(e) => {
+                      if (!hasLink) return;
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleActivityActivate(activity);
+                      }
+                    }}
+                  >
+                    <div className={styles.cardThumb} />
+                    <h3 className={styles.cardTitle}>{activity.title}</h3>
+                    <span
+                      className={hasLink ? styles.cardAction : styles.cardActionDisabled}
+                    >
+                      {hasLink
+                        ? isExternal
+                          ? "Abrir recurso"
+                          : "Ver actividad"
+                        : "Sin enlace disponible"}
+                    </span>
+                  </article>
+                );
+              })}
             </div>
           )}
         </section>

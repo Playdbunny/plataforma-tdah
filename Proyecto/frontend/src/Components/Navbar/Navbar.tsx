@@ -6,6 +6,7 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import styles from "./Navbar.module.css";
 import { useAppStore } from "../../stores/appStore";
+import { useSubjectsStore } from "../../stores/subjectsStore";
 
 export type NavItem = { label: string; to: string };
 
@@ -14,13 +15,6 @@ type NavbarProps = {
   items?: NavItem[];
   avatarSrc?: string;
 };
-
-const SUBJECTS = [
-  { id: "matematicas", name: "Matemática" },
-  { id: "historia",    name: "Historia"   },
-  { id: "quimica",     name: "Química"    },
-  
-];
 
 const SUBJECT_PREFIX = "/subjects";
 
@@ -58,6 +52,9 @@ export default function Navbar({
   const user  = useAppStore((s:any) => s?.user ?? null);
   const setUser = useAppStore((s: any) => s?.setUser ?? (() => {}));
 
+  const { items: subjects, list: listSubjects } = useSubjectsStore();
+  const hasSubjects = subjects.length > 0;
+
   const showMenu = !homeOnly;
 
   const isPublic = useMemo(
@@ -81,6 +78,12 @@ export default function Navbar({
     document.addEventListener("click", onDocClick);
     return () => document.removeEventListener("click", onDocClick);
   }, []);
+
+  useEffect(() => {
+    if (!hasSubjects) {
+      listSubjects();
+    }
+  }, [hasSubjects, listSubjects]);
 
   // Inyección mock con ?mock=1
   useEffect(() => {
@@ -164,26 +167,34 @@ export default function Navbar({
                               Ver todas
                             </Link>
                           </li>
-                        {SUBJECTS.map((s) => {
-                          const href = `${SUBJECT_PREFIX}/${s.id}`;
-                          const isActive = pathname.startsWith(href);
-                          return (
-                            <li key={s.id} role="none">
-                              <Link
-                                role="menuitem"
-                                to={href}
-                                className={`${styles.dropLink} ${isActive ? styles.active : ""}`}
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  setOpenSubjects(false);
-                                  navigate(href);
-                                }}
-                              >
-                                {s.name}
-                              </Link>
-                            </li>
-                          );
-                        })}
+                        {!hasSubjects ? (
+                          <li className={styles.dropEmpty} role="none">
+                            <span className={styles.dropLink} aria-disabled>
+                              Aún no hay materias disponibles
+                            </span>
+                          </li>
+                        ) : (
+                          subjects.map((s) => {
+                            const href = `${SUBJECT_PREFIX}/${s.slug}`;
+                            const isActive = pathname.startsWith(href);
+                            return (
+                              <li key={s.id} role="none">
+                                <Link
+                                  role="menuitem"
+                                  to={href}
+                                  className={`${styles.dropLink} ${isActive ? styles.active : ""}`}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    setOpenSubjects(false);
+                                    navigate(href);
+                                  }}
+                                >
+                                  {s.name}
+                                </Link>
+                              </li>
+                            );
+                          })
+                        )}
                       </ul>
                     )}
                   </div>

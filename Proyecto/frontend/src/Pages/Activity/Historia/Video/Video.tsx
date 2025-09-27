@@ -1,54 +1,38 @@
-import styles from "./Video.module.css";
 import ActivityLayout from "../../../../Layouts/ActivityLayout/ActivityLayout";
-import { useState } from "react";
+import styles from "./Video.module.css";
 
-const VideoPage = () => {
-  // Simulación: URL del video que vendrá del formulario/subida
-  const [videoUrl] = useState("/videos/historia-chile.mp4"); // Cambia por la URL real del video
-
+const VideoTemplate = () => {
   return (
-    <ActivityLayout title={<span className={styles.videoTitle}>La Historia de chile</span>}>
-      <div className={styles.videoBg}>
-        <div className={styles.videoContent}>
-          <div className={styles.sidePanelGroup}>
-            <div className={styles.sidePanel + " " + styles.topPanel}>
-              <img src="/Gifs/Fuegito.gif" alt="Fuego" className={styles.panelIcon} />
-              <span className={styles.panelText}>
-                Terminando el video<br />
-                recien se otorgarán tus monedas
-              </span>
-            </div>
-            <div className={styles.sidePanel + " " + styles.bottomPanel}>
-              <img src="/Gifs/Pixel Owl Gif.gif" alt="Sombrero" className={styles.panelIcon} />
-              <span className={styles.panelText}>
-                Como recomendación<br />
-                toma un cuaderno<br />
-                o tu tablet para<br />
-                tus apuntes
-              </span>
-            </div>
+    <ActivityLayout title="Título del video" backTo="/subjects">
+      <div className={styles.wrapper}>
+        <div className={styles.player}>
+          <div className={styles.playerPlaceholder}>
+            <strong>Inserta tu reproductor aquí</strong>
+            <p>
+              Sustituye este contenedor por la etiqueta <code>&lt;video&gt;</code>, un embed externo o cualquier componente
+              que utilices para transmitir el material audiovisual.
+            </p>
           </div>
-          <div className={styles.videoMain}>
-            <video
-              className={styles.videoPlayer}
-              src={videoUrl}
-              controls
-              poster="/Images/video-poster.png"
-            >
-              Tu navegador no soporta el video.
-            </video>
-          </div>
-          <button
-            className={styles.finishedBtn}
-            type="button"
-            onClick={() => alert("¡Actividad finalizada!")}
-          >
-            Finished <img src="/Images/coin.png" alt="Moneda" className={styles.coinIcon} /> +5
-          </button>
         </div>
+
+        <section className={styles.details}>
+          <h2>Contexto e instrucciones</h2>
+          <p>
+            Usa esta área para describir los objetivos de aprendizaje, entregar guías de trabajo o compartir enlaces
+            complementarios. Puedes agregar botones extra para descargar recursos, iniciar evaluaciones o marcar la actividad
+            como completada.
+          </p>
+          <div className={styles.actionRow}>
+            <button type="button" className={styles.highlight}>
+              Marcar como vista
+            </button>
+            <button type="button">Abrir guía de trabajo</button>
+            <button type="button">Compartir</button>
+          </div>
+        </section>
       </div>
     </ActivityLayout>
   );
 };
 
-export default VideoPage;
+export default VideoTemplate;
