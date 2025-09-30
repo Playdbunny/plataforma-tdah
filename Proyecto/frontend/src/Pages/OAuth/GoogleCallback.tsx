@@ -51,6 +51,36 @@ type NextResolution = {
   original: string | null;
 };
 
+type OAuthJwtPayload = {
+  token?: unknown;
+  user?: unknown;
+};
+
+function parseOAuthJwt(raw: string | null): { token: string; user: unknown } | null {
+  if (!raw) return null;
+
+  const [, middle] = raw.split(".");
+  if (!middle) return null;
+
+  const normalized = middle.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), "=");
+
+  try {
+    const decoded = atob(padded)
+      .split("")
+      .map((char) => `%${`00${char.charCodeAt(0).toString(16)}`.slice(-2)}`)
+      .join("");
+    const parsed = JSON.parse(decodeURIComponent(decoded)) as OAuthJwtPayload;
+    if (typeof parsed.token === "string" && parsed.user !== undefined) {
+      return { token: parsed.token, user: parsed.user };
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
 function ensureSafePath(candidate: string | null): string | null {
   if (!candidate) return null;
   return candidate.startsWith("/") ? candidate : null;
@@ -108,6 +138,9 @@ export default function GoogleCallback() {
 
   useEffect(() => {
     let handled = false;
+    const params = new URLSearchParams(location.search);
+    const queryPayload = params.get("payload");
+    const timeoutRef: { current: number | null } = { current: null };
 
     const fail = (reason: string) => {
       if (handled) return;
@@ -122,6 +155,10 @@ export default function GoogleCallback() {
       if (handled) return;
       handled = true;
       setMessage("Sesión verificada. Redirigiendo…");
+      if (timeoutRef.current !== null) {
+        window.clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }      
       try {
         useAuthStore.getState().acceptOAuthSession({ token, user });
       } catch (error) {
@@ -131,8 +168,21 @@ export default function GoogleCallback() {
       navigate(next, { replace: true });
     };
 
+    if (queryPayload) {
+      const parsedPayload = parseOAuthJwt(queryPayload);
+      if (!parsedPayload) {
+        fail("Los datos recibidos de Google son inválidos.");
+        return () => {
+          handled = true;
+        };
+      }
+      succeed(parsedPayload.token, parsedPayload.user);
+      return () => {
+        handled = true;
+      };
+    }
+
     const attemptFromQuery = () => {
-      const params = new URLSearchParams(location.search);
       const queryToken = params.get("token");
       const queryUser = params.get("user");
 
@@ -173,7 +223,7 @@ export default function GoogleCallback() {
 
     window.addEventListener("message", handleMessage);
 
-    const timeout = window.setTimeout(() => {
+    timeoutRef.current = window.setTimeout(() => {
       if (!handled) {
         fail("No se recibieron datos de autenticación. Intenta iniciar sesión otra vez.");
       }
@@ -182,7 +232,9 @@ export default function GoogleCallback() {
     return () => {
       handled = true;
       window.removeEventListener("message", handleMessage);
-      window.clearTimeout(timeout);
+      if (timeoutRef.current !== null) {
+        window.clearTimeout(timeoutRef.current);
+      }
     };
   }, [location.search, navigate, next]);
 
