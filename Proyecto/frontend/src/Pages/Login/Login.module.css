@@ -96,9 +96,21 @@
   gap:20px; /* suma más aire bajo cada input */
 }
 
-.inputWrap{ 
+.inputWrap{
   position: relative;
-  margin-bottom: 12px; /*suma más aire bajo cada input */  
+  margin-bottom: 12px; /*suma más aire bajo cada input */
+}
+
+.notice{
+  font-family: var(--font-pixel);
+  font-size: 12px;
+  background: #e6f8ff;
+  color: #0b3650;
+  border: 2px solid #0c4a58;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin: -4px 0 12px;
+  text-align: center;
 }
 
 .input{
