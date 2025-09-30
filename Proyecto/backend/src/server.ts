@@ -9,6 +9,7 @@ import session from "express-session";
 import passport from "passport";
 import { initGoogleStrategy } from "./auth/google";
 import googleRouter from "./routes/google.routes";
+import adminActivitiesRouter from "./routes/adminActivities.routes";
 
 const app = express();
 app.use(cors());
@@ -59,3 +60,7 @@ const PORT = process.env.PORT || 4000;
     console.log(`🚀 API corriendo en http://localhost:${PORT}`);
   });
 })();
+
+//Ruta de adminActivity
+app.use(adminActivitiesRouter);
+
