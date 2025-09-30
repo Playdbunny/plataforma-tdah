@@ -17,6 +17,7 @@ import Forgot from "./Pages/Forgot/Forgot";
 import Reset from "./Pages/Reset/Reset";
 import TdahSelect from "./Pages/TDAHSelect/TDAHSelect";
 import SubjectPage from "./Pages/SubjectPage/SubjectPage";
+import GoogleCallback from "./Pages/OAuth/GoogleCallback";
 
 // Páginas autenticadas
 import Courses from "./Pages/Courses/Courses";
@@ -89,6 +90,7 @@ export const router = createBrowserRouter([
   { path: "/forgot", element: <Forgot /> },
   { path: "/reset", element: <Reset /> },
   { path: "/reset/:token", element: <Reset /> },
+  { path: "/oauth/google/callback", element: <GoogleCallback /> },
 
   // Flujo inicial (selección TDAH)
   { path: "/tdah", element: <TdahSelect /> },
