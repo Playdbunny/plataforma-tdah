@@ -10,6 +10,7 @@ import { useAppStore } from "../../stores/appStore";
 // Store de autenticación (axios + persist + token)
 import { useAuthStore } from "../../stores/authStore";
 import type { TDAHType } from "../../types/user";
+import { getApiBaseUrl } from "../../Lib/api";
 
 export default function Register() {
   /* Bloquea el scroll */
@@ -68,8 +69,9 @@ export default function Register() {
       navigate("/tdah");
       return;
     }
-    const p = new URLSearchParams({ tdahType });
-    window.location.href = `/auth/google?${p.toString()}`;
+    const apiBaseUrl = getApiBaseUrl();
+    const params = new URLSearchParams({ tdahType });
+    window.location.href = `${apiBaseUrl}/auth/google?${params.toString()}`;
   };
 
   // Texto amigable del TDAH
