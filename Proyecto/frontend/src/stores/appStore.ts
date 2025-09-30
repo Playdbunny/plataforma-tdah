@@ -1,4 +1,7 @@
 // src/stores/appStore.ts
+// ============================================================
+// Store global de la app (perfil, sesión, preferencias) usando Zustand + persist
+// ============================================================
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -27,19 +30,24 @@ export type User = {
   role: UserRole;
 
   username?: string;
-  avatarUrl?: string;
+  avatarUrl?: string;  
+  tdahType?: TDAHType;
   level?: number;
   xp?: number;
   
   nextXp?: number;
-  location?: string;
-  work?: string;
+  // location?: string;
+  // work?: string;
   education?: string;
   character?: Character;
 
   // 🪙 Economía/tienda
   coins?: number;
   ownedCharacters?: string[];
+  streak?: { count: number; lastCheck?: Date | null };
+  createdAt?: Date;
+  updatedAt?: Date;
+  lastLogin?: Date | null;
 } | null;
 
 /* ======================
