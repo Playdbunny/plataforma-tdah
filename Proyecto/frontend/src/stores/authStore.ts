@@ -3,6 +3,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import api from "../Lib/api";
 import { IUserSafe, TDAHType } from "../types/user";
+import { useAppStore } from "./appStore";
 import { reviveUserDates } from "../utils/user_serializers";
 
 type RegisterBody = {
@@ -39,62 +40,90 @@ const setAuthHeader = (token: string | null) => {
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set, get) => ({
-      user: null,
-      token: null,
-      loading: false,
-      error: null,
-
-      setUser: (u) => {
-        const current = get().user;
-        if (!current) return;
-        set({ user: { ...current, ...u, streak: { ...current.streak, ...u.streak } } });
-      },
-
-      setSession: (token, user) => {
-        setAuthHeader(token);
-        set({ token, user, error: null });
-      },
-
-      register: async (body) => {
+    (set, get) => {
+      const syncAppStoreUser = (user: IUserSafe | null) => {
         try {
-          set({ loading: true, error: null });
-          const { data } = await api.post<AuthResponse>("/auth/register", body);
-          const user = reviveUserDates(data.user);
-          get().setSession(data.token, user);
-        } catch (err: any) {
-          set({ error: err?.response?.data?.error ?? err?.message ?? "No se pudo registrar" });
-          throw err;
-        } finally {
-          set({ loading: false });
+                    const { setUser: setAppUser } = useAppStore.getState();
+          setAppUser(user as Parameters<typeof setAppUser>[0]);
+        } catch {
+          // noop: si appStore no está listo simplemente ignoramos
         }
-      },
+      };
 
-      login: async (body) => {
+       const clearAppStoreSession = () => {
         try {
-          set({ loading: true, error: null });
-          const { data } = await api.post<AuthResponse>("/auth/login", body);
-          const user = reviveUserDates(data.user);
-          get().setSession(data.token, user);
-        } catch (err: any) {
-          set({ error: err?.response?.data?.error ?? err?.message ?? "No se pudo iniciar sesión" });
-          throw err;
-        } finally {
-          set({ loading: false });
+          useAppStore.getState().logout();
+        } catch {
+          // noop
         }
-      },
+      };
 
-      logout: () => {
-        setAuthHeader(null);
-        set({ user: null, token: null, error: null, loading: false });
-      },
+      return {
+        user: null,
+        token: null,
+        loading: false,
+        error: null,
 
-      acceptOAuthSession: ({ token, user }) => {
-        // user llega con fechas string → revivir
-        const revived = reviveUserDates(user);
-        get().setSession(token, revived);
-      },
-    }),
+        setUser: (u) => {
+          const current = get().user;
+          if (!current) return;
+          set({ user: { ...current, ...u, streak: { ...current.streak, ...u.streak } } });
+        },
+
+        setSession: (token, user) => {
+          setAuthHeader(token);
+          set({ token, user, error: null });
+          syncAppStoreUser(user);
+        },
+
+        register: async (body) => {
+          try {
+            set({ loading: true, error: null });
+            const { data } = await api.post<AuthResponse>("/auth/register", body);
+            const user = reviveUserDates(data.user);
+            get().setSession(data.token, user);
+          } catch (err: any) {
+            set({
+              error: err?.response?.data?.error ?? err?.message ?? "No se pudo registrar",
+            });
+            throw err;
+          } finally {
+            set({ loading: false });
+          }
+        },
+
+        login: async (body) => {
+          try {
+            set({ loading: true, error: null });
+            const { data } = await api.post<AuthResponse>("/auth/login", body);
+            const user = reviveUserDates(data.user);
+            get().setSession(data.token, user);
+          } catch (err: any) {
+            set({
+              error:
+                err?.response?.data?.error ?? err?.message ?? "No se pudo iniciar sesión",
+            });
+            throw err;
+          } finally {
+            set({ loading: false });
+          }
+        },
+
+        logout: () => {
+          setAuthHeader(null);
+          set({ user: null, token: null, error: null, loading: false });
+          clearAppStoreSession();
+        },
+
+        acceptOAuthSession: ({ token, user }) => {
+          // user llega con fechas string → revivir
+          const revived = reviveUserDates(user);
+          setAuthHeader(token);
+          set({ token, user: revived, error: null });
+          syncAppStoreUser(revived);
+        },
+      };
+    },
     {
       name: "sq_auth",
       storage: createJSONStorage(() => localStorage),
