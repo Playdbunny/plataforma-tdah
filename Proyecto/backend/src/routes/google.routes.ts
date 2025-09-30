@@ -3,7 +3,7 @@ import passport from "passport";
 import { signToken } from "./helpers/jwt-sign";
 // URL base del frontend. Se toma de la variable de entorno y, si no existe,
 // se usa localhost como respaldo para entornos de desarrollo.
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";/**
 /**
  * Construye una URL absoluta hacia el frontend combinando el host definido
  * en la configuración con el pathname y cualquier parámetro de query extra.
