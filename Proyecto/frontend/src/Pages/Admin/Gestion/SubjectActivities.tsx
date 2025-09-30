@@ -8,6 +8,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 
 import styles from "./SubjectActivities.module.css";
+import ActivityForm from "./ActivityForm";
+import "./ActivityForm.module.css";
 import { useSubjectsStore } from "../../../stores/subjectsStore";
 import {
   DEFAULT_ACTIVITIES_BY_SLUG,
@@ -54,9 +56,10 @@ export default function SubjectActivitiesAdminPage() {
   const subjectName =
     subject?.name ?? slug.charAt(0).toUpperCase() + slug.slice(1);
 
+  // Filtrar actividades del store por materia (slug)
   const activities = useMemo<SubjectActivity[]>(
-    () => DEFAULT_ACTIVITIES_BY_SLUG[slug] ?? [],
-    [slug]
+    () => items.filter((a) => a.subjectSlug === slug),
+    [items, slug]
   );
 
   const [query, setQuery] = useState("");
@@ -65,6 +68,8 @@ export default function SubjectActivitiesAdminPage() {
     "all"
   );
   const [sortBy, setSortBy] = useState<SortKey>("updatedDesc");
+  const [showForm, setShowForm] = useState(false);
+  // Mostrar formulario de nueva actividad
 
   const filteredActivities = useMemo(() => {
     const q = debouncedQuery.trim().toLowerCase();
@@ -116,12 +121,15 @@ export default function SubjectActivitiesAdminPage() {
             type="button"
             className={styles.newButton}
             aria-label="Crear nueva actividad"
-            onClick={() =>
-              window.alert("Funcionalidad en construcción: crear nueva actividad")
-            }
+            onClick={() => setShowForm(true)}
           >
             + Nueva Actividad
           </button>
+          {showForm && (
+            <div className="modalOverlay">
+              <ActivityForm subjectSlug={slug} onClose={() => setShowForm(false)} />
+            </div>
+          )}
         </div>
 
         <div className={styles.toolbar}>

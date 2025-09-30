@@ -1,0 +1,108 @@
+.modalOverlay {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(30, 27, 60, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background: linear-gradient(135deg, #eef2ff 60%, #c7d2fe 100%);
+  border-radius: 18px;
+  box-shadow: 0 8px 32px #6366f1cc;
+  padding: 32px 28px 24px 28px;
+  min-width: 350px;
+  max-width: 95vw;
+  font-family: 'PixelGrid', 'Press Start 2P', system-ui, sans-serif;
+  border: 3px solid #6366f1;
+  position: relative;
+}
+
+.formTitle {
+  font-family: 'Press Start 2P', system-ui, sans-serif;
+  font-size: 22px;
+  color: #4f46e5;
+  margin-bottom: 18px;
+  text-align: center;
+  letter-spacing: 0.04em;
+}
+
+.formLabel {
+  display: block;
+  margin-bottom: 14px;
+  font-size: 15px;
+  color: #312e81;
+  font-family: 'PixelGrid', system-ui, sans-serif;
+}
+
+.formInput, .formSelect, .formTextarea {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 2px solid #a5b4fc;
+  background: #fff;
+  font-size: 15px;
+  margin-top: 4px;
+  margin-bottom: 10px;
+  font-family: inherit;
+  color: #3730a3;
+  transition: border 0.2s;
+}
+.formInput:focus, .formSelect:focus, .formTextarea:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px #6366f155;
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.submitBtn {
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 22px;
+  font-family: 'Press Start 2P', system-ui, sans-serif;
+  font-size: 15px;
+  cursor: pointer;
+  box-shadow: 0 4px 16px #6366f155;
+  transition: background 0.2s, transform 0.2s;
+}
+.submitBtn:disabled {
+  background: #a5b4fc;
+  cursor: not-allowed;
+}
+.submitBtn:hover:not(:disabled) {
+  background: linear-gradient(90deg, #8b5cf6, #6366f1);
+  transform: translateY(-2px);
+}
+
+.cancelBtn {
+  background: #f3f4f6;
+  color: #6366f1;
+  border: 2px solid #6366f1;
+  border-radius: 12px;
+  padding: 10px 22px;
+  font-family: 'PixelGrid', system-ui, sans-serif;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.cancelBtn:hover {
+  background: #6366f1;
+  color: #fff;
+}
+
+.errorMsg {
+  color: #dc2626;
+  font-size: 14px;
+  margin-bottom: 8px;
+  text-align: center;
+}
