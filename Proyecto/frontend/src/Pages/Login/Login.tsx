@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate, useSearchParams } from "react-router-do
 import Navbar from "../../Components/Navbar/Navbar";
 import styles from "./Login.module.css";
 import { useAuthStore } from "../../stores/authStore";
+import { getApiBaseUrl } from "../../Lib/api";
 
 export default function Login() {
 
@@ -26,6 +27,7 @@ export default function Login() {
   const location = useLocation();
   const [qs] = useSearchParams();
   const next = qs.get("next") || "/profile";
+  const nextParam = qs.get("next");
 
   /* Mensajes provenientes de redirecciones (p.ej. OAuth fallido) */
   useEffect(() => {
@@ -46,8 +48,11 @@ export default function Login() {
 
   /* Handler del botón Google: redirige al backend */
   const handleGoogle = () => {
-    // en login no pasamos tdahType
-    window.location.href = "/auth/google";
+    const apiBaseUrl = getApiBaseUrl();
+    const params = new URLSearchParams();
+    if (nextParam) params.set("next", nextParam);
+    const query = params.toString();
+    window.location.href = `${apiBaseUrl}/auth/google${query ? `?${query}` : ""}`;
   };
 
   /* Submit del formulario: llama al backend usando el store */
