@@ -12,10 +12,10 @@ import styles from "./Materias.module.css";
 import { useSubjectsStore, type Subject } from "../../../stores/subjectsStore";
 
 // Estructura del formulario (no incluye id ni banner)
-type Form = { name: string; description: string; slug?: string };
+type Form = { name: string; description: string };
 
 // Estado inicial del form
-const EMPTY_FORM: Form = { name: "", description: "", slug: "" };
+const EMPTY_FORM: Form = { name: "", description: "" };
 
 export default function MateriasPage() {
   /* =========================================================================
@@ -34,7 +34,7 @@ export default function MateriasPage() {
   /* =========================================================================
      2) ESTADO DE UI
      ========================================================================= */
-  const [query, setQuery] = useState("");                 // búsqueda por nombre/slug/descr.
+  const [query, setQuery] = useState("");                 // búsqueda por nombre/descr.
   const [sortAsc, setSortAsc] = useState(true);           // orden A→Z o Z→A
 
   // Modal de Crear/Editar
@@ -66,8 +66,7 @@ export default function MateriasPage() {
       ? items
       : items.filter(s =>
           s.name.toLowerCase().includes(q) ||
-          (s.description ?? "").toLowerCase().includes(q) ||
-          s.slug.toLowerCase().includes(q)
+          (s.description ?? "").toLowerCase().includes(q)
         );
 
     return arr.slice().sort((a, b) =>
@@ -95,7 +94,7 @@ export default function MateriasPage() {
   // Abrir modal en modo "editar" con datos cargados
   function openEdit(s: Subject) {
     setEditingId(s.id);
-    setForm({ name: s.name, description: s.description ?? "", slug: s.slug });
+    setForm({ name: s.name, description: s.description ?? "" });
     setError(null);
     // resetea banner del modal
     if (bannerPreview) URL.revokeObjectURL(bannerPreview);
@@ -159,7 +158,6 @@ export default function MateriasPage() {
         s = await update(editingId, {
           name: form.name.trim(),
           description: form.description.trim(),
-          slug: form.slug?.trim() || undefined,
         });
 
         // Si eligió un nuevo banner, lo "subimos" (mock) ahora
@@ -171,7 +169,6 @@ export default function MateriasPage() {
         s = await create({
           name: form.name.trim(),
           description: form.description.trim(),
-          slug: form.slug?.trim() || undefined,
         });
 
         // Si eligió banner al crear, súbelo también
@@ -220,7 +217,7 @@ export default function MateriasPage() {
         <div className={styles.right}>
           <input
             className={styles.search}
-            placeholder="Buscar por nombre/slug/descripción…"
+            placeholder="Buscar por nombre o descripción…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             aria-label="Buscar materia"
@@ -242,7 +239,6 @@ export default function MateriasPage() {
             <tr>
               <th>Materia</th>
               <th>Descripción</th>
-              <th>Slug</th>
               <th>Banner</th>
               <th className={styles.colAcciones}>Acciones</th>
             </tr>
@@ -252,7 +248,7 @@ export default function MateriasPage() {
             {/* Estado vacío */}
             {filtered.length === 0 ? (
               <tr>
-                <td className={styles.empty} colSpan={5}>
+                <td className={styles.empty} colSpan={4}>
                   No hay materias que coincidan.
                 </td>
               </tr>
@@ -263,8 +259,6 @@ export default function MateriasPage() {
                   <td className={styles.descripcion}>
                     {s.description ?? "—"}
                   </td>
-                  <td className={styles.slug}>{s.slug}</td>
-
                   {/* Banner con miniatura + acción "quitar" */}
                   <td className={styles.bannerCell}>
                     {s.bannerUrl ? (
@@ -350,18 +344,6 @@ export default function MateriasPage() {
                     setForm((f) => ({ ...f, description: e.target.value }))
                   }
                   maxLength={200}
-                />
-              </label>
-
-              <label className={styles.label}>
-                Slug (opcional)
-                <input
-                  className={styles.input}
-                  value={form.slug ?? ""}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, slug: e.target.value }))
-                  }
-                  placeholder="p. ej. matematicas"
                 />
               </label>
 

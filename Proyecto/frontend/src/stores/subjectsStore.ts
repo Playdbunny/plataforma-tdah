@@ -27,8 +27,8 @@ type SubjectsState = {
   error: string | null;
 
   list: () => Promise<void>;
-  create: (p: { name: string; description?: string; slug?: string }) => Promise<Subject>;
-  update: (id: string, patch: Partial<Pick<Subject,"name"|"description"|"slug">>) => Promise<Subject>;
+  create: (p: { name: string; description?: string }) => Promise<Subject>;
+  update: (id: string, patch: Partial<Pick<Subject, "name" | "description">>) => Promise<Subject>;
   remove: (id: string) => Promise<void>;
   uploadBanner: (id: string, file: File) => Promise<Subject>;
   clearBanner: (id: string) => Promise<Subject>;
@@ -75,12 +75,14 @@ export const useSubjectsStore = create<SubjectsState>()(
         }
       },
 
-      create: async ({ name, description, slug }) => {
+      create: async ({ name, description }) => {
+        const cleanName = name.trim();
+        const cleanDescription = description?.trim() || undefined;
         const s: Subject = {
           id: crypto.randomUUID(),
-          name: name.trim(),
-          description: description?.trim(),
-          slug: (slug?.trim() || toSlug(name)) || `subject-${Math.random().toString(36).slice(2,8)}`,
+          name: cleanName,
+          description: cleanDescription,
+          slug: toSlug(cleanName) || `subject-${Math.random().toString(36).slice(2,8)}`,
           bannerUrl: null,
         };
         set({ items: [s, ...get().items] });
@@ -88,7 +90,29 @@ export const useSubjectsStore = create<SubjectsState>()(
       },
 
       update: async (id, patch) => {
-        const next = get().items.map(it => it.id === id ? { ...it, ...patch } : it);
+        const trimmedPatch: Partial<Subject> = {};
+        if (patch.name !== undefined) {
+          trimmedPatch.name = patch.name.trim();
+        }
+        if (patch.description !== undefined) {
+          const cleanDescription = patch.description.trim();
+          trimmedPatch.description = cleanDescription || undefined;
+        }
+
+        const next = get().items.map(it => {
+          if (it.id !== id) return it;
+
+          const updated: Subject = {
+            ...it,
+            ...trimmedPatch,
+          };
+
+          if (trimmedPatch.name !== undefined) {
+            updated.slug = toSlug(trimmedPatch.name) || it.slug || `subject-${Math.random().toString(36).slice(2,8)}`;
+          }
+
+          return updated;
+        });
         set({ items: next });
         return next.find(x => x.id === id)!;
       },

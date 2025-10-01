@@ -78,7 +78,6 @@ tbody tr:hover { background: #eef2ff; }
 .colAcciones { width: 220px; }
 .nombre { font-weight: 800; }
 .descripcion { color: #374151; }
-.slug { color: #374151; }
 
 /* Banner en fila */
 
@@ -203,5 +202,4 @@ tbody tr:hover { background: #eef2ff; }
 }
 @media (max-width: 640px) {
   .colAcciones { width: 160px; }
-  .slug { display:none; } /* Oculta slug en móvil para respirar */
 }
