@@ -1,0 +1,74 @@
+.overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(30,32,59,0.85);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal {
+  background: #f6f7ff;
+  border-radius: 18px;
+  box-shadow: 0 8px 32px #1e203b44;
+  padding: 2.5rem 2rem 2rem 2rem;
+  min-width: 350px;
+  max-width: 95vw;
+  min-height: 200px;
+  position: relative;
+  font-family: 'PixelGrid', system-ui, sans-serif;
+  color: #1e203b;
+}
+.closeBtn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: #1e203b;
+  cursor: pointer;
+}
+.actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  justify-content: flex-end;
+}
+.saveBtn {
+  background: #6c63ff;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 2px 8px #6c63ff33;
+}
+.publishBtn {
+  background: #00c48c;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+.deleteBtn {
+  background: #ff4d4f;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+.cancelBtn {
+  background: #e0e7ff;
+  color: #1e203b;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+}

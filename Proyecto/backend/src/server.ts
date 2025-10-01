@@ -10,6 +10,7 @@ import passport from "passport";
 import { initGoogleStrategy } from "./auth/google";
 import googleRouter from "./routes/google.routes";
 import adminActivitiesRouter from "./routes/adminActivities.routes";
+import adminSubjectsRouter from "./routes/adminSubjects.routes";
 
 const app = express();
 app.use(cors());
@@ -61,6 +62,8 @@ const PORT = process.env.PORT || 4000;
   });
 })();
 
-//Ruta de adminActivity
+// Ruta de adminActivity
 app.use(adminActivitiesRouter);
+// Ruta de adminSubjects
+app.use(adminSubjectsRouter);
 

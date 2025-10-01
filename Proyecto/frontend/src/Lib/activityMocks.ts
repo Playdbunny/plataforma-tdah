@@ -21,7 +21,17 @@ export type SubjectActivity = {
   status: SubjectActivityStatus;
   updatedAt: string; // ISO string para mostrar fecha legible
   description?: string;
-  subjectSlug: string; // materia a la que pertenece
+  subjectSlug: string; // materia a la que pertenece (mock)
+  subjectId?: string; // id de materia real (backend)
+};
+
+// Permitir campos extra para compatibilidad backend
+export type BackendActivityPayload = Partial<SubjectActivity> & {
+  createdBy?: string;
+  fieldsJSON?: any;
+  templateType?: string;
+  slug?: string;
+  subjectId?: string;
 };
 
 export const SUBJECT_ACTIVITY_TYPE_LABELS: Record<SubjectActivityType, string> = {

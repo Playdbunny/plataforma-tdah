@@ -4,14 +4,17 @@
 // CRUD mock sin backend: listar, crear, editar, eliminar, subir/quitar banners.
 // ============================================================
 
+
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import * as api from "../api/subjects";
 
 // ========================
 // Tipo base de una materia
 // ========================
 export type Subject = {
-  id: string;
+  id: string; // UUID local (legacy, para compatibilidad)
+  _id?: string; // ObjectId de MongoDB (opcional para compatibilidad)
   slug: string;             // p.ej. "matematicas"
   name: string;             // "Matemáticas"
   description?: string;     // descripción corta
@@ -67,9 +70,10 @@ export const useSubjectsStore = create<SubjectsState>()(
       list: async () => {
         set({ loading: true, error: null });
         try {
-          await new Promise(r => setTimeout(r, 200));
-        } catch {
-          set({ error: "No se pudo listar materias" });
+          const data = await api.getSubjects();
+          set({ items: data, error: null });
+        } catch (e: any) {
+          set({ error: e?.response?.data?.error || "No se pudo listar materias" });
         } finally {
           set({ loading: false });
         }

@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useActivitiesStore } from "../../../stores/activitiesStore";
-import { SubjectActivityType, SUBJECT_ACTIVITY_TYPE_LABELS } from "../../../Lib/activityMocks";
+import { useAuthStore } from "../../../stores/authStore";
+import { useSubjectsStore } from "../../../stores/subjectsStore";
+import { SubjectActivityType, SUBJECT_ACTIVITY_TYPE_LABELS, BackendActivityPayload } from "../../../Lib/activityMocks";
 import styles from "./ActivityForm.module.css";
 
 interface ActivityFormProps {
@@ -10,20 +12,31 @@ interface ActivityFormProps {
 
 export default function ActivityForm({ subjectSlug, onClose }: ActivityFormProps) {
   const { create, loading, error } = useActivitiesStore();
+  const { user } = useAuthStore();
+  const { items: subjects } = useSubjectsStore();
   const [title, setTitle] = useState("");
   const [type, setType] = useState<SubjectActivityType>("infografia");
   const [description, setDescription] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await create({
+    // Buscar la materia seleccionada
+    const subject = subjects.find(s => s.slug === subjectSlug);
+    const payload: BackendActivityPayload = {
       title,
       type,
       description,
       status: "draft",
       updatedAt: new Date().toISOString(),
       subjectSlug,
-    });
+      // Campos requeridos por el backend:
+      createdBy: user?.id ?? "",
+      fieldsJSON: {},
+      templateType: "default",
+      slug: title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, ""),
+      subjectId: subject?._id ?? "",
+    };
+    await create(payload);
     onClose();
   };
 

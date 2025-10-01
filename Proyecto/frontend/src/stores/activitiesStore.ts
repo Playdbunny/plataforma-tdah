@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import * as api from "../api/activities";
-import { SubjectActivity } from "../Lib/activityMocks";
+import { SubjectActivity, DEFAULT_ACTIVITIES_BY_SLUG } from "../Lib/activityMocks";
 
 interface ActivitiesState {
   items: SubjectActivity[];
@@ -20,7 +20,9 @@ export const useActivitiesStore = create<ActivitiesState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const data = await api.getActivities();
-      set({ items: data, error: null });
+      // Mezclar siempre actividades del backend y las mock
+      const allMock: SubjectActivity[] = Object.values(DEFAULT_ACTIVITIES_BY_SLUG).flat();
+      set({ items: [...data, ...allMock], error: null });
     } catch (e: any) {
       set({ error: e?.response?.data?.error || "Error al cargar actividades" });
     } finally {
