@@ -21,6 +21,20 @@ export type SubjectActivity = {
   status: SubjectActivityStatus;
   updatedAt: string; // ISO string para mostrar fecha legible
   description?: string;
+  subjectSlug: string; // materia a la que pertenece (mock)
+  subjectId?: string; // id de materia real (backend)
+  fieldsJSON?: Record<string, any>;
+  slug?: string;
+  templateType?: string;
+};
+
+// Permitir campos extra para compatibilidad backend
+export type BackendActivityPayload = Partial<SubjectActivity> & {
+  createdBy?: string;
+  fieldsJSON?: any;
+  templateType?: string;
+  slug?: string;
+  subjectId?: string;
 };
 
 export const SUBJECT_ACTIVITY_TYPE_LABELS: Record<SubjectActivityType, string> = {
@@ -46,6 +60,7 @@ export const DEFAULT_ACTIVITIES_BY_SLUG: Record<string, SubjectActivity[]> = {
       status: "published",
       updatedAt: "2025-02-01T12:00:00Z",
       description: "Cronología visual de los hechos claves del conflicto.",
+      subjectSlug: "historia",
     },
     {
       id: "hist-2",
@@ -53,6 +68,7 @@ export const DEFAULT_ACTIVITIES_BY_SLUG: Record<string, SubjectActivity[]> = {
       type: "quiz",
       status: "published",
       updatedAt: "2025-01-25T15:30:00Z",
+      subjectSlug: "historia",
     },
     {
       id: "hist-3",
@@ -61,6 +77,7 @@ export const DEFAULT_ACTIVITIES_BY_SLUG: Record<string, SubjectActivity[]> = {
       status: "draft",
       updatedAt: "2025-02-10T09:45:00Z",
       description: "Presentación interactiva sobre la crisis del siglo XX.",
+      subjectSlug: "historia",
     },
     {
       id: "hist-4",
@@ -68,6 +85,7 @@ export const DEFAULT_ACTIVITIES_BY_SLUG: Record<string, SubjectActivity[]> = {
       type: "video",
       status: "published",
       updatedAt: "2025-01-12T18:20:00Z",
+      subjectSlug: "historia",
     },
     {
       id: "hist-5",
@@ -75,6 +93,7 @@ export const DEFAULT_ACTIVITIES_BY_SLUG: Record<string, SubjectActivity[]> = {
       type: "juego",
       status: "archived",
       updatedAt: "2024-12-10T10:05:00Z",
+      subjectSlug: "historia",
     },
   ],
   matematicas: [
@@ -84,6 +103,7 @@ export const DEFAULT_ACTIVITIES_BY_SLUG: Record<string, SubjectActivity[]> = {
       type: "infografia",
       status: "published",
       updatedAt: "2025-02-09T11:00:00Z",
+      subjectSlug: "matematicas",
     },
     {
       id: "mat-2",
@@ -91,6 +111,7 @@ export const DEFAULT_ACTIVITIES_BY_SLUG: Record<string, SubjectActivity[]> = {
       type: "quiz",
       status: "draft",
       updatedAt: "2025-02-08T08:30:00Z",
+      subjectSlug: "matematicas",
     },
     {
       id: "mat-3",
@@ -98,6 +119,7 @@ export const DEFAULT_ACTIVITIES_BY_SLUG: Record<string, SubjectActivity[]> = {
       type: "ppt-animada",
       status: "published",
       updatedAt: "2025-01-28T14:10:00Z",
+      subjectSlug: "matematicas",
     },
     {
       id: "mat-4",
@@ -105,6 +127,7 @@ export const DEFAULT_ACTIVITIES_BY_SLUG: Record<string, SubjectActivity[]> = {
       type: "video",
       status: "published",
       updatedAt: "2025-01-15T16:50:00Z",
+      subjectSlug: "matematicas",
     },
     {
       id: "mat-5",
@@ -112,6 +135,7 @@ export const DEFAULT_ACTIVITIES_BY_SLUG: Record<string, SubjectActivity[]> = {
       type: "juego",
       status: "draft",
       updatedAt: "2024-12-20T19:00:00Z",
+      subjectSlug: "matematicas",
     },
   ],
   quimica: [
@@ -121,6 +145,7 @@ export const DEFAULT_ACTIVITIES_BY_SLUG: Record<string, SubjectActivity[]> = {
       type: "infografia",
       status: "published",
       updatedAt: "2025-02-03T10:25:00Z",
+      subjectSlug: "quimica",
     },
     {
       id: "quim-2",
@@ -128,6 +153,7 @@ export const DEFAULT_ACTIVITIES_BY_SLUG: Record<string, SubjectActivity[]> = {
       type: "quiz",
       status: "published",
       updatedAt: "2025-01-30T13:15:00Z",
+      subjectSlug: "quimica",
     },
     {
       id: "quim-3",
@@ -135,6 +161,7 @@ export const DEFAULT_ACTIVITIES_BY_SLUG: Record<string, SubjectActivity[]> = {
       type: "ppt-animada",
       status: "draft",
       updatedAt: "2025-01-22T09:00:00Z",
+      subjectSlug: "quimica",
     },
     {
       id: "quim-4",
@@ -142,6 +169,7 @@ export const DEFAULT_ACTIVITIES_BY_SLUG: Record<string, SubjectActivity[]> = {
       type: "video",
       status: "published",
       updatedAt: "2025-01-05T17:40:00Z",
+      subjectSlug: "quimica",
     },
     {
       id: "quim-5",
@@ -149,6 +177,7 @@ export const DEFAULT_ACTIVITIES_BY_SLUG: Record<string, SubjectActivity[]> = {
       type: "juego",
       status: "archived",
       updatedAt: "2024-11-28T12:30:00Z",
+      subjectSlug: "quimica",
     },
   ],
 };

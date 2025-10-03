@@ -61,3 +61,60 @@ npm install axios
 npm run dev
 ```
 > El frontend quedará en http://localhost:5173.
+
+## 🧩 Activity model & API (CRUD + validation)
+### 🔹 Backend
+
+* Modelo Activity
+
+  subjectId: ObjectId — Referencia a la materia
+  title: String — Título de la actividad
+  slug: String — Identificador único por materia
+  templateType: String — Tipo de plantilla (quiz, video, ppt, etc.)
+  fieldsJSON: Object — Estructura variable según el tipo de actividad
+  status: "draft" | "published"
+  createdBy: ObjectId — Usuario creador
+  createdAt, updatedAt: Date
+
+* Endpoints
+
+ 1. Crear actividad
+   
+   * POST /admin/activities
+   * Headers: Authorization: Bearer <token>
+   * Body (JSON):
+     {
+      "subjectId": "652e1b1234567890abcdef12",
+      "title": "Quiz de Matemáticas",
+      "slug": "quiz-matematicas",
+      "templateType": "quiz",
+      "fieldsJSON": { "questions": [] },
+      "status": "draft",
+      "createdBy": "652e1b1234567890abcdef12"
+     }
+
+ 2. Listar actividades
+   
+   * GET /admin/activities
+   * Headers: Authorization: Bearer <token>
+   * Respuesta: Array de actividades
+
+ 3. Actualizar actividades
+
+   * PUT /admin/activities/:id
+   * Headers: Authorization: Bearer <token>
+   * Body: Campos actualizar 
+   * Respuesta: Actividad actualizada
+
+ 4. Eliminar actividad 
+
+   * DELETE /admin/activities/:id
+   * Headers: Authorization: Bear <token>
+   * Respuesta: {"message": "Actividad eliminada."}
+
+* Errores comunes
+
+ - 401 Unauthorized: Token faltantes o invalido
+ - 403 Forbidden: Usuario sin permisos de admin
+ - 422 Unprocessable Entity: Datos invalidos o slug repetido
+ - 404 Not Found: Actividad no encontrada

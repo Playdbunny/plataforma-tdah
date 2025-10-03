@@ -7,6 +7,11 @@ import { RouterProvider } from "react-router-dom";
 import { router } from "./router";         // ← usamos router.tsx
 import "./globals.css";
 import { useAppStore } from "./stores/appStore";
+import { setAuthTokenGetter } from "./Lib/api";
+import { useAuthStore } from "./stores/authStore";
+
+// Configura el getter de token para todas las peticiones API
+setAuthTokenGetter(() => useAuthStore.getState().token);
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

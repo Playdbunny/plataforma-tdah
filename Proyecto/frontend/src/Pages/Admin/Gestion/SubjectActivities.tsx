@@ -8,7 +8,11 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 
 import styles from "./SubjectActivities.module.css";
+import ActivityForm from "./ActivityForm";
+import ActivityEditModal from "./ActivityEditModal";
+import activityFormStyles from "./ActivityForm.module.css";
 import { useSubjectsStore } from "../../../stores/subjectsStore";
+import { useActivitiesStore } from "../../../stores/activitiesStore";
 import {
   DEFAULT_ACTIVITIES_BY_SLUG,
   SUBJECT_ACTIVITY_STATUS_LABELS,
@@ -44,19 +48,26 @@ export default function SubjectActivitiesAdminPage() {
   const { subjectId } = useParams<{ subjectId: string }>();
   const slug = useMemo(() => normalizeSubjectSlug(subjectId), [subjectId]);
 
-  const { items, list } = useSubjectsStore();
+  const { items: subjects, list } = useSubjectsStore();
+  const { items: activities, fetch: fetchActivities } = useActivitiesStore();
 
   useEffect(() => {
-    if (!items || items.length === 0) list();
-  }, [items, list]);
+    if (!subjects || subjects.length === 0) list();
+    fetchActivities();
+  }, [subjects, list, fetchActivities]);
 
-  const subject = items.find((s) => s.slug.toLowerCase() === slug);
+  const subject = subjects.find((s) => s.slug.toLowerCase() === slug);
   const subjectName =
     subject?.name ?? slug.charAt(0).toUpperCase() + slug.slice(1);
 
-  const activities = useMemo<SubjectActivity[]>(
-    () => DEFAULT_ACTIVITIES_BY_SLUG[slug] ?? [],
-    [slug]
+  // Filtrar actividades por materia (subjectId o subjectSlug)
+  const filteredBySubject = useMemo<SubjectActivity[]>(
+    () => activities.filter((a) => {
+      if (a.subjectId && subject?._id) return a.subjectId === subject._id;
+      if (a.subjectSlug) return a.subjectSlug === slug;
+      return false;
+    }),
+    [activities, slug, subject]
   );
 
   const [query, setQuery] = useState("");
@@ -65,10 +76,13 @@ export default function SubjectActivitiesAdminPage() {
     "all"
   );
   const [sortBy, setSortBy] = useState<SortKey>("updatedDesc");
+  const [showForm, setShowForm] = useState(false);
+  const [editingActivity, setEditingActivity] = useState<SubjectActivity|null>(null);
+  // Mostrar formulario de nueva actividad
 
   const filteredActivities = useMemo(() => {
     const q = debouncedQuery.trim().toLowerCase();
-    let result = activities.filter((a) => {
+    let result = filteredBySubject.filter((a) => {
       const matchesQuery =
         q.length === 0 || a.title.toLowerCase().includes(q);
       const matchesType = typeFilter === "all" || a.type === typeFilter;
@@ -84,13 +98,13 @@ export default function SubjectActivitiesAdminPage() {
     }
 
     return result;
-  }, [activities, debouncedQuery, typeFilter, sortBy]);
+  }, [filteredBySubject, debouncedQuery, typeFilter, sortBy]);
 
   const typeOptions = useMemo(() => {
     const unique = new Set<SubjectActivityType>();
-    activities.forEach((a) => unique.add(a.type));
+    filteredBySubject.forEach((a) => unique.add(a.type));
     return Array.from(unique);
-  }, [activities]);
+  }, [filteredBySubject]);
 
   const hasActiveFilters = query.trim().length > 0 || typeFilter !== "all";
 
@@ -116,12 +130,15 @@ export default function SubjectActivitiesAdminPage() {
             type="button"
             className={styles.newButton}
             aria-label="Crear nueva actividad"
-            onClick={() =>
-              window.alert("Funcionalidad en construcción: crear nueva actividad")
-            }
+            onClick={() => setShowForm(true)}
           >
             + Nueva Actividad
           </button>
+          {showForm && (
+            <div className={activityFormStyles.modalOverlay}>
+              <ActivityForm subjectSlug={slug} onClose={() => setShowForm(false)} />
+            </div>
+          )}
         </div>
 
         <div className={styles.toolbar}>
@@ -232,7 +249,11 @@ export default function SubjectActivitiesAdminPage() {
                   <time dateTime={activity.updatedAt}>
                     Actualizado: {formatDate(activity.updatedAt)}
                   </time>
-                  <button type="button" className={styles.manageButton}>
+                  <button
+                    type="button"
+                    className={styles.manageButton}
+                    onClick={() => setEditingActivity(activity)}
+                  >
                     Administrar
                   </button>
                 </footer>
@@ -241,6 +262,12 @@ export default function SubjectActivitiesAdminPage() {
           </div>
         )}
       </main>
-    </div>
+    {editingActivity && (
+      <ActivityEditModal
+        activity={editingActivity}
+        onClose={() => setEditingActivity(null)}
+      />
+    )}
+  </div>
   );
 }

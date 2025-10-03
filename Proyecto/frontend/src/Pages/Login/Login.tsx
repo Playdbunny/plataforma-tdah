@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate, useSearchParams } from "react-router-do
 import Navbar from "../../Components/Navbar/Navbar";
 import styles from "./Login.module.css";
 import { useAuthStore } from "../../stores/authStore";
+import { useAppStore } from "../../stores/appStore";
 import { getApiBaseUrl } from "../../Lib/api";
 
 export default function Login() {
@@ -63,10 +64,12 @@ export default function Login() {
 
       // accedemos al user recién guardado en el store
       const user = useAuthStore.getState().user;
+      // sincroniza también en appStore para guards y layout
+      if (user) useAppStore.getState().setUser(user);
 
       // si viene ?next= lo respetamos, si no, mandamos según el rol
       const target =
-      qs.get("next") || (user?.role === "admin" ? "/admin" : "/profile");
+        qs.get("next") || (user?.role === "admin" ? "/admin" : "/profile");
 
       navigate(target, { replace: true }); // redirige a la ruta que venía en ?next o al home
     } catch {

@@ -89,7 +89,8 @@
   border-bottom: 2px solid #c6d1ff;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 16px;
   padding: 0 16px;
 }
 
@@ -106,7 +107,12 @@
 }
 
 /* Lado derecho de la topbar */
-.topRight { display: flex; align-items: center; gap: 12px; }
+.topRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
 
 /* Botón de campana (notificaciones) con badge */
 .bell { position: relative; background: transparent; border: 0; font-size: 20px; cursor: pointer; }

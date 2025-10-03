@@ -31,7 +31,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
 /** Middleware que exige un rol específico */
 export function requireRole(role: "student" | "admin") {
   return (req: any, res: Response, next: NextFunction) => {
-    if (!req.auth || req.auth.role !== role) {
+    if (!req.auth || req.auth.role !== role ) {
       return res.status(403).json({ error: "No autorizado" });
     }
     next();

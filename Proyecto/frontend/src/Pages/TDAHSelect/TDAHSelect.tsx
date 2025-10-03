@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../../Components/Navbar/Navbar";
 import { useAppStore } from "../../stores/appStore";
 import type { TDAHType } from "../../stores/appStore";
-import styles from "./TdahSelect.module.css";
+import styles from "./TDAHSelect.module.css";
 
 export default function TdahSelect() {
   useEffect(() => {
