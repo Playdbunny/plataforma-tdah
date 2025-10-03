@@ -10,7 +10,7 @@ import { Link, Navigate, useParams } from "react-router-dom";
 import styles from "./SubjectActivities.module.css";
 import ActivityForm from "./ActivityForm";
 import ActivityEditModal from "./ActivityEditModal";
-import "./ActivityForm.module.css";
+import activityFormStyles from "./ActivityForm.module.css";
 import { useSubjectsStore } from "../../../stores/subjectsStore";
 import { useActivitiesStore } from "../../../stores/activitiesStore";
 import {
@@ -135,7 +135,7 @@ export default function SubjectActivitiesAdminPage() {
             + Nueva Actividad
           </button>
           {showForm && (
-            <div className="modalOverlay">
+            <div className={activityFormStyles.modalOverlay}>
               <ActivityForm subjectSlug={slug} onClose={() => setShowForm(false)} />
             </div>
           )}

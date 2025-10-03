@@ -1,11 +1,15 @@
-import React, { useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import type { ChangeEvent, FormEvent } from "react";
 import styles from "./ActivityForm.module.css";
-import { SubjectActivity, DEFAULT_ACTIVITIES_BY_SLUG } from "../../../Lib/activityMocks";
+import { SubjectActivity } from "../../../Lib/activityMocks";
 
 import { useActivitiesStore } from "../../../stores/activitiesStore";
 
-
-
+type Question = {
+  question: string;
+  answers: string[];
+  correct?: number;
+};
 
 interface Props {
   activity: SubjectActivity;
@@ -16,22 +20,49 @@ interface Props {
 
 export default function ActivityEditModal({ activity, onClose, onMockDelete, onBackendDelete }: Props) {
   const [title, setTitle] = useState(activity.title);
-  // Soporta fieldsJSON opcional
-  const [questions, setQuestions] = useState<any[]>(activity.fieldsJSON?.questions || []);
-  const [file, setFile] = useState<File | null>(null); // para ppt/video
-  const [fileUrl, setFileUrl] = useState<string | null>(activity.fieldsJSON?.fileUrl || "");
+  const initialQuestions = Array.isArray(activity.fieldsJSON?.questions)
+    ? (activity.fieldsJSON!.questions as Question[])
+    : [];
+  const [questions, setQuestions] = useState<Question[]>(initialQuestions);
+  const [fileUrl, setFileUrl] = useState<string>(activity.fieldsJSON?.fileUrl ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { update, remove, fetch } = useActivitiesStore();
+  const { update, remove } = useActivitiesStore();
+  const overlayTitleId = useId();
+  const objectUrlRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleEsc);
+    return () => {
+      window.removeEventListener("keydown", handleEsc);
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+        objectUrlRef.current = null;
+      }
+    };
+  }, [onClose]);
 
   // Handlers para preguntas y respuestas
   const handleQuestionChange = (idx: number, value: string) => {
-    setQuestions((prev) => prev.map((q, i) => i === idx ? { ...q, question: value } : q));
+    setQuestions((prev) => prev.map((q, i) => (i === idx ? { ...q, question: value } : q)));
   };
   const handleAnswerChange = (qIdx: number, aIdx: number, value: string) => {
-    setQuestions((prev) => prev.map((q, i) =>
-      i === qIdx ? { ...q, answers: q.answers.map((a: string, j: number) => j === aIdx ? value : a) } : q
-    ));
+    setQuestions((prev) =>
+      prev.map((q, i) =>
+        i === qIdx
+          ? {
+              ...q,
+              answers: q.answers.map((a, j) => (j === aIdx ? value : a)),
+            }
+          : q
+      )
+    );
   };
   const handleAddQuestion = () => {
     setQuestions((prev) => [...prev, { question: "", answers: [""], correct: 0 }]);
@@ -40,30 +71,64 @@ export default function ActivityEditModal({ activity, onClose, onMockDelete, onB
     setQuestions((prev) => prev.filter((_, i) => i !== idx));
   };
   const handleAddAnswer = (qIdx: number) => {
-    setQuestions((prev) => prev.map((q, i) =>
-      i === qIdx ? { ...q, answers: [...q.answers, ""] } : q
-    ));
+    setQuestions((prev) =>
+      prev.map((q, i) =>
+        i === qIdx
+          ? {
+              ...q,
+              answers: [...q.answers, ""],
+              correct:
+                typeof q.correct === "number" ? q.correct : q.answers.length,
+            }
+          : q
+      )
+    );
   };
   const handleRemoveAnswer = (qIdx: number, aIdx: number) => {
-    setQuestions((prev) => prev.map((q, i) =>
-      i === qIdx ? { ...q, answers: q.answers.filter((_: string, j: number) => j !== aIdx) } : q
-    ));
+    setQuestions((prev) =>
+      prev.map((q, i) =>
+        i === qIdx
+          ? {
+              ...q,
+              answers: q.answers.filter((_, j) => j !== aIdx),
+              correct:
+                typeof q.correct !== "number"
+                  ? undefined
+                  : q.correct === aIdx
+                  ? 0
+                  : q.correct > aIdx
+                  ? q.correct - 1
+                  : q.correct,
+            }
+          : q
+      )
+    );
+  };
+
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const nextFile = event.target.files?.[0] ?? null;
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = null;
+    }
+    if (nextFile) {
+      const objectUrl = URL.createObjectURL(nextFile);
+      objectUrlRef.current = objectUrl;
+      setFileUrl(objectUrl);
+    }
   };
 
   // Guardar cambios (draft)
   const handleSave = async (publish = false) => {
-    setSaving(true); setError(null);
+    setSaving(true);
+    setError(null);
     try {
-      let fieldsJSON = { ...activity.fieldsJSON };
+      const fieldsJSON = { ...(activity.fieldsJSON ?? {}) };
       if (activity.type === "quiz" || activity.type === "infografia") {
         fieldsJSON.questions = questions;
       } else if (activity.type === "ppt-animada" || activity.type === "video") {
-        // Simulación: en real deberías subir el archivo y guardar la URL
-        if (file) {
-          // Aquí deberías hacer upload real, por ahora solo simula URL local
-          const url = URL.createObjectURL(file);
-          setFileUrl(url);
-          fieldsJSON.fileUrl = url;
+        if (fileUrl) {
+          fieldsJSON.fileUrl = fileUrl;
         }
       }
       await update(activity.id, {
@@ -72,8 +137,9 @@ export default function ActivityEditModal({ activity, onClose, onMockDelete, onB
         status: publish ? "published" : activity.status,
       });
       onClose();
-    } catch (e: any) {
-      setError(e?.message || "Error al guardar");
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Error al guardar";
+      setError(message);
     } finally {
       setSaving(false);
     }
@@ -83,7 +149,8 @@ export default function ActivityEditModal({ activity, onClose, onMockDelete, onB
   const isMongoId = (id: string) => /^[a-f\d]{24}$/i.test(id);
   const handleDelete = async () => {
     if (!window.confirm("¿Seguro que deseas eliminar esta actividad?")) return;
-    setSaving(true); setError(null);
+    setSaving(true);
+    setError(null);
     // Considera backend solo si tiene subjectId y un id/_id de Mongo
     const mongoId = (activity as any)._id || activity.id;
     const isBackend = !!activity.subjectId && isMongoId(mongoId);
@@ -93,11 +160,12 @@ export default function ActivityEditModal({ activity, onClose, onMockDelete, onB
         if (onBackendDelete) onBackendDelete();
         else onClose();
       } else {
-        // No elimina mocks, solo cierra
+        onMockDelete?.(activity.id);
         onClose();
       }
-    } catch (e: any) {
-      setError(e?.message || "Error al eliminar");
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Error al eliminar";
+      setError(message);
     } finally {
       setSaving(false);
     }
@@ -105,9 +173,23 @@ export default function ActivityEditModal({ activity, onClose, onMockDelete, onB
 
   // Render dinámico según tipo
   return (
-    <div className={styles.modalOverlay}>
-      <form className={styles.modalContent} onSubmit={e => { e.preventDefault(); handleSave(false); }}>
-        <h2 className={styles.formTitle}>Editar Actividad</h2>
+    <div
+      className={styles.modalOverlay}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={overlayTitleId}
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <form
+        className={styles.modalContent}
+        onSubmit={(event: FormEvent<HTMLFormElement>) => {
+          event.preventDefault();
+          handleSave(false);
+        }}
+      >
+        <h2 id={overlayTitleId} className={styles.formTitle}>Editar Actividad</h2>
         <label className={styles.formLabel}>
           Título
           <input
@@ -170,9 +252,7 @@ export default function ActivityEditModal({ activity, onClose, onMockDelete, onB
         <input
           type="file"
           accept={activity.type === "ppt-animada" ? ".ppt,.pptx,.pdf" : "video/*"}
-          onChange={e => {
-            if (e.target.files && e.target.files[0]) setFile(e.target.files[0]);
-          }}
+          onChange={handleFileChange}
           className={styles.formInput}
           title={activity.type === "ppt-animada" ? "Subir archivo PPT o PDF" : "Subir archivo de video"}
           placeholder={activity.type === "ppt-animada" ? "Selecciona un archivo PPT o PDF" : "Selecciona un archivo de video"}

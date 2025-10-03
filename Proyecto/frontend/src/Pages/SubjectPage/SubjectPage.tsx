@@ -15,6 +15,7 @@ import styles from "./SubjectPage.module.css";
 // 🔗 Store de materias (Fase 1: mock persistido en localStorage)
 // Update the import path if the file is located elsewhere, for example:
 import { useSubjectsStore } from "../../stores/subjectsStore";
+import { useActivitiesStore } from "../../stores/activitiesStore";
 
 // ✅ Store de app para saber si el usuario es admin
 import {
@@ -58,7 +59,43 @@ export default function SubjectPage() {
     "/Gifs/8banner.gif";
 
   // Actividades: mock por slug (hasta que migres a backend)
-  const activities: SubjectActivity[] = DEFAULT_ACTIVITIES_BY_SLUG[slug] ?? [];
+  const {
+    items: activitiesStoreItems,
+    fetch: fetchActivities,
+    hasLoaded: hasLoadedActivities,
+  } = useActivitiesStore();
+
+  useEffect(() => {
+    if (!hasLoadedActivities) {
+      fetchActivities();
+    }
+  }, [hasLoadedActivities, fetchActivities]);
+
+  const fallbackActivities: SubjectActivity[] = DEFAULT_ACTIVITIES_BY_SLUG[slug] ?? [];
+
+  const activities: SubjectActivity[] = useMemo(() => {
+    const bySubject = activitiesStoreItems.filter((activity) => {
+      if (activity.subjectSlug) {
+        return activity.subjectSlug.toLowerCase() === slug;
+      }
+      if (activity.subjectId && subject?._id) {
+        return String(activity.subjectId) === String(subject._id);
+      }
+      return false;
+    });
+
+    const map = new Map<string, SubjectActivity>();
+    fallbackActivities.forEach((activity) => {
+      map.set(activity.id, activity);
+    });
+    bySubject.forEach((activity) => {
+      map.set(activity.id, activity);
+    });
+
+    return Array.from(map.values()).sort(
+      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    );
+  }, [activitiesStoreItems, fallbackActivities, slug, subject?._id]);
 
   const [query, setQuery] = useState("");
   const filteredActivities = activities.filter((a) =>

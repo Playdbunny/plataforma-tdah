@@ -220,7 +220,7 @@ export default function MateriasPage() {
         <div className={styles.right}>
           <input
             className={styles.search}
-            placeholder="Buscar por nombre/slug/descripción…"
+            placeholder="Buscar por nombre/descripción…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             aria-label="Buscar materia"
@@ -242,7 +242,6 @@ export default function MateriasPage() {
             <tr>
               <th>Materia</th>
               <th>Descripción</th>
-              <th>Slug</th>
               <th>Banner</th>
               <th className={styles.colAcciones}>Acciones</th>
             </tr>
@@ -252,7 +251,7 @@ export default function MateriasPage() {
             {/* Estado vacío */}
             {filtered.length === 0 ? (
               <tr>
-                <td className={styles.empty} colSpan={5}>
+                <td className={styles.empty} colSpan={4}>
                   No hay materias que coincidan.
                 </td>
               </tr>
@@ -263,7 +262,6 @@ export default function MateriasPage() {
                   <td className={styles.descripcion}>
                     {s.description ?? "—"}
                   </td>
-                  <td className={styles.slug}>{s.slug}</td>
 
                   {/* Banner con miniatura + acción "quitar" */}
                   <td className={styles.bannerCell}>

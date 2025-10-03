@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { ChangeEvent, FormEvent } from "react";
 import { useActivitiesStore } from "../../../stores/activitiesStore";
 import { useAuthStore } from "../../../stores/authStore";
 import { useSubjectsStore } from "../../../stores/subjectsStore";
@@ -10,6 +11,119 @@ interface ActivityFormProps {
   onClose: () => void;
 }
 
+const ACCEPT_BY_TYPE: Partial<Record<SubjectActivityType, string>> = {
+  infografia: "image/png,image/jpeg,image/webp,image/gif",
+  video: "video/*",
+  "ppt-animada":
+    ".ppt,.pptx,.pdf,application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  quiz:
+    "image/png,image/jpeg,image/webp,image/gif,application/pdf,.ppt,.pptx,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation",
+};
+
+const HELPER_TEXT: Partial<Record<SubjectActivityType, string>> = {
+  infografia: "Formatos permitidos: PNG, JPG, WEBP o GIF (máx. 25 MB).",
+  video:
+    "Puedes subir un archivo de video (MP4, MOV…) o elegir la opción de enlace para pegar una URL.",
+  "ppt-animada": "Acepta archivos PPT, PPTX o PDF de hasta 25 MB.",
+  quiz: "Admite imágenes (PNG, JPG, WEBP, GIF), además de PPT/PPTX o PDF (máx. 25 MB).",
+};
+
+const TYPES_WITH_RESOURCE: SubjectActivityType[] = [
+  "infografia",
+  "video",
+  "ppt-animada",
+  "quiz",
+];
+
+const MAX_FILE_SIZE_MB = 25;
+const MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024;
+
+function getFileExtension(file: File) {
+  return file.name.split(".").pop()?.toLowerCase() ?? "";
+}
+
+function isFileAllowedForType(activityType: SubjectActivityType, file: File) {
+  const mime = file.type;
+  const extension = getFileExtension(file);
+
+  switch (activityType) {
+    case "infografia":
+      return mime.startsWith("image/");
+    case "video":
+      return mime.startsWith("video/");
+    case "ppt-animada":
+      return (
+        mime === "application/pdf" ||
+        extension === "pdf" ||
+        extension === "ppt" ||
+        extension === "pptx"
+      );
+    case "quiz":
+      return (
+        mime.startsWith("image/") ||
+        mime === "application/pdf" ||
+        extension === "pdf" ||
+        extension === "ppt" ||
+        extension === "pptx"
+      );
+    default:
+      return true;
+  }
+}
+
+function invalidFileMessageFor(type: SubjectActivityType) {
+  switch (type) {
+    case "infografia":
+      return "Selecciona una imagen en formato PNG, JPG, WEBP o GIF.";
+    case "video":
+      return "Selecciona un archivo de video válido (MP4, MOV, WEBM, etc.).";
+    case "ppt-animada":
+      return "Selecciona un archivo PPT, PPTX o PDF.";
+    case "quiz":
+      return "Puedes adjuntar imágenes (PNG, JPG, WEBP, GIF), PPT/PPTX o PDF.";
+    default:
+      return "Formato de archivo no permitido para este tipo de actividad.";
+  }
+}
+
+function resolveAssetType(activityType: SubjectActivityType, file: File) {
+  if (activityType === "video") return "video";
+  if (activityType === "ppt-animada") return "document";
+  if (activityType === "infografia") return "image";
+  if (activityType === "quiz") {
+    return file.type.startsWith("image/") ? "image" : "document";
+  }
+  return "document";
+}
+
+function formatFileSize(bytes: number) {
+  if (bytes >= 1024 * 1024) {
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+  if (bytes >= 1024) {
+    return `${(bytes / 1024).toFixed(1)} KB`;
+  }
+  return `${bytes} B`;
+}
+
+function isValidHttpUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch (err) {
+    return false;
+  }
+}
+
+function fileToDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error("No se pudo leer el archivo seleccionado."));
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function ActivityForm({ subjectSlug, onClose }: ActivityFormProps) {
   const { create, loading, error } = useActivitiesStore();
   const { user } = useAuthStore();
@@ -17,27 +131,189 @@ export default function ActivityForm({ subjectSlug, onClose }: ActivityFormProps
   const [title, setTitle] = useState("");
   const [type, setType] = useState<SubjectActivityType>("infografia");
   const [description, setDescription] = useState("");
+  const [resourceFile, setResourceFile] = useState<File | null>(null);
+  const [resourcePreview, setResourcePreview] = useState<string | null>(null);
+  const [videoMode, setVideoMode] = useState<"file" | "link">("file");
+  const [videoLink, setVideoLink] = useState("");
+  const [formError, setFormError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    // Buscar la materia seleccionada
-    const subject = subjects.find(s => s.slug === subjectSlug);
-    const payload: BackendActivityPayload = {
-      title,
-      type,
-      description,
-      status: "draft",
-      updatedAt: new Date().toISOString(),
-      subjectSlug,
-      // Campos requeridos por el backend:
-      createdBy: user?.id ?? "",
-      fieldsJSON: {},
-      templateType: "default",
-      slug: title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, ""),
-      subjectId: subject?._id ?? "",
+  useEffect(() => {
+    return () => {
+      if (resourcePreview) {
+        URL.revokeObjectURL(resourcePreview);
+      }
     };
-    await create(payload);
-    onClose();
+  }, [resourcePreview]);
+
+  const resetResourceState = () => {
+    setResourceFile(null);
+    setVideoLink("");
+    setFormError(null);
+    setVideoMode("file");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+    setResourcePreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
+  };
+
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] ?? null;
+
+    if (resourcePreview) {
+      URL.revokeObjectURL(resourcePreview);
+      setResourcePreview(null);
+    }
+
+    if (!file) {
+      setResourceFile(null);
+      return;
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      setFormError(`El archivo supera el límite de ${MAX_FILE_SIZE_MB} MB.`);
+      event.target.value = "";
+      setResourceFile(null);
+      return;
+    }
+
+    if (!isFileAllowedForType(type, file)) {
+      setFormError(invalidFileMessageFor(type));
+      event.target.value = "";
+      setResourceFile(null);
+      return;
+    }
+
+    setResourceFile(file);
+    setFormError(null);
+
+    if (
+      type === "infografia" ||
+      (type === "quiz" && file.type.startsWith("image/"))
+    ) {
+      const previewUrl = URL.createObjectURL(file);
+      setResourcePreview(previewUrl);
+    } else {
+      setResourcePreview(null);
+    }
+  };
+
+  const handleVideoModeChange = (mode: "file" | "link") => {
+    setVideoMode(mode);
+    setFormError(null);
+    if (mode === "file") {
+      setVideoLink("");
+    } else {
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+      setResourceFile(null);
+      if (resourcePreview) {
+        URL.revokeObjectURL(resourcePreview);
+        setResourcePreview(null);
+      }
+    }
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setFormError(null);
+
+    try {
+      const normalizedTitle = title.trim();
+      const normalizedDescription = description.trim();
+      // Buscar la materia seleccionada
+      const subject = subjects.find((s) => s.slug === subjectSlug);
+
+      const fieldsJSON: Record<string, any> = {};
+
+      if (type === "quiz" && !fieldsJSON.questions) {
+        fieldsJSON.questions = [];
+      }
+
+      if (TYPES_WITH_RESOURCE.includes(type)) {
+        if (type === "video" && videoMode === "link") {
+          const trimmedLink = videoLink.trim();
+          if (!trimmedLink) {
+            setFormError("Ingresa un enlace de video.");
+            return;
+          }
+          if (!isValidHttpUrl(trimmedLink)) {
+            setFormError("El enlace debe comenzar con http:// o https://");
+            return;
+          }
+          fieldsJSON.fileUrl = trimmedLink;
+          fieldsJSON.asset = {
+            type: "video",
+            source: "link",
+            url: trimmedLink,
+          };
+        } else {
+          if (!resourceFile) {
+            setFormError("Selecciona un archivo para adjuntar a la actividad.");
+            return;
+          }
+
+          if (resourceFile.size > MAX_FILE_SIZE) {
+            setFormError(`El archivo supera el límite de ${MAX_FILE_SIZE_MB} MB.`);
+            return;
+          }
+
+          if (!isFileAllowedForType(type, resourceFile)) {
+            setFormError(invalidFileMessageFor(type));
+            return;
+          }
+
+          const dataUrl = await fileToDataUrl(resourceFile);
+          const assetType = resolveAssetType(type, resourceFile);
+          fieldsJSON.fileUrl = dataUrl;
+          fieldsJSON.asset = {
+            type: assetType,
+            source: "upload",
+            name: resourceFile.name,
+            size: resourceFile.size,
+            mimeType: resourceFile.type,
+            extension: getFileExtension(resourceFile),
+            dataUrl,
+          };
+        }
+      }
+
+      const payload: BackendActivityPayload = {
+        title: normalizedTitle,
+        type,
+        description: normalizedDescription || undefined,
+        status: "draft",
+        updatedAt: new Date().toISOString(),
+        subjectSlug,
+        // Campos requeridos por el backend:
+        createdBy: user?.id ?? "",
+        fieldsJSON,
+        templateType: "default",
+        slug: normalizedTitle
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/(^-|-$)+/g, ""),
+        subjectId: subject?._id ?? "",
+      };
+
+      await create(payload);
+      const latestError = useActivitiesStore.getState().error;
+      if (latestError) {
+        setFormError(latestError);
+        return;
+      }
+
+      if (resourcePreview) {
+        URL.revokeObjectURL(resourcePreview);
+      }
+      onClose();
+    } catch (err: any) {
+      setFormError(err?.message || "No se pudo crear la actividad.");
+    }
   };
 
   return (
@@ -58,7 +334,11 @@ export default function ActivityForm({ subjectSlug, onClose }: ActivityFormProps
         <select
           className={styles.formSelect}
           value={type}
-          onChange={e => setType(e.target.value as SubjectActivityType)}
+          onChange={(e) => {
+            const nextType = e.target.value as SubjectActivityType;
+            setType(nextType);
+            resetResourceState();
+          }}
         >
           {Object.entries(SUBJECT_ACTIVITY_TYPE_LABELS).map(([key, label]) => (
             <option key={key} value={key}>{label}</option>
@@ -74,6 +354,89 @@ export default function ActivityForm({ subjectSlug, onClose }: ActivityFormProps
           placeholder="Describe brevemente la actividad..."
         />
       </label>
+      {TYPES_WITH_RESOURCE.includes(type) && (
+        <div className={styles.formLabel}>
+          <span>Recurso asociado</span>
+          {type === "video" ? (
+            <>
+              <div className={styles.radioGroup}>
+                <label className={styles.radioOption}>
+                  <input
+                    type="radio"
+                    name="video-source"
+                    value="file"
+                    checked={videoMode === "file"}
+                    onChange={() => handleVideoModeChange("file")}
+                  />
+                  Subir archivo
+                </label>
+                <label className={styles.radioOption}>
+                  <input
+                    type="radio"
+                    name="video-source"
+                    value="link"
+                    checked={videoMode === "link"}
+                    onChange={() => handleVideoModeChange("link")}
+                  />
+                  Usar enlace
+                </label>
+              </div>
+
+              {videoMode === "file" ? (
+                <>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    className={styles.formInput}
+                    accept={ACCEPT_BY_TYPE.video}
+                    onChange={handleFileChange}
+                    title="Sube un archivo de video"
+                  />
+                  <p className={styles.helperText}>{HELPER_TEXT.video}</p>
+                </>
+              ) : (
+                <>
+                  <input
+                    type="url"
+                    className={styles.formInput}
+                    placeholder="https://video.com/ejemplo"
+                    value={videoLink}
+                    onChange={(event) => setVideoLink(event.target.value)}
+                  />
+                  <p className={styles.helperText}>
+                    Pega un enlace público (YouTube, Vimeo u otro servicio con http/https).
+                  </p>
+                </>
+              )}
+            </>
+          ) : (
+            <>
+              <input
+                ref={fileInputRef}
+                type="file"
+                className={styles.formInput}
+                accept={ACCEPT_BY_TYPE[type]}
+                onChange={handleFileChange}
+              />
+              <p className={styles.helperText}>{HELPER_TEXT[type] ?? "Adjunta el recurso correspondiente."}</p>
+            </>
+          )}
+          {resourceFile && (type !== "video" || videoMode === "file") && (
+            <div className={styles.fileBadge}>
+              <span>{resourceFile.name}</span>
+              <span>{formatFileSize(resourceFile.size)}</span>
+            </div>
+          )}
+          {resourcePreview && (
+            <img
+              src={resourcePreview}
+              alt="Vista previa del archivo seleccionado"
+              className={styles.previewImage}
+            />
+          )}
+        </div>
+      )}
+      {formError && <div className={styles.errorMsg}>{formError}</div>}
       {error && <div className={styles.errorMsg}>{error}</div>}
       <div className={styles.formActions}>
         <button type="submit" className={styles.submitBtn} disabled={loading}>
