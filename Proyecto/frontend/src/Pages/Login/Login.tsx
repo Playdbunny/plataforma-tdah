@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import Navbar from "../../Components/Navbar/Navbar";
 import styles from "./Login.module.css";
 import { useAuthStore } from "../../stores/authStore";
 import { useAppStore } from "../../stores/appStore";
+import { getApiBaseUrl } from "../../Lib/api";
 
 export default function Login() {
 
@@ -17,19 +18,42 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   /* Store de auth: login (acción), loading y error */
   const { login, loading, error } = useAuthStore();
 
   /* Navegación y lectura de query (?next=/ruta) para redirigir tras login */
   const navigate = useNavigate();
+  const location = useLocation();
   const [qs] = useSearchParams();
   const next = qs.get("next") || "/profile";
+  const nextParam = qs.get("next");
+
+  /* Mensajes provenientes de redirecciones (p.ej. OAuth fallido) */
+  useEffect(() => {
+    const state = location.state as { notice?: string } | null;
+    if (state?.notice) {
+      setNotice(state.notice);
+      const { notice: _notice, ...rest } = state;
+      const cleanState = Object.keys(rest).length ? rest : null;
+      navigate(location.pathname + location.search, { replace: true, state: cleanState });
+    }
+  }, [location, navigate]);
+
+  useEffect(() => {
+    if (!notice) return;
+    const timeout = window.setTimeout(() => setNotice(null), 6000);
+    return () => window.clearTimeout(timeout);
+  }, [notice]);
 
   /* Handler del botón Google: redirige al backend */
   const handleGoogle = () => {
-    // en login no pasamos tdahType
-    window.location.href = "/auth/google";
+    const apiBaseUrl = getApiBaseUrl();
+    const params = new URLSearchParams();
+    if (nextParam) params.set("next", nextParam);
+    const query = params.toString();
+    window.location.href = `${apiBaseUrl}/auth/google${query ? `?${query}` : ""}`;
   };
 
   /* Submit del formulario: llama al backend usando el store */
@@ -117,6 +141,13 @@ export default function Login() {
                 {showPw ? "🙈" : "👁️"}
               </button>
             </label>
+
+            {/* Mensaje informativo proveniente de otras pantallas */}
+            {notice && (
+              <p className={styles.notice} role="status" aria-live="polite">
+                {notice}
+              </p>
+            )}
 
             {/* Mensaje de error del store (por ej.: 401) */}
             {error && <p className={styles.error} role="alert">{error}</p>}

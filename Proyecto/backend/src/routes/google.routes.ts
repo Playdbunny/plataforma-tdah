@@ -1,40 +1,97 @@
 import { Router } from "express";
 import passport from "passport";
 import { signToken } from "./helpers/jwt-sign";
-
+import { GoogleTokenVerificationError, verifyGoogleIdToken } from "../services/googleVerifier";
+// URL base del frontend. Se toma de la variable de entorno y, si no existe,
+// se usa localhost como respaldo para entornos de desarrollo.
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+/**
+ * Construye una URL absoluta hacia el frontend combinando el host definido
+ * en la configuración con el pathname y cualquier parámetro de query extra.
+ *
+ * @param pathname Segmento del frontend al que se desea redirigir.
+ * @param searchParams Pares clave/valor a insertar como query string.
+ */
+function buildFrontendUrl(pathname: string, searchParams: Record<string, string> = {}) {
+  const url = new URL(pathname, FRONTEND_URL);
+  // Inyectamos cada parámetro como parte del query string final.
+  for (const [key, value] of Object.entries(searchParams)) {
+    url.searchParams.set(key, value);
+  }
+  return url.toString();
+}
 const router = Router();
 
+function getErrorMessage(error: unknown) {
+  if (error instanceof GoogleTokenVerificationError) return error.message;
+  if (error instanceof Error) return error.message;
+  return "Token de Google inválido";
+}
+
+function buildErrorRedirectUrl(message: string) {
+  const payload = JSON.stringify({ error: message });
+  return buildFrontendUrl("/login", { oauth: "error", payload });
+}
+
+router.post("/google/verify", async (req, res) => {
+  const idToken: string | undefined = req.body?.id_token || req.body?.idToken;
+  if (!idToken) {
+    return res.status(400).json({ error: "El id_token es obligatorio" });
+  }
+
+  try {
+    const payload = await verifyGoogleIdToken(idToken);
+    return res.status(200).json(payload);
+  } catch (error) {
+    const message = getErrorMessage(error);
+    return res.status(401).json({ error: message });
+  }
+});
 // /auth/google?tdahType=inatento|hiperactivo|combinado
 router.get("/google", (req, res, next) => {
   const tdahType = (req.query.tdahType as string) || null;
-
   // Validación simple (opcional)
   const valid = ["inatento", "hiperactivo", "combinado"];
   const finalTdah = valid.includes(String(tdahType)) ? tdahType : null;
-
-  // serializamos un pequeño JSON como state
+  // Serializamos un pequeño JSON como `state`. Passport lo enviará a Google y
+  // luego lo recibiremos intacto en el callback para no perder contexto.
   const state = JSON.stringify({ tdahType: finalTdah });
-
-  // pasamos state a passport.authenticate
+  // Pasamos `state` a passport.authenticate para que Google nos lo devuelva.
   return passport.authenticate("google", {
     scope: ["profile", "email"],
     state,                      // <-- clave
   })(req, res, next);
 });
-
 // Callback: emite TU JWT y, si vino tdahType y el user lo tenía null, lo setea (lo haremos en la estrategia)
 router.get(
   "/google/callback",
   passport.authenticate("google", { failureRedirect: "/auth/google/failure", session: true }),
   async (req: any, res) => {
-    const user = req.user;
-    const token = signToken({ sub: user.id, role: user.role });
-    return res.json({ token, user: user.toJSON(), provider: "google" });
+    try {
+      const user = req.user;
+      if (!user) {
+        throw new GoogleTokenVerificationError("No se pudo autenticar el usuario de Google");
+      }
+      // Firmamos un JWT "interno" con los datos mínimos para el backend.
+      const token = signToken({ sub: user.id, role: user.role });
+      // Luego firmamos un segundo token con la información que enviaremos al
+      // frontend (token de sesión, datos del usuario serializados y el proveedor).
+      const payload = signToken({ token, user: user.toJSON(), provider: "google" });
+      // Construimos la URL final del frontend donde la SPA recibirá la respuesta
+      // e interpretará el payload firmado para completar el login.
+      const redirectUrl = buildFrontendUrl("/oauth/google/callback", { payload });
+      return res.redirect(redirectUrl);
+    } catch (error) {
+      console.error("Google OAuth callback error", error);
+      const message = getErrorMessage(error);
+      const redirectUrl = buildErrorRedirectUrl(message);
+      return res.redirect(redirectUrl);
+    }
   }
 );
-
 router.get("/google/failure", (_req, res) => {
-  res.status(401).json({ error: "No se pudo autenticar con Google" });
+  // Este handler captura la ruta de fallo de Passport y la envía al frontend.
+  const redirectUrl = buildErrorRedirectUrl("Fallo en la autenticación con Google");
+  res.redirect(redirectUrl);
 });
-
 export default router;
