@@ -21,33 +21,7 @@ type FormularioMaterial = {
   enlace: string;
 };
 
-const materialesEjemplo: Material[] = [
-  {
-    titulo: "Guía Álgebra",
-    materia: "Matemáticas",
-    tipo: "PDF",
-    orientado: "Tipo TDAH",
-    subidoPor: "Admin",
-    fecha: "01/09/25",
-  },
-  {
-    titulo: "Video Independencia",
-    materia: "Historia",
-    tipo: "Video",
-    orientado: "Tipo TDAH",
-    subidoPor: "Admin",
-    fecha: "30/06/25",
-  },
-  {
-    titulo: "Experimentos básicos",
-    materia: "Química",
-    tipo: "Link",
-    orientado: "Tipo TDAH",
-    subidoPor: "Admin",
-    fecha: "28/06/25",
-    enlace: "https://recursos.ejemplo/quimica",
-  },
-];
+const materialesEjemplo: Material[] = [];
 
 export default function MaterialesPage() {
   const [materiales, setMateriales] = useState<Material[]>(materialesEjemplo);

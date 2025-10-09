@@ -173,6 +173,11 @@
 }
 .dropLink:hover{ background: rgba(255,255,255,.06); }
 
+.dropEmpty {
+  opacity: 0.6;
+  cursor: default;
+}
+
 /* Opción “Ver todas” con un poquito más de énfasis */
 .dropAll{
   font-weight: 800;

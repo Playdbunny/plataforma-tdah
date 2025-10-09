@@ -14,7 +14,10 @@ import adminSubjectsRouter from "./routes/adminSubjects.routes";
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+
+const bodyLimit = process.env.JSON_BODY_LIMIT || "10mb";
+app.use(express.json({ limit: bodyLimit }));
+app.use(express.urlencoded({ extended: true, limit: bodyLimit }));
 
 app.use("/admin", adminRouter);
 app.use("/auth", authRouter);

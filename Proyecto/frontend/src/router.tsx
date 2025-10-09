@@ -37,27 +37,6 @@ import SubjectActivitiesAdminPage from "./Pages/Admin/Gestion/SubjectActivities"
 import EstudiantesPage from "./Pages/Admin/Gestion/EstudiantesPage";
 import EstudianteDetallePage from "./Pages/Admin/Gestion/EstudianteDetallePage";
 
-//Actividades de Historia
-import HistoriaInfografia from "./Pages/Activity/Historia/Infografia/Infografia";
-import HistoriaQuiz from "./Pages/Activity/Historia/Quiz/Quiz";
-import HistoriaPptAnimada from "./Pages/Activity/Historia/PPT-Animada/PPT-Animada";
-import HistoriaVideo from "./Pages/Activity/Historia/Video/Video";
-//import HistoriaJuego from "./Pages/Activity/Historia/Juego/Juego";
-
-//Actividades de Matematica
-import MatematicaInfografia from "./Pages/Activity/Matematica/Infografia/Infografia_mat";
-import MatematicaQuiz from "./Pages/Activity/Matematica/Quiz/Quiz_Mat";
-import MatematicaPptAnimada from "./Pages/Activity/Matematica/PPT-Animada/PPT-Animada";
-import MatematicaVideo from "./Pages/Activity/Matematica/Video/Video_Mat";
-//import MatematicaJuego from "./Pages/Activity/Matematica/Juego/Juego";
-
-//Actividades de Quimica
-import QuimicaInfografia from "./Pages/Activity/Quimica/Infografia/Infografia_Quim";
-import QuimicaQuiz from "./Pages/Activity/Quimica/Quiz/Quiz_Quim";
-import QuimicaPptAnimada from "./Pages/Activity/Quimica/PPT-Animada/PPT-Animada_Quim";
-import QuimicaVideo from "./Pages/Activity/Quimica/Video/Video_Quim";
-//import QuimicaJuego from "./Pages/Activity/Quimica/Juego/Juego_Quim";
-
 // ─────────────────────────────────────────────────────────────
 // Guard de ADMIN — espera hidratación y valida role === 'admin'
 // ─────────────────────────────────────────────────────────────
@@ -144,27 +123,6 @@ export const router = createBrowserRouter([
       // { path: "ranking", element: <AdminRanking /> },
     ],
   },
-
-// ── Actividades de Historia ───────────────────────────────
-  { path: "/historia/infografia", element: <HistoriaInfografia /> },
-  { path: "/historia/quiz", element: <HistoriaQuiz /> },
-  { path: "/historia/ppt-animada", element: <HistoriaPptAnimada /> },
-  { path: "/historia/video", element: <HistoriaVideo /> },
-  //{ path: "/historia/juego", element: <HistoriaJuego /> },
-
-// ── Actividades de Matemática ─────────────────────────────
-  { path: "/matematicas/infografia", element: <MatematicaInfografia /> },
-  { path: "/matematicas/quiz", element: <MatematicaQuiz /> },
-  { path: "/matematicas/ppt-animada", element: <MatematicaPptAnimada /> },
-  { path: "/matematicas/video", element: <MatematicaVideo /> },
-  //{ path: "/matematicas/juego", element: <MatematicaJuego /> },
-
-// ── Actividades de Química ───────────────────────────────
-  { path: "/quimica/infografia", element: <QuimicaInfografia /> },
-  { path: "/quimica/quiz", element: <QuimicaQuiz /> },
-  { path: "/quimica/ppt-animada", element: <QuimicaPptAnimada /> },
-  { path: "/quimica/video", element: <QuimicaVideo /> },
-  //{ path: "/quimica/juego", element: <QuimicaJuego /> },
 
   // ── 404 Not Found ───────────────────────────────
   { path: "*", element: <NotFound /> },

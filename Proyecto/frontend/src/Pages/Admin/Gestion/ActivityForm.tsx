@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { useActivitiesStore } from "../../../stores/activitiesStore";
-import { useAuthStore } from "../../../stores/authStore";
 import { useSubjectsStore } from "../../../stores/subjectsStore";
 import { SubjectActivityType, SUBJECT_ACTIVITY_TYPE_LABELS, BackendActivityPayload } from "../../../Lib/activityMocks";
 import styles from "./ActivityForm.module.css";
@@ -126,7 +125,6 @@ function fileToDataUrl(file: File) {
 
 export default function ActivityForm({ subjectSlug, onClose }: ActivityFormProps) {
   const { create, loading, error } = useActivitiesStore();
-  const { user } = useAuthStore();
   const { items: subjects } = useSubjectsStore();
   const [title, setTitle] = useState("");
   const [type, setType] = useState<SubjectActivityType>("infografia");
@@ -227,6 +225,12 @@ export default function ActivityForm({ subjectSlug, onClose }: ActivityFormProps
       const normalizedDescription = description.trim();
       // Buscar la materia seleccionada
       const subject = subjects.find((s) => s.slug === subjectSlug);
+      if (!subject || !subject._id) {
+        setFormError(
+          "No se encontró la materia seleccionada. Refresca la lista e inténtalo nuevamente.",
+        );
+        return;
+      }
 
       const fieldsJSON: Record<string, any> = {};
 
@@ -290,14 +294,13 @@ export default function ActivityForm({ subjectSlug, onClose }: ActivityFormProps
         updatedAt: new Date().toISOString(),
         subjectSlug,
         // Campos requeridos por el backend:
-        createdBy: user?.id ?? "",
         fieldsJSON,
         templateType: "default",
         slug: normalizedTitle
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, "-")
           .replace(/(^-|-$)+/g, ""),
-        subjectId: subject?._id ?? "",
+        subjectId: subject._id,
       };
 
       await create(payload);

@@ -3,7 +3,9 @@ import mongoose from "mongoose";
 import { requireAuth, requireRole } from "../middleware/requireAuth";
 
 // Modelo dinámico para Subject (evita error si no hay archivo Subject.ts)
-const Subject = mongoose.model("Subject", new mongoose.Schema({}, { strict: false }), "subjects");
+const Subject =
+  mongoose.models.Subject ||
+  mongoose.model("Subject", new mongoose.Schema({}, { strict: false }), "subjects");
 
 const router = Router();
 

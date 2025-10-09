@@ -37,15 +37,11 @@ const SEED: Student[] = [
     xp: 850,
     streakDays: 2,
     lastActiveAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // hace 2h
-    progressBySubject: [
-      { slug: "matematicas", label: "Matemáticas", progress: 51 },
-      { slug: "historia", label: "Historia", progress: 71 },
-      { slug: "quimica", label: "Química", progress: 15 },
-    ],
+    progressBySubject: [],
     weeklyXP: [20, 28, 25, 35, 36, 42, 50],
     recentActivity: [
-      "Completó ejercicio en Matemáticas (+20 XP)",
-      'Vio material "Guía Química"',
+      "Completó una actividad personalizada (+20 XP)",
+      'Revisó nuevo material en la plataforma',
       "Inició sesión (hace 2h)",
     ],
     avatarUrl: "/Images/default-profile.jpg",
@@ -58,13 +54,9 @@ const SEED: Student[] = [
     xp: 800,
     streakDays: 3,
     lastActiveAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-    progressBySubject: [
-      { slug: "matematicas", label: "Matemáticas", progress: 58 },
-      { slug: "historia", label: "Historia", progress: 65 },
-      { slug: "quimica", label: "Química", progress: 22 },
-    ],
+    progressBySubject: [],
     weeklyXP: [12, 15, 18, 25, 30, 31, 40],
-    recentActivity: ["Terminó Historia (85%)", "Sumó 30 XP en Química"],
+    recentActivity: ["Terminó una actividad asignada (85%)", "Sumó 30 XP al completar material"],
     avatarUrl: "/Images/default-profile.jpg",
   },
   {
@@ -75,11 +67,7 @@ const SEED: Student[] = [
     xp: 650,
     streakDays: 1,
     lastActiveAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-    progressBySubject: [
-      { slug: "matematicas", label: "Matemáticas", progress: 35 },
-      { slug: "historia", label: "Historia", progress: 49 },
-      { slug: "quimica", label: "Química", progress: 12 },
-    ],
+    progressBySubject: [],
     weeklyXP: [8, 10, 12, 18, 20, 22, 28],
     recentActivity: ["Inició sesión (hace 6h)"],
     avatarUrl: "/Images/default-profile.jpg",

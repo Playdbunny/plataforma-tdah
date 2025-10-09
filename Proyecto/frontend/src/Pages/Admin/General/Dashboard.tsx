@@ -33,10 +33,7 @@ export default function AdminDashboard() {
     { id: "3", name: "Pedro", xp: 430, lastActiveAt: "2025-08-29T21:10:00Z" },
   ];
 
-  const materials: Material[] = [
-    { id: "m1", title: "Álgebra I - Guía 1", subjectId: "matematicas" },
-    { id: "m2", title: "Historia de Chile - Repaso", subjectId: "historia" },
-  ];
+  const materials: Material[] = [];
 
   // Rangos (para cuando conectes al backend puedes pedir 7/30/90 días)
   const [range, setRange] = useState<"7d" | "30d" | "90d">("7d");
@@ -267,14 +264,14 @@ export default function AdminDashboard() {
             <li>
               <span className={`${styles.dot} ${styles.dotBlue}`} />
               <span className={styles.event}>
-                Juan completó <strong>Matemáticas</strong> (+20 XP)
+                Juan completó una actividad personalizada (+20 XP)
               </span>
               <span className={styles.time}>hace 2h</span>
             </li>
             <li>
               <span className={`${styles.dot} ${styles.dotGreen}`} />
               <span className={styles.event}>
-                Ana completó <strong>Química</strong> (+30 XP)
+                Ana subió nuevo material (+30 XP)
               </span>
               <span className={styles.time}>hace 5h</span>
             </li>

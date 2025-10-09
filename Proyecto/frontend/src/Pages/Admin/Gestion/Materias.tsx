@@ -11,6 +11,8 @@ import styles from "./Materias.module.css";
 // Store (mock) y tipo Subject
 import { useSubjectsStore, type Subject } from "../../../stores/subjectsStore";
 
+const subjectKey = (subject: Subject) => subject._id ?? subject.id;
+
 // Estructura del formulario (no incluye id ni banner)
 type Form = { name: string; description: string; slug?: string };
 
@@ -94,7 +96,7 @@ export default function MateriasPage() {
 
   // Abrir modal en modo "editar" con datos cargados
   function openEdit(s: Subject) {
-    setEditingId(s.id);
+    setEditingId(subjectKey(s));
     setForm({ name: s.name, description: s.description ?? "", slug: s.slug });
     setError(null);
     // resetea banner del modal
@@ -164,7 +166,7 @@ export default function MateriasPage() {
 
         // Si eligió un nuevo banner, lo "subimos" (mock) ahora
         if (bannerFile) {
-          await uploadBanner(s.id, bannerFile);
+          await uploadBanner(subjectKey(s), bannerFile);
         }
       } else {
         // CREAR
@@ -176,7 +178,7 @@ export default function MateriasPage() {
 
         // Si eligió banner al crear, súbelo también
         if (bannerFile) {
-          await uploadBanner(s.id, bannerFile);
+          await uploadBanner(subjectKey(s), bannerFile);
         }
       }
 
@@ -195,7 +197,7 @@ export default function MateriasPage() {
 
   // Eliminar con confirmación
   async function handleDelete(id: string) {
-    const s = items.find(x => x.id === id);
+    const s = items.find(x => x._id === id || x.id === id);
     if (!s) return;
     if (!confirm(`¿Eliminar la materia "${s.name}"?`)) return;
     await remove(id);
@@ -257,7 +259,7 @@ export default function MateriasPage() {
               </tr>
             ) : (
               filtered.map((s) => (
-                <tr key={s.id}>
+                <tr key={subjectKey(s)}>
                   <td className={styles.nombre}>{s.name}</td>
                   <td className={styles.descripcion}>
                     {s.description ?? "—"}
@@ -274,7 +276,7 @@ export default function MateriasPage() {
                         />
                         <button
                           className={styles.linkDanger}
-                          onClick={() => handleClearBanner(s.id)}
+                          onClick={() => handleClearBanner(subjectKey(s))}
                         >
                           quitar
                         </button>
@@ -294,7 +296,7 @@ export default function MateriasPage() {
                     </button>
                     <button
                       className={styles.linkDanger}
-                      onClick={() => handleDelete(s.id)}
+                      onClick={() => handleDelete(subjectKey(s))}
                     >
                       Eliminar
                     </button>
@@ -376,13 +378,13 @@ export default function MateriasPage() {
 
                 {(bannerPreview ||
                   (editingId &&
-                    items.find((x) => x.id === editingId)?.bannerUrl)) && (
+                    items.find((x) => x._id === editingId || x.id === editingId)?.bannerUrl)) && (
                   <div className={styles.bannerPreviewWrap}>
                     <img
                       className={styles.bannerPreview}
                       src={
                         bannerPreview ||
-                        items.find((x) => x.id === editingId)?.bannerUrl ||
+                        items.find((x) => x._id === editingId || x.id === editingId)?.bannerUrl ||
                         undefined
                       }
                       alt="Vista previa del banner"

@@ -12,13 +12,6 @@ import { useEffect, useMemo } from "react";
 import styles from "./Actividades.module.css";
 import { useSubjectsStore } from "../../../stores/subjectsStore";
 
-// Imagen por defecto según el slug, igual que en Courses para mantener coherencia.
-const DEFAULT_ART_BY_SLUG: Record<string, string> = {
-  historia: "/Gifs/3banner.gif",
-  quimica: "/Gifs/6banner.gif",
-  matematicas: "/Gifs/8banner.gif",
-};
-
 export default function ActividadesPage() {
   const { items, list } = useSubjectsStore();
 
@@ -54,14 +47,11 @@ export default function ActividadesPage() {
       ) : (
         <div className={styles.grid}>
           {subjects.map((subject) => {
-            const background =
-              subject.bannerUrl ||
-              DEFAULT_ART_BY_SLUG[subject.slug] ||
-              "/Gifs/8banner.gif";
+            const background = subject.bannerUrl || "/Gifs/8banner.gif";
 
             return (
               <Link
-                key={subject.id}
+                key={subject._id ?? subject.id}
                 to={`/admin/actividades/${subject.slug}`}
                 className={styles.card}
               >
