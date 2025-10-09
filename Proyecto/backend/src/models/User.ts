@@ -26,6 +26,7 @@ export interface IUserSafe {
 
 /** Cómo luce el documento dentro de Mongo (incluye passwordHash) - Documento Real almacenado en Mongo */
 export interface IUserDoc extends Document {
+  // Campos básicos
   name: string;
   email: string;
   username?: string;
@@ -34,15 +35,22 @@ export interface IUserDoc extends Document {
   role: Role;
   tdahType: TDAHType;
 
+  // Estadísticas de gamificación
   xp: number;
   coins: number;
   level: number;
   streak: { count: number; lastCheck?: Date | null };
 
+  // Campos de auditoría
   lastLogin?: Date | null;
   createdAt: Date;
   updatedAt: Date;
 
+  // Campos para recuperación de password
+  passwordResetToken?: string | null;
+  passwordResetExpires?: Date | null;
+
+  // Campos para OAuth con Google
   googleId?: string | null;
   authProvider?: "local" | "google";
 
@@ -99,6 +107,10 @@ const UserSchema = new Schema<IUserDoc>(
 
     lastLogin: { type: Date, default: null, index: true }, // para saber cuándo fue la última vez que se conectó
 
+    // Campos para recuperación de password
+    passwordResetToken: { type: String, default: null, index: true },
+    passwordResetExpires: { type: Date, default: null },
+
     // Para usuarios que se registraron con Google OAuth
     googleId: { type: String, default: null, index: true },
     authProvider: { type: String, enum: ["local","google"], default: "local", index: true },
@@ -117,6 +129,8 @@ const UserSchema = new Schema<IUserDoc>(
         }
         // Nunca exponer el hash
         Reflect.deleteProperty(ret, "passwordHash");
+        Reflect.deleteProperty(ret, "passwordResetToken");
+        Reflect.deleteProperty(ret, "passwordResetExpires");
         return ret;
       }
     }

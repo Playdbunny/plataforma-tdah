@@ -44,8 +44,9 @@ El propósito es mejorar la atención y el desempeño académico ajustando los c
 ```bash
 cd Proyecto/backend
 npm install
-npm run dev
 npm install google-auth-library
+npm install nodemailer
+npm run dev
 ```
 > El backend quedará corriendo en http://localhost:4000.
 

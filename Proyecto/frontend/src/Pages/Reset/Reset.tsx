@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
+import { isAxiosError } from "axios";
 import Navbar from "../../Components/Navbar/Navbar";
 import styles from "./Reset.module.css";
+import { resetPassword } from "../../api/auth";
 
 function useResetToken() {
 
@@ -37,12 +39,15 @@ export default function Reset() {
     setError(null);
 
     try {
-      // TODO: reemplazar por tu llamada real:
-      // await api.post('/auth/reset-password', { token, password: pw });
-      await new Promise((r) => setTimeout(r, 900)); // demo
+      await resetPassword({ token, password: pw });
       setDone(true);
     } catch (err) {
-      setError("No se pudo actualizar la contraseña. Inténtalo nuevamente.");
+      if (isAxiosError(err)) {
+        const message = (err.response?.data as { error?: string } | undefined)?.error;
+        setError(message ?? "No se pudo actualizar la contraseña. Inténtalo nuevamente.");
+      } else {
+        setError("Ocurrió un error inesperado. Inténtalo nuevamente.");
+      }
     } finally {
       setLoading(false);
     }
