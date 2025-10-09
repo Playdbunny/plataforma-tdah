@@ -1,24 +1,4 @@
-type SendMailInput = {
-  to: string;
-  from: string;
-  subject: string;
-  text: string;
-  html: string;
-};
-
-type SendMailResult = {
-  messageId?: string;
-  [key: string]: unknown;
-};
-
-type NodemailerTransporter = {
-  sendMail: (input: SendMailInput) => Promise<SendMailResult>;
-};
-
-type NodemailerModule = {
-  createTransport: (options: unknown) => NodemailerTransporter;
-  getTestMessageUrl?: (info: SendMailResult) => string | false | null | undefined;
-};
+import nodemailer, { Transporter } from "nodemailer";
 
 export interface PasswordResetEmailParams {
   to: string;
@@ -27,47 +7,14 @@ export interface PasswordResetEmailParams {
 }
 
 export interface PasswordResetEmailResult {
-  simulated?: boolean;
   previewUrl?: string;
   messageId?: string;
 }
 
-let cachedModule: NodemailerModule | null | undefined;
-let cachedTransporter: NodemailerTransporter | null | undefined;
+let cachedTransporter: Transporter | null = null;
 
-function isModuleNotFound(error: unknown): error is NodeJS.ErrnoException {
-  if (!error || typeof error !== "object") return false;
-  return (error as NodeJS.ErrnoException).code === "MODULE_NOT_FOUND";
-}
-
-function loadNodemailer(): NodemailerModule | null {
-  if (cachedModule !== undefined) return cachedModule;
-
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    cachedModule = require("nodemailer") as NodemailerModule;
-  } catch (error) {
-    if (isModuleNotFound(error)) {
-      console.warn(
-        "[email] nodemailer no está instalado. El envío de correos se simulará hasta que agregues la dependencia.",
-      );
-      cachedModule = null;
-    } else {
-      throw error;
-    }
-  }
-
-  return cachedModule;
-}
-
-function resolveTransporter(): NodemailerTransporter | null {
-  if (cachedTransporter !== undefined) return cachedTransporter;
-
-  const nodemailer = loadNodemailer();
-  if (!nodemailer) {
-    cachedTransporter = null;
-    return cachedTransporter;
-  }
+function resolveTransporter(): Transporter {
+  if (cachedTransporter) return cachedTransporter;
 
   const smtpUrl = process.env.SMTP_URL;
   if (smtpUrl) {
@@ -77,8 +24,9 @@ function resolveTransporter(): NodemailerTransporter | null {
 
   const host = process.env.SMTP_HOST;
   if (!host) {
-    cachedTransporter = null;
-    return cachedTransporter;
+    throw new Error(
+      "SMTP no configurado. Define SMTP_URL o SMTP_HOST/SMTP_PORT/SMTP_USER/SMTP_PASS en las variables de entorno.",
+    );
   }
 
   const port = Number(process.env.SMTP_PORT ?? 587);
@@ -111,7 +59,6 @@ export async function sendPasswordResetEmail(
   params: PasswordResetEmailParams,
 ): Promise<PasswordResetEmailResult> {
   const transporter = resolveTransporter();
-  const nodemailer = loadNodemailer();
   const from = getFromAddress();
   const { to, resetUrl } = params;
   const name = params.name?.trim();
@@ -154,12 +101,6 @@ export async function sendPasswordResetEmail(
     <p style="margin-top:16px;">— El equipo de Plataforma TDAH</p>
   `;
 
-  if (!transporter) {
-    console.warn("[email] SMTP no configurado. Simulando envío de correo de recuperación.");
-    console.info(`[email] Enlace de restablecimiento para ${to}: ${resetUrl}`);
-    return { simulated: true };
-  }
-
   const info = await transporter.sendMail({
     to,
     from,
@@ -168,7 +109,7 @@ export async function sendPasswordResetEmail(
     html,
   });
 
-  const previewCandidate = nodemailer?.getTestMessageUrl?.(info);
+  const previewCandidate = nodemailer.getTestMessageUrl?.(info);
   const previewUrl = typeof previewCandidate === "string" ? previewCandidate : undefined;
   if (previewUrl) {
     console.info(`[email] Vista previa del correo de recuperación: ${previewUrl}`);
