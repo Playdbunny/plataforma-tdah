@@ -1,4 +1,24 @@
-import nodemailer from "nodemailer";
+type SendMailInput = {
+  to: string;
+  from: string;
+  subject: string;
+  text: string;
+  html: string;
+};
+
+type SendMailResult = {
+  messageId?: string;
+  [key: string]: unknown;
+};
+
+type NodemailerTransporter = {
+  sendMail: (input: SendMailInput) => Promise<SendMailResult>;
+};
+
+type NodemailerModule = {
+  createTransport: (options: unknown) => NodemailerTransporter;
+  getTestMessageUrl?: (info: SendMailResult) => string | false | null | undefined;
+};
 
 export interface PasswordResetEmailParams {
   to: string;
@@ -12,10 +32,42 @@ export interface PasswordResetEmailResult {
   messageId?: string;
 }
 
-let cachedTransporter: nodemailer.Transporter | null | undefined;
+let cachedModule: NodemailerModule | null | undefined;
+let cachedTransporter: NodemailerTransporter | null | undefined;
 
-function resolveTransporter(): nodemailer.Transporter | null {
+function isModuleNotFound(error: unknown): error is NodeJS.ErrnoException {
+  if (!error || typeof error !== "object") return false;
+  return (error as NodeJS.ErrnoException).code === "MODULE_NOT_FOUND";
+}
+
+function loadNodemailer(): NodemailerModule | null {
+  if (cachedModule !== undefined) return cachedModule;
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    cachedModule = require("nodemailer") as NodemailerModule;
+  } catch (error) {
+    if (isModuleNotFound(error)) {
+      console.warn(
+        "[email] nodemailer no está instalado. El envío de correos se simulará hasta que agregues la dependencia.",
+      );
+      cachedModule = null;
+    } else {
+      throw error;
+    }
+  }
+
+  return cachedModule;
+}
+
+function resolveTransporter(): NodemailerTransporter | null {
   if (cachedTransporter !== undefined) return cachedTransporter;
+
+  const nodemailer = loadNodemailer();
+  if (!nodemailer) {
+    cachedTransporter = null;
+    return cachedTransporter;
+  }
 
   const smtpUrl = process.env.SMTP_URL;
   if (smtpUrl) {
@@ -59,6 +111,7 @@ export async function sendPasswordResetEmail(
   params: PasswordResetEmailParams,
 ): Promise<PasswordResetEmailResult> {
   const transporter = resolveTransporter();
+  const nodemailer = loadNodemailer();
   const from = getFromAddress();
   const { to, resetUrl } = params;
   const name = params.name?.trim();
@@ -115,7 +168,8 @@ export async function sendPasswordResetEmail(
     html,
   });
 
-  const previewUrl = nodemailer.getTestMessageUrl(info) ?? undefined;
+  const previewCandidate = nodemailer?.getTestMessageUrl?.(info);
+  const previewUrl = typeof previewCandidate === "string" ? previewCandidate : undefined;
   if (previewUrl) {
     console.info(`[email] Vista previa del correo de recuperación: ${previewUrl}`);
   }
