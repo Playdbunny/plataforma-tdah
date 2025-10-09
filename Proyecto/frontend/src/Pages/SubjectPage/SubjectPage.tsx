@@ -4,7 +4,7 @@
 // - Usa el bannerUrl subido desde el Admin; si no hay, cae a tu GIF por defecto.
 // - Muestra actividades "mock" por materia (puedes migrarlas a backend luego).
 
-import { useParams, Navigate, useNavigate } from "react-router-dom";
+import { useParams, Navigate } from "react-router-dom";
 import { useMemo, useEffect, useState } from "react";
 
 
@@ -18,24 +18,14 @@ import { useSubjectsStore } from "../../stores/subjectsStore";
 import { useActivitiesStore } from "../../stores/activitiesStore";
 
 // ✅ Store de app para saber si el usuario es admin
-import {
-  DEFAULT_ACTIVITIES_BY_SLUG,
-  SubjectActivity,
-} from "../../Lib/activityMocks";
+import { SubjectActivity } from "../../Lib/activityMocks";
 import { normalizeSubjectSlug } from "../../utils/subjects";
-
-const DEFAULT_HERO_BY_SLUG: Record<string, string> = {
-  historia: "/Gifs/3banner.gif",
-  quimica: "/Gifs/6banner.gif",
-  matematicas: "/Gifs/8banner.gif",
-};
 
 export default function SubjectPage() {
   // ===============================================
   // 2) Param y normalización del slug
   // ===============================================
   const { subjectId } = useParams<{ subjectId: string }>();
-  const navigate = useNavigate();
   const slug = useMemo(() => normalizeSubjectSlug(subjectId), [subjectId]);
 
   // ===============================================
@@ -53,10 +43,7 @@ export default function SubjectPage() {
 
   // Determina el título y el banner a mostrar:
   const title = subject?.name ?? slug.charAt(0).toUpperCase() + slug.slice(1);
-  const bannerUrl =
-    subject?.bannerUrl ??
-    DEFAULT_HERO_BY_SLUG[slug] ??
-    "/Gifs/8banner.gif";
+  const bannerUrl = subject?.bannerUrl ?? "/Gifs/8banner.gif";
 
   // Actividades: mock por slug (hasta que migres a backend)
   const {
@@ -71,8 +58,6 @@ export default function SubjectPage() {
     }
   }, [hasLoadedActivities, fetchActivities]);
 
-  const fallbackActivities: SubjectActivity[] = DEFAULT_ACTIVITIES_BY_SLUG[slug] ?? [];
-
   const activities: SubjectActivity[] = useMemo(() => {
     const bySubject = activitiesStoreItems.filter((activity) => {
       if (activity.subjectSlug) {
@@ -84,18 +69,10 @@ export default function SubjectPage() {
       return false;
     });
 
-    const map = new Map<string, SubjectActivity>();
-    fallbackActivities.forEach((activity) => {
-      map.set(activity.id, activity);
-    });
-    bySubject.forEach((activity) => {
-      map.set(activity.id, activity);
-    });
-
-    return Array.from(map.values()).sort(
+    return bySubject.slice().sort(
       (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
     );
-  }, [activitiesStoreItems, fallbackActivities, slug, subject?._id]);
+  }, [activitiesStoreItems, slug, subject?._id]);
 
   const [query, setQuery] = useState("");
   const filteredActivities = activities.filter((a) =>
@@ -154,12 +131,6 @@ export default function SubjectPage() {
                   role="listitem"
                   tabIndex={0}
                   title={a.title}
-                  onClick={() => {
-                    if (slug === "historia") navigate(`/historia/${a.type}`);
-                    else if (slug === "matematicas") navigate(`/matematicas/${a.type}`);
-                    else if (slug === "quimica") navigate(`/quimica/${a.type}`);
-                  }}
-                  style={{ cursor: "pointer" }}
                 >
                   <div className={styles.cardThumb} />
                   <h3 className={styles.cardTitle}>{a.title}</h3>

@@ -42,13 +42,18 @@ export default function EditProfile() {
 
   // Form controlado
   const [name, setName]         = useState(user?.name ?? "");
+  const [email, setEmail]       = useState(user?.email ?? "");
   const [username, setUsername] = useState(user?.username ?? "");
   const [education, setEducation] = useState(user?.education ?? "");
   const [avatarPreview, setAvatarPreview] = useState<string>(user?.avatarUrl ?? "/Images/default-profile.jpg");
   const [selectedChar, setSelectedChar]   = useState<string>(user?.character?.id ?? CHARACTERS[0].id);
 
   // Habilitar guardar solo si username >= 3
-  const canSave = useMemo(() => username.trim().length >= 3, [username]);
+  const canSave = useMemo(() => {
+    const trimmedUsername = username.trim();
+    const trimmedEmail = email.trim();
+    return trimmedUsername.length >= 3 && /\S+@\S+\.\S+/.test(trimmedEmail);
+  }, [username, email]);
 
   // Previsualizar avatar (frontend)
   const onPickAvatar = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -90,6 +95,7 @@ export default function EditProfile() {
     const c = CHARACTERS.find(x => x.id === selectedChar) ?? CHARACTERS[0];
     update({
       name: name.trim(),
+      email: email.trim(),
       username: username.trim(),
       education: education.trim(),
       avatarUrl: avatarPreview, // en prod: URL devuelta por tu API
@@ -141,6 +147,16 @@ export default function EditProfile() {
               </label>
               <small className={styles.hint}>PNG/JPG &lt; 5MB — relación 1:1</small>
             </div>
+
+            <label className={styles.label}>Correo
+              <input
+                className={styles.input}
+                type="email"
+                value={email}
+                onChange={e=>setEmail(e.target.value)}
+                placeholder="tu@correo.com"
+              />
+            </label>
 
             <label className={styles.label}>Nombre de usuario
               <input

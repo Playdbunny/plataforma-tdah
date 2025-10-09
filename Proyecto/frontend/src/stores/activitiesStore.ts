@@ -1,6 +1,15 @@
 import { create } from "zustand";
 import * as api from "../api/activities";
-import { SubjectActivity, DEFAULT_ACTIVITIES_BY_SLUG } from "../Lib/activityMocks";
+import { SubjectActivity } from "../Lib/activityMocks";
+
+const extractErrorMessage = (err: any, fallback: string) => {
+  const message =
+    err?.response?.data?.error ??
+    err?.response?.data?.message ??
+    err?.message ??
+    fallback;
+  return typeof message === "string" ? message : fallback;
+};
 
 interface ActivitiesState {
   items: SubjectActivity[];
@@ -20,11 +29,9 @@ export const useActivitiesStore = create<ActivitiesState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const data = await api.getActivities();
-      // Mezclar siempre actividades del backend y las mock
-      const allMock: SubjectActivity[] = Object.values(DEFAULT_ACTIVITIES_BY_SLUG).flat();
-      set({ items: [...data, ...allMock], error: null });
+      set({ items: data, error: null });
     } catch (e: any) {
-      set({ error: e?.response?.data?.error || "Error al cargar actividades" });
+      set({ error: extractErrorMessage(e, "Error al cargar actividades") });
     } finally {
       set({ loading: false });
     }
@@ -35,7 +42,7 @@ export const useActivitiesStore = create<ActivitiesState>((set, get) => ({
       await api.createActivity(activity);
       await get().fetch();
     } catch (e: any) {
-      set({ error: e?.response?.data?.error || "Error al crear actividad" });
+      set({ error: extractErrorMessage(e, "Error al crear actividad") });
     } finally {
       set({ loading: false });
     }
@@ -46,7 +53,7 @@ export const useActivitiesStore = create<ActivitiesState>((set, get) => ({
       await api.updateActivity(id, activity);
       await get().fetch();
     } catch (e: any) {
-      set({ error: e?.response?.data?.error || "Error al actualizar actividad" });
+      set({ error: extractErrorMessage(e, "Error al actualizar actividad") });
     } finally {
       set({ loading: false });
     }
@@ -57,7 +64,7 @@ export const useActivitiesStore = create<ActivitiesState>((set, get) => ({
       await api.deleteActivity(id);
       await get().fetch();
     } catch (e: any) {
-      set({ error: e?.response?.data?.error || "Error al eliminar actividad" });
+      set({ error: extractErrorMessage(e, "Error al eliminar actividad") });
     } finally {
       set({ loading: false });
     }

@@ -1,23 +1,27 @@
 // src/stores/subjectsStore.ts
 // ============================================================
 // Store de "Materias" (Subjects) usando Zustand con persistencia.
-// CRUD mock sin backend: listar, crear, editar, eliminar, subir/quitar banners.
+// Ahora consume el backend real para CRUD y banners, manteniendo
+// compatibilidad con componentes que aún leen `subject.id`.
 // ============================================================
-
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import * as api from "../api/subjects";
+import type {
+  SubjectPayload,
+  SubjectResponse,
+} from "../api/subjects";
 
 // ========================
 // Tipo base de una materia
 // ========================
 export type Subject = {
-  id: string; // UUID local (legacy, para compatibilidad)
-  _id?: string; // ObjectId de MongoDB (opcional para compatibilidad)
-  slug: string;             // p.ej. "matematicas"
-  name: string;             // "Matemáticas"
-  description?: string;     // descripción corta
+  _id: string; // ObjectId de MongoDB
+  id: string; // Alias derivado para compatibilidad con componentes legacy
+  slug: string; // p.ej. "matematicas"
+  name: string; // "Matemáticas"
+  description?: string; // descripción corta
   bannerUrl?: string | null; // URL del banner (subido o mock)
 };
 
@@ -30,103 +34,240 @@ type SubjectsState = {
   error: string | null;
 
   list: () => Promise<void>;
-  create: (p: { name: string; description?: string; slug?: string }) => Promise<Subject>;
-  update: (id: string, patch: Partial<Pick<Subject,"name"|"description"|"slug">>) => Promise<Subject>;
+  create: (
+    p: { name: string; description?: string; slug?: string },
+  ) => Promise<Subject>;
+  update: (
+    id: string,
+    patch: Partial<Pick<Subject, "name" | "description" | "slug">>,
+  ) => Promise<Subject>;
   remove: (id: string) => Promise<void>;
   uploadBanner: (id: string, file: File) => Promise<Subject>;
   clearBanner: (id: string) => Promise<Subject>;
 };
 
-// ========================
-// Datos iniciales (seed)
-// ========================
+const INITIAL_STATE: Pick<SubjectsState, "items" | "loading" | "error"> = {
+  items: [],
+  loading: false,
+  error: null,
+};
 
-const SEED: Subject[] =   [];
-
-// ========================
-// Utilidad para crear slug
-// ========================
 function toSlug(name: string) {
   return name
     .toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)+/g, "");
 }
 
-// ========================
-// Store (Zustand + persist)
-// ========================
-const MAX_BANNER_SIZE_MB = 20; // 👈 Cambia aquí el límite (20 MB recomendado)
-const MAX_BANNER_SIZE = MAX_BANNER_SIZE_MB * 1024 * 1024;
+function normalizeSubject(subject: SubjectResponse | Subject): Subject {
+  const rawMongoId = (subject as any)._id ?? null;
+  const legacyId = (subject as any).id ?? null;
+  const fallbackSlug = "slug" in subject ? subject.slug : undefined;
+  const resolvedId =
+    (rawMongoId as string | null) ??
+    (legacyId as string | null) ??
+    (fallbackSlug ?? "");
+
+  const finalId = resolvedId || `subject-${Math.random().toString(36).slice(2, 10)}`;
+
+  return {
+    ...subject,
+    _id: String(rawMongoId ?? finalId),
+    id: String(finalId),
+    bannerUrl: subject.bannerUrl ?? null,
+  } as Subject;
+}
+
+function extractErrorMessage(err: any, fallback: string) {
+  const message =
+    err?.response?.data?.error ??
+    err?.response?.data?.message ??
+    err?.message ??
+    fallback;
+  return typeof message === "string" ? message : fallback;
+}
+
+async function fetchAndSetSubjects(set: (partial: Partial<SubjectsState>) => void) {
+  const data = await api.getSubjects();
+  const normalized = data.map(normalizeSubject);
+  set({ items: normalized, error: null });
+  return normalized;
+}
 
 export const useSubjectsStore = create<SubjectsState>()(
   persist(
     (set, get) => ({
-      items: SEED,
-      loading: false,
-      error: null,
+      ...INITIAL_STATE,
 
       list: async () => {
         set({ loading: true, error: null });
         try {
-          const data = await api.getSubjects();
-          set({ items: data, error: null });
-        } catch (e: any) {
-          set({ error: e?.response?.data?.error || "No se pudo listar materias" });
+          await fetchAndSetSubjects(set);
+        } catch (err) {
+          set({ error: extractErrorMessage(err, "No se pudo listar materias") });
         } finally {
           set({ loading: false });
         }
       },
 
       create: async ({ name, description, slug }) => {
-        const s: Subject = {
-          id: crypto.randomUUID(),
-          name: name.trim(),
-          description: description?.trim(),
-          slug: (slug?.trim() || toSlug(name)) || `subject-${Math.random().toString(36).slice(2,8)}`,
-          bannerUrl: null,
-        };
-        set({ items: [s, ...get().items] });
-        return s;
+        const trimmedName = name.trim();
+        const trimmedDescription = description?.trim();
+        const normalizedSlug = (slug?.trim() || toSlug(trimmedName)) ||
+          `subject-${Math.random().toString(36).slice(2, 8)}`;
+
+        set({ loading: true, error: null });
+        try {
+          const created = await api.createSubject({
+            name: trimmedName,
+            slug: normalizedSlug,
+            description: trimmedDescription || undefined,
+          });
+          const normalized = normalizeSubject(created);
+          await fetchAndSetSubjects(set);
+          return (
+            get().items.find(
+              (subject) => subject._id === normalized._id || subject.id === normalized.id,
+            ) ?? normalized
+          );
+        } catch (err: any) {
+          const message = extractErrorMessage(err, "No se pudo crear la materia");
+          set({ error: message });
+          throw new Error(message);
+        } finally {
+          set({ loading: false });
+        }
       },
 
       update: async (id, patch) => {
-        const next = get().items.map(it => it.id === id ? { ...it, ...patch } : it);
-        set({ items: next });
-        return next.find(x => x.id === id)!;
+        const target = get().items.find(
+          (subject) => subject._id === id || subject.id === id,
+        );
+        if (!target || !target._id) {
+          const error =
+            "Materia no encontrada o sin identificador válido. Refresca la lista.";
+          set({ error });
+          throw new Error(error);
+        }
+
+        const normalizedPatch: Partial<SubjectPayload> = {};
+        if (patch.name) normalizedPatch.name = patch.name.trim();
+        if (patch.description !== undefined) {
+          normalizedPatch.description = patch.description?.trim();
+        }
+        if (patch.slug) {
+          normalizedPatch.slug = patch.slug.trim();
+        }
+
+        set({ loading: true, error: null });
+        try {
+          const updated = await api.updateSubject(target._id, normalizedPatch);
+          const normalized = normalizeSubject(updated);
+          await fetchAndSetSubjects(set);
+          return (
+            get().items.find(
+              (subject) => subject._id === normalized._id || subject.id === normalized.id,
+            ) ?? normalized
+          );
+        } catch (err: any) {
+          const message = extractErrorMessage(err, "No se pudo actualizar la materia");
+          set({ error: message });
+          throw new Error(message);
+        } finally {
+          set({ loading: false });
+        }
       },
 
       remove: async (id) => {
-        set({ items: get().items.filter(it => it.id !== id) });
+        const target = get().items.find(
+          (subject) => subject._id === id || subject.id === id,
+        );
+        if (!target || !target._id) {
+          const error =
+            "Materia no encontrada o sin identificador válido. Refresca la lista.";
+          set({ error });
+          throw new Error(error);
+        }
+
+        set({ loading: true, error: null });
+        try {
+          await api.deleteSubject(target._id);
+          await fetchAndSetSubjects(set);
+        } catch (err: any) {
+          const message = extractErrorMessage(err, "No se pudo eliminar la materia");
+          set({ error: message });
+          throw new Error(message);
+        } finally {
+          set({ loading: false });
+        }
       },
 
-      // 📌 uploadBanner (mock con ObjectURL local)
-    uploadBanner: async (id, file) => {
-      if (!/^image\/(png|jpe?g|webp|gif)$/.test(file.type)) {
-        throw new Error("Formato no soportado (usa PNG, JPG, WEBP o GIF)");
-      }
-      if (file.size > 10 * 1024 * 1024) {
-        throw new Error("La imagen excede 10MB");
-      }
+      uploadBanner: async (id, file) => {
+        const target = get().items.find(
+          (subject) => subject._id === id || subject.id === id,
+        );
+        if (!target || !target._id) {
+          const error =
+            "Materia no encontrada o sin identificador válido. Refresca la lista.";
+          set({ error });
+          throw new Error(error);
+        }
 
-      const localUrl = URL.createObjectURL(file); // preview inmediato en SPA
-
-      const next = get().items.map(it =>
-        it.id === id ? { ...it, bannerUrl: localUrl } : it
-      );
-      set({ items: next });
-      return next.find(x => x.id === id)!;
-    },
+        set({ loading: true, error: null });
+        try {
+          const updated = await api.uploadSubjectBanner(target._id, file);
+          const normalized = normalizeSubject(updated);
+          await fetchAndSetSubjects(set);
+          return (
+            get().items.find(
+              (subject) => subject._id === normalized._id || subject.id === normalized.id,
+            ) ?? normalized
+          );
+        } catch (err: any) {
+          const message = extractErrorMessage(err, "No se pudo subir el banner");
+          set({ error: message });
+          throw new Error(message);
+        } finally {
+          set({ loading: false });
+        }
+      },
 
       clearBanner: async (id) => {
-        const next = get().items.map(it =>
-          it.id === id ? { ...it, bannerUrl: null } : it
+        const target = get().items.find(
+          (subject) => subject._id === id || subject.id === id,
         );
-        set({ items: next });
-        return next.find(x => x.id === id)!;
+        if (!target || !target._id) {
+          const error =
+            "Materia no encontrada o sin identificador válido. Refresca la lista.";
+          set({ error });
+          throw new Error(error);
+        }
+
+        set({ loading: true, error: null });
+        try {
+          const updated = await api.clearSubjectBanner(target._id);
+          const normalized = normalizeSubject(updated);
+          await fetchAndSetSubjects(set);
+          return (
+            get().items.find(
+              (subject) => subject._id === normalized._id || subject.id === normalized.id,
+            ) ?? normalized
+          );
+        } catch (err: any) {
+          const message = extractErrorMessage(err, "No se pudo limpiar el banner");
+          set({ error: message });
+          throw new Error(message);
+        } finally {
+          set({ loading: false });
+        }
       },
     }),
-    { name: "subjects-store" }
-  )
+    {
+      name: "subjects-store-v2",
+      version: 2,
+      migrate: () => ({ ...INITIAL_STATE }),
+    },
+  ),
 );

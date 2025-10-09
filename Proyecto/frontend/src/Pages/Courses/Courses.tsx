@@ -15,13 +15,6 @@ import styles from "./Courses.module.css";
 // 👇 Store con las materias creadas/gestionadas en Admin
 import { useSubjectsStore } from "../../stores/subjectsStore";
 
-// Fallbacks de banner por slug (mismos que usas en SubjectPage)
-const DEFAULT_HERO_BY_SLUG: Record<string, string> = {
-  historia: "/Gifs/3banner.gif",
-  quimica: "/Gifs/6banner.gif",
-  matematicas: "/Gifs/8banner.gif",
-};
-
 export default function Courses() {
   // Leemos materias del store + acción para “listar”
   const { items, list } = useSubjectsStore();
@@ -69,12 +62,11 @@ export default function Courses() {
         <div className={styles.grid}>
           {items.map((s) => {
             // Banner: primero el subido en Admin, si no, fallback por slug, si no, genérico
-            const banner =
-              s.bannerUrl || DEFAULT_HERO_BY_SLUG[s.slug] || "/Gifs/8banner.gif";
+            const banner = s.bannerUrl || "/Gifs/8banner.gif";
 
             return (
               <FancyCourseCard
-                key={s.id}
+                key={s._id ?? s.id}
                 to={`/subjects/${s.slug}`}          // 👉 navega a la página pública de la materia
                 eyebrow="MATERIA"
                 title={s.name}

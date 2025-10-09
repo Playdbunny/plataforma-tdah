@@ -14,7 +14,6 @@ import activityFormStyles from "./ActivityForm.module.css";
 import { useSubjectsStore } from "../../../stores/subjectsStore";
 import { useActivitiesStore } from "../../../stores/activitiesStore";
 import {
-  DEFAULT_ACTIVITIES_BY_SLUG,
   SUBJECT_ACTIVITY_STATUS_LABELS,
   SUBJECT_ACTIVITY_TYPE_LABELS,
   SubjectActivity,
