@@ -30,7 +30,6 @@ import AdminLayout from "./Layouts/AdminLayout/AdminLayout";
 import AdminDashboard from "./Pages/Admin/General/Dashboard";
 import AdminRanking from "./Pages/Admin/General/Ranking";
 import MateriasPage from "./Pages/Admin/Gestion/Materias";
-import MaterialesPage from "./Pages/Admin/Gestion/Materiales";
 import ActividadesPage from "./Pages/Admin/Gestion/Actividades";
 import SubjectActivitiesAdminPage from "./Pages/Admin/Gestion/SubjectActivities";
 
@@ -111,7 +110,6 @@ export const router = createBrowserRouter([
       { path: "materias", element: <MateriasPage /> },
       { path: "actividades", element: <ActividadesPage /> },
       { path: "actividades/:subjectId", element: <SubjectActivitiesAdminPage /> },
-      { path: "materiales", element: <MaterialesPage />},
       { path: "estudiantes", element: <EstudiantesPage /> },
       { path: "gestion/estudiantes/:id", element: <EstudianteDetallePage /> },
 

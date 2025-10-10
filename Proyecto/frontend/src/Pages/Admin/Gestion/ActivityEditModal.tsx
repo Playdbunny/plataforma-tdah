@@ -145,22 +145,24 @@ export default function ActivityEditModal({ activity, onClose, onMockDelete, onB
     }
   };
   // Eliminar actividad
-  // Solo elimina actividades del backend (MongoDB)
+  // Intenta primero eliminar actividades reales del backend (MongoDB)
   const isMongoId = (id: string) => /^[a-f\d]{24}$/i.test(id);
   const handleDelete = async () => {
     if (!window.confirm("¿Seguro que deseas eliminar esta actividad?")) return;
     setSaving(true);
     setError(null);
-    // Considera backend solo si tiene subjectId y un id/_id de Mongo
-    const mongoId = (activity as any)._id || activity.id;
-    const isBackend = !!activity.subjectId && isMongoId(mongoId);
+    // Identificamos si el id corresponde a un documento real de MongoDB
+    const mongoId = String((activity as any)._id || activity.id || "");
+    const shouldDeleteFromBackend = isMongoId(mongoId);
     try {
-      if (isBackend) {
+      if (shouldDeleteFromBackend) {
         await remove(mongoId);
         if (onBackendDelete) onBackendDelete();
         else onClose();
       } else {
-        onMockDelete?.(activity.id);
+        if (activity.id) {
+          onMockDelete?.(activity.id);
+        }
         onClose();
       }
     } catch (e: unknown) {
