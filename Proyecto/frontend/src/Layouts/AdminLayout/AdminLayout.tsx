@@ -114,17 +114,6 @@ export default function AdminLayout() {
             <span>Actividades</span>
           </NavLink>
 
-          <NavLink
-            to="/admin/materiales"
-            className={({ isActive }) =>
-              isActive ? `${styles.item} ${styles.active}` : styles.item
-            }
-          >
-            <span className={styles.icon} aria-hidden>
-              🗂️
-            </span>
-            <span>Materiales</span>
-          </NavLink>
         </nav>
 
         {/* Botón “Cerrar sesión” al fondo del sidebar */}

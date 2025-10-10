@@ -15,6 +15,7 @@ interface ActivitiesState {
   items: SubjectActivity[];
   loading: boolean;
   error: string | null;
+  hasLoaded: boolean;
   fetch: () => Promise<void>;
   create: (activity: Partial<SubjectActivity>) => Promise<void>;
   update: (id: string, activity: Partial<SubjectActivity>) => Promise<void>;
@@ -25,13 +26,14 @@ export const useActivitiesStore = create<ActivitiesState>((set, get) => ({
   items: [],
   loading: false,
   error: null,
+  hasLoaded: false,
   fetch: async () => {
     set({ loading: true, error: null });
     try {
       const data = await api.getActivities();
-      set({ items: data, error: null });
+      set({ items: data, error: null, hasLoaded: true });
     } catch (e: any) {
-      set({ error: extractErrorMessage(e, "Error al cargar actividades") });
+      set({ error: extractErrorMessage(e, "Error al cargar actividades"), hasLoaded: true });
     } finally {
       set({ loading: false });
     }

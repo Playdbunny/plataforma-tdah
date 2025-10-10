@@ -1,15 +1,7 @@
 import { Router, Request, Response } from 'express';
-import mongoose from 'mongoose';
 import Activity, { IActivity } from '../models/Activity';
+import Subject from '../models/Subject';
 import { requireAuth, requireRole, AuthPayload } from '../middleware/requireAuth';
-
-const Subject =
-  mongoose.models.Subject ||
-  mongoose.model(
-    'Subject',
-    new mongoose.Schema({}, { strict: false }),
-    'subjects',
-  );
 
 // Extiende la interfaz Request para incluir user con role
 declare global {
