@@ -220,6 +220,11 @@ export default function SubjectActivitiesAdminPage() {
           <div className={styles.grid}>
             {filteredActivities.map((activity) => (
               <article key={activity.id} className={styles.card} tabIndex={0}>
+                {activity.bannerUrl ? (
+                  <div className={styles.cardBanner} aria-hidden>
+                    <img src={activity.bannerUrl} alt="" />
+                  </div>
+                ) : null}
                 <header className={styles.cardHeader}>
                   <span className={styles.cardType}>
                     {SUBJECT_ACTIVITY_TYPE_LABELS[activity.type]}
