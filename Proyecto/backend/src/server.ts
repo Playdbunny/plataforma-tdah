@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import { connectDB } from "./db";
 import authRouter from "./routes/auth.routes";
+import profileRouter from "./routes/profile.routes";
 import { requireAuth, requireRole } from "./middleware/requireAuth";
 import adminRouter from "./routes/admin.routes";
 import session from "express-session";
@@ -21,6 +22,7 @@ app.use(express.urlencoded({ extended: true, limit: bodyLimit }));
 
 app.use("/admin", adminRouter);
 app.use("/auth", authRouter);
+app.use("/profile", profileRouter);
 
 // Ruta protegida genérica
 app.get("/me", requireAuth, (req: any, res) => {

@@ -249,7 +249,11 @@ export default function Navbar({
                         <button
                           role="menuitem"
                           className={`${styles.userItem} ${styles.danger}`}
-                          onClick={() => setUser(null)}
+                          onClick={() => {
+                            setUser(null);
+                            setOpenUser(false);
+                            navigate("/");
+                          }}
                         >
                           Cerrar sesión
                         </button>

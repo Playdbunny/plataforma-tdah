@@ -6,14 +6,23 @@ export type TDAHType = "inatento" | "hiperactivo" | "combinado" | null;
 export type Role = "student" | "admin";
 
 /** Lo que enviaremos al frontend (sin passwordHash) - Vista segura */
+export interface IUserCharacter {
+  id: string;
+  name: string;
+  sprite: string;
+}
+
 export interface IUserSafe {
   id: string;
   name: string;
   email: string;
   username?: string;
-  avatarUrl?: string;
+  avatarUrl?: string | null;
   role: Role;
   tdahType: TDAHType;
+  education?: string | null;
+  character?: IUserCharacter | null;
+  ownedCharacters?: string[];
 
   xp: number;
   coins: number;
@@ -29,15 +38,18 @@ export interface IUserDoc extends Document {
   name: string;
   email: string;
   username?: string;
-  avatarUrl?: string;
+  avatarUrl?: string | null;
   passwordHash: string;
   role: Role;
   tdahType: TDAHType;
+  education?: string | null;
 
   xp: number;
   coins: number;
   level: number;
   streak: { count: number; lastCheck?: Date | null };
+  character?: IUserCharacter | null;
+  ownedCharacters: string[];
 
   lastLogin?: Date | null;
   createdAt: Date;
@@ -79,6 +91,7 @@ const UserSchema = new Schema<IUserDoc>(
 
     username: { type: String, trim: true, minlength: 2, maxlength: 100, unique: true, sparse: true, index: true }, // puede ser null, pero si existe debe ser único
     avatarUrl: { type: String, default: null },
+    education: { type: String, trim: true, default: null },
 
     // Nunca almacenamos el password en texto plano
     passwordHash: { type: String, required: true },
@@ -96,6 +109,23 @@ const UserSchema = new Schema<IUserDoc>(
 
     // Racha diaria
     streak: { type: StreakSchema, default: () => ({}) },
+
+    // Personalización
+    character: {
+      type: new Schema<IUserCharacter>(
+        {
+          id: { type: String, required: true },
+          name: { type: String, required: true },
+          sprite: { type: String, required: true },
+        },
+        { _id: false }
+      ),
+      default: null,
+    },
+    ownedCharacters: {
+      type: [String],
+      default: () => ["boy", "girl", "foxboy", "foxgirl", "robot"],
+    },
 
     lastLogin: { type: Date, default: null, index: true }, // para saber cuándo fue la última vez que se conectó
 

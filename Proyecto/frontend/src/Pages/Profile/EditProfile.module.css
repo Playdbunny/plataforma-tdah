@@ -229,6 +229,16 @@
   filter: none;
 }
 
+.error {
+  margin-top: 16px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 117, 117, 0.12);
+  border: 1px solid rgba(255, 117, 117, 0.4);
+  color: #ffbaba;
+  font-family: 'PixelGrid', system-ui, sans-serif;
+}
+
 /* ============================
    RESPONSIVE
 ============================ */
