@@ -37,6 +37,11 @@ const TYPES_WITH_RESOURCE: SubjectActivityType[] = [
 const MAX_FILE_SIZE_MB = 25;
 const MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024;
 
+const BANNER_ACCEPT = "image/png,image/jpeg,image/webp,image/gif";
+const MAX_BANNER_SIZE_MB = 10;
+const MAX_BANNER_SIZE = MAX_BANNER_SIZE_MB * 1024 * 1024;
+const BANNER_TYPE_REGEX = /^image\/(png|jpe?g|webp|gif)$/i;
+
 function getFileExtension(file: File) {
   return file.name.split(".").pop()?.toLowerCase() ?? "";
 }
@@ -131,10 +136,13 @@ export default function ActivityForm({ subjectSlug, onClose }: ActivityFormProps
   const [description, setDescription] = useState("");
   const [resourceFile, setResourceFile] = useState<File | null>(null);
   const [resourcePreview, setResourcePreview] = useState<string | null>(null);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [bannerPreview, setBannerPreview] = useState<string | null>(null);
   const [videoMode, setVideoMode] = useState<"file" | "link">("file");
   const [videoLink, setVideoLink] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const bannerInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     return () => {
@@ -143,6 +151,14 @@ export default function ActivityForm({ subjectSlug, onClose }: ActivityFormProps
       }
     };
   }, [resourcePreview]);
+
+  useEffect(() => {
+    return () => {
+      if (bannerPreview) {
+        URL.revokeObjectURL(bannerPreview);
+      }
+    };
+  }, [bannerPreview]);
 
   const resetResourceState = () => {
     setResourceFile(null);
@@ -156,6 +172,47 @@ export default function ActivityForm({ subjectSlug, onClose }: ActivityFormProps
       if (prev) URL.revokeObjectURL(prev);
       return null;
     });
+  };
+
+  const resetBannerState = () => {
+    setBannerFile(null);
+    setBannerPreview(null);
+    if (bannerInputRef.current) {
+      bannerInputRef.current.value = "";
+    }
+  };
+
+  const handleBannerChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] ?? null;
+
+    if (!file) {
+      resetBannerState();
+      return;
+    }
+
+    if (!BANNER_TYPE_REGEX.test(file.type)) {
+      setFormError("Selecciona una imagen PNG, JPG, WEBP o GIF para el banner.");
+      event.target.value = "";
+      resetBannerState();
+      return;
+    }
+
+    if (file.size > MAX_BANNER_SIZE) {
+      setFormError(`El banner supera el límite de ${MAX_BANNER_SIZE_MB} MB.`);
+      event.target.value = "";
+      resetBannerState();
+      return;
+    }
+
+    setFormError(null);
+    setBannerFile(file);
+    const previewUrl = URL.createObjectURL(file);
+    setBannerPreview(previewUrl);
+  };
+
+  const handleRemoveBanner = () => {
+    setFormError(null);
+    resetBannerState();
   };
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -286,6 +343,21 @@ export default function ActivityForm({ subjectSlug, onClose }: ActivityFormProps
         }
       }
 
+      let bannerDataUrl: string | undefined;
+      if (bannerFile) {
+        if (!BANNER_TYPE_REGEX.test(bannerFile.type)) {
+          setFormError("Selecciona una imagen PNG, JPG, WEBP o GIF para el banner.");
+          return;
+        }
+
+        if (bannerFile.size > MAX_BANNER_SIZE) {
+          setFormError(`El banner supera el límite de ${MAX_BANNER_SIZE_MB} MB.`);
+          return;
+        }
+
+        bannerDataUrl = await fileToDataUrl(bannerFile);
+      }
+
       const payload: BackendActivityPayload = {
         title: normalizedTitle,
         type,
@@ -301,6 +373,7 @@ export default function ActivityForm({ subjectSlug, onClose }: ActivityFormProps
           .replace(/[^a-z0-9]+/g, "-")
           .replace(/(^-|-$)+/g, ""),
         subjectId: subject._id,
+        bannerUrl: bannerDataUrl,
       };
 
       await create(payload);
@@ -312,6 +385,9 @@ export default function ActivityForm({ subjectSlug, onClose }: ActivityFormProps
 
       if (resourcePreview) {
         URL.revokeObjectURL(resourcePreview);
+      }
+      if (bannerPreview) {
+        URL.revokeObjectURL(bannerPreview);
       }
       onClose();
     } catch (err: any) {
@@ -357,6 +433,35 @@ export default function ActivityForm({ subjectSlug, onClose }: ActivityFormProps
           placeholder="Describe brevemente la actividad..."
         />
       </label>
+      <div className={styles.formLabel}>
+        <span>Banner de la actividad (opcional)</span>
+        <input
+          ref={bannerInputRef}
+          type="file"
+          className={styles.formInput}
+          accept={BANNER_ACCEPT}
+          onChange={handleBannerChange}
+        />
+        <p className={styles.helperText}>
+          Formatos permitidos: PNG, JPG, WEBP o GIF (máx. {MAX_BANNER_SIZE_MB} MB).
+        </p>
+        {bannerPreview && (
+          <div className={styles.bannerPreviewWrap}>
+            <img
+              src={bannerPreview}
+              alt="Vista previa del banner de la actividad"
+              className={styles.bannerPreview}
+            />
+            <button
+              type="button"
+              className={styles.removeBannerBtn}
+              onClick={handleRemoveBanner}
+            >
+              Quitar banner
+            </button>
+          </div>
+        )}
+      </div>
       {TYPES_WITH_RESOURCE.includes(type) && (
         <div className={styles.formLabel}>
           <span>Recurso asociado</span>

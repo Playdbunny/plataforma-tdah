@@ -23,6 +23,7 @@ export type SubjectActivity = {
   description?: string;
   subjectSlug: string; // materia a la que pertenece (mock)
   subjectId?: string; // id de materia real (backend)
+  bannerUrl?: string | null;
   fieldsJSON?: Record<string, any>;
   slug?: string;
   templateType?: string;
