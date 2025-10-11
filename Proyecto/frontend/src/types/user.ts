@@ -6,9 +6,16 @@ export interface IUserSafe {
   name: string;
   email: string;
   username?: string;
-  avatarUrl?: string;
+  avatarUrl?: string | null;
   role: Role;
   tdahType: TDAHType;
+  education?: string | null;
+  character?: {
+    id: string;
+    name: string;
+    sprite: string;
+  } | null;
+  ownedCharacters?: string[];
 
   xp: number;
   coins: number;

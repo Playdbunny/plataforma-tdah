@@ -4,6 +4,8 @@ import styles from "./EditProfile.module.css";
 import cardStyles from "../../Components/CharacterCard/CharacterCard.module.css"; // 👈 NUEVO
 import Navbar from "../../Components/Navbar/Navbar";
 import { useAppStore } from "../../stores/appStore";
+import { useAuthStore } from "../../stores/authStore";
+import { updateProfile } from "../../api/users";
 
 // Catálogo con rareza y precio (solo pagan los no-comunes)
 const CHARACTERS = [
@@ -33,8 +35,10 @@ export default function EditProfile() {
   const navigate = useNavigate();
 
   // Store
-  const user   = useAppStore((s: any) => s.user);
-  const update = useAppStore((s: any) => s.updateUser);
+  const user        = useAppStore((s: any) => s.user);
+  const update      = useAppStore((s: any) => s.updateUser);
+  const setAppUser  = useAppStore((s: any) => s.setUser);
+  const setAuthUser = useAuthStore((s) => s.setUser);
 
   // Defaults seguros
   const coins            = user?.coins ?? 0;
@@ -47,13 +51,20 @@ export default function EditProfile() {
   const [education, setEducation] = useState(user?.education ?? "");
   const [avatarPreview, setAvatarPreview] = useState<string>(user?.avatarUrl ?? "/Images/default-profile.jpg");
   const [selectedChar, setSelectedChar]   = useState<string>(user?.character?.id ?? CHARACTERS[0].id);
+  const [saving, setSaving]               = useState(false);
+  const [errorMsg, setErrorMsg]           = useState<string | null>(null);
 
   // Habilitar guardar solo si username >= 3
   const canSave = useMemo(() => {
     const trimmedUsername = username.trim();
     const trimmedEmail = email.trim();
-    return trimmedUsername.length >= 3 && /\S+@\S+\.\S+/.test(trimmedEmail);
-  }, [username, email]);
+    const trimmedEducation = education.trim();
+    return (
+      trimmedUsername.length >= 3 &&
+      trimmedEducation.length > 0 &&
+      /\S+@\S+\.\S+/.test(trimmedEmail)
+    );
+  }, [username, email, education]);
 
   // Previsualizar avatar (frontend)
   const onPickAvatar = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -88,20 +99,46 @@ export default function EditProfile() {
       ownedCharacters: nextOwned,
       character: { id: c.id, name: c.name, sprite: c.sprite },
     });
+    setAuthUser({
+      coins: coins - price,
+      ownedCharacters: nextOwned,
+      character: { id: c.id, name: c.name, sprite: c.sprite },
+    });
     setSelectedChar(id);
   };
 
-  const onSave = () => {
+  const onSave = async () => {
+    if (!canSave || saving) return;
+
     const c = CHARACTERS.find(x => x.id === selectedChar) ?? CHARACTERS[0];
-    update({
+    setSaving(true);
+    setErrorMsg(null);
+
+    const payload = {
       name: name.trim(),
       email: email.trim(),
       username: username.trim(),
       education: education.trim(),
-      avatarUrl: avatarPreview, // en prod: URL devuelta por tu API
+      avatarUrl: avatarPreview,
       character: { id: c.id, name: c.name, sprite: c.sprite },
-    });
-    navigate("/profile");
+      ownedCharacters,
+      coins: coins,
+    };
+
+    try {
+      const updatedUser = await updateProfile(payload);
+      setAppUser(updatedUser as any);
+      setAuthUser(updatedUser);
+      navigate("/profile");
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.error ??
+        err?.message ??
+        "No se pudo guardar los cambios. Intenta nuevamente.";
+      setErrorMsg(typeof message === "string" ? message : "No se pudo guardar los cambios.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -231,11 +268,14 @@ export default function EditProfile() {
             })}
           </div>
 
+          {/* Mensaje de error */}
+          {errorMsg && <p className={styles.error}>{errorMsg}</p>}
+
           {/* Acciones */}
           <div className={styles.actions}>
             <button className={styles.btnGhost} onClick={()=>navigate("/profile")}>Cancelar</button>
-            <button className={styles.btnPrimary} onClick={onSave} disabled={!canSave}>
-              Guardar cambios
+            <button className={styles.btnPrimary} onClick={onSave} disabled={!canSave || saving}>
+              {saving ? "Guardando..." : "Guardar cambios"}
             </button>
           </div>
         </main>

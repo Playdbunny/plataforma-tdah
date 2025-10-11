@@ -10,7 +10,10 @@ export function useRequireProfileComplete() {
 
   useEffect(() => {
     if (!user) return; // no logeado, no hacemos nada
-    const incomplete = !user.username || !user.character;
+    const usernameOk = typeof user.username === "string" && user.username.trim().length >= 3;
+    const educationOk = typeof user.education === "string" && user.education.trim().length > 0;
+    const characterOk = !!user.character?.id;
+    const incomplete = !usernameOk || !educationOk || !characterOk;
     const isEditing  = pathname.startsWith("/profile/edit");
     if (incomplete && !isEditing) {
       navigate("/profile/edit");

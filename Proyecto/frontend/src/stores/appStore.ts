@@ -30,7 +30,7 @@ export type User = {
   role: UserRole;
 
   username?: string;
-  avatarUrl?: string;  
+  avatarUrl?: string | null;
   tdahType?: TDAHType;
   level?: number;
   xp?: number;
@@ -38,8 +38,8 @@ export type User = {
   nextXp?: number;
   // location?: string;
   // work?: string;
-  education?: string;
-  character?: Character;
+  education?: string | null;
+  character?: Character | null;
 
   // 🪙 Economía/tienda
   coins?: number;
