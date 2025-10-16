@@ -11,39 +11,54 @@ export interface PasswordResetEmailResult {
   messageId?: string;
 }
 
-let cachedTransporter: Transporter | null = null;
+let cachedTransporterPromise: Promise<Transporter> | null = null;
+let fallbackFromAddress: string | null = null;
 
-function resolveTransporter(): Transporter {
-  if (cachedTransporter) return cachedTransporter;
+async function resolveTransporter(): Promise<Transporter> {
+  if (cachedTransporterPromise) return cachedTransporterPromise;
 
-  const smtpUrl = process.env.SMTP_URL;
-  if (smtpUrl) {
-    cachedTransporter = nodemailer.createTransport(smtpUrl);
-    return cachedTransporter;
-  }
+  cachedTransporterPromise = (async () => {
+    const smtpUrl = process.env.SMTP_URL;
+    if (smtpUrl) {
+      return nodemailer.createTransport(smtpUrl);
+    }
 
-  const host = process.env.SMTP_HOST;
-  if (!host) {
-    throw new Error(
-      "SMTP no configurado. Define SMTP_URL o SMTP_HOST/SMTP_PORT/SMTP_USER/SMTP_PASS en las variables de entorno.",
+    const host = process.env.SMTP_HOST;
+    if (host) {
+      const port = Number(process.env.SMTP_PORT ?? 587);
+      const secureEnv = process.env.SMTP_SECURE;
+      const secure = secureEnv ? secureEnv === "true" || secureEnv === "1" : port === 465;
+
+      const user = process.env.SMTP_USER;
+      const pass = process.env.SMTP_PASS;
+
+      return nodemailer.createTransport({
+        host,
+        port,
+        secure,
+        auth: user && pass ? { user, pass } : undefined,
+      });
+    }
+
+    const testAccount = await nodemailer.createTestAccount();
+    fallbackFromAddress = testAccount.user;
+    console.warn(
+      "[email] SMTP no configurado. Se utilizará una cuenta de prueba de Nodemailer.",
     );
-  }
+    console.warn(`[email] Credenciales temporales: ${testAccount.user}`);
 
-  const port = Number(process.env.SMTP_PORT ?? 587);
-  const secureEnv = process.env.SMTP_SECURE;
-  const secure = secureEnv ? secureEnv === "true" || secureEnv === "1" : port === 465;
+    return nodemailer.createTransport({
+      host: testAccount.smtp.host,
+      port: testAccount.smtp.port,
+      secure: testAccount.smtp.secure,
+      auth: {
+        user: testAccount.user,
+        pass: testAccount.pass,
+      },
+    });
+  })();
 
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
-
-  cachedTransporter = nodemailer.createTransport({
-    host,
-    port,
-    secure,
-    auth: user && pass ? { user, pass } : undefined,
-  });
-
-  return cachedTransporter;
+  return cachedTransporterPromise;
 }
 
 function getFromAddress(): string {
@@ -51,6 +66,7 @@ function getFromAddress(): string {
     process.env.EMAIL_FROM ||
     process.env.SMTP_FROM ||
     process.env.SMTP_USER ||
+    fallbackFromAddress ||
     "no-reply@plataforma-tdah.com"
   );
 }
@@ -58,7 +74,7 @@ function getFromAddress(): string {
 export async function sendPasswordResetEmail(
   params: PasswordResetEmailParams,
 ): Promise<PasswordResetEmailResult> {
-  const transporter = resolveTransporter();
+  const transporter = await resolveTransporter();
   const from = getFromAddress();
   const { to, resetUrl } = params;
   const name = params.name?.trim();
