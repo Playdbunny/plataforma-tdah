@@ -119,7 +119,7 @@ export async function sendPasswordResetEmail(
   const greeting = name && name.length > 0 ? `Hola ${name},` : "Hola,";
 
   const text = `${greeting}\n\n` +
-    `Recibimos una solicitud para restablecer tu contraseña en Plataforma TDAH.\n` +
+    `Recibimos una solicitud para restablecer tu contraseña en SynapQuest.\n` +
     `Haz clic en el siguiente enlace (o cópialo en tu navegador) para crear una nueva contraseña:\n\n` +
     `${resetUrl}\n\n` +
     `Si no fuiste tú, simplemente ignora este correo.\n` +
@@ -127,7 +127,7 @@ export async function sendPasswordResetEmail(
 
   const html = `
     <p>${greeting}</p>
-    <p>Recibimos una solicitud para restablecer tu contraseña en <strong>Plataforma TDAH</strong>.</p>
+    <p>Recibimos una solicitud para restablecer tu contraseña en <strong>SynapQuest</strong>.</p>
     <p>
       Haz clic en el siguiente botón (o copia el enlace en tu navegador) para crear una nueva contraseña:
     </p>
@@ -151,7 +151,7 @@ export async function sendPasswordResetEmail(
     <p style="margin-top:16px;">
       Si no solicitaste este cambio, puedes ignorar este correo. El enlace expirará en unas horas por seguridad.
     </p>
-    <p style="margin-top:16px;">— El equipo de Plataforma TDAH</p>
+    <p style="margin-top:16px;">— El equipo de SynapQuest</p>
   `;
 
   const info = await transporter.sendMail({

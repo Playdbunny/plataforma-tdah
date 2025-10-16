@@ -129,8 +129,8 @@ const UserSchema = new Schema<IUserDoc>(
         }
         // Nunca exponer el hash
         Reflect.deleteProperty(ret, "passwordHash");
-        Reflect.deleteProperty(ret, "passwordResetToken");
-        Reflect.deleteProperty(ret, "passwordResetExpires");
+        Reflect.deleteProperty(ret, "passwordResetTokenHash");
+        Reflect.deleteProperty(ret, "passwordResetExpiresAt");
         return ret;
       }
     }

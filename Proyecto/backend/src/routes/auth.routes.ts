@@ -126,8 +126,8 @@ router.post("/forgot-password", async (req, res) => {
   const rawToken = randomBytes(32).toString("hex");
   const hashedToken = createHash("sha256").update(rawToken).digest("hex");
 
-  user.passwordResetToken = hashedToken;
-  user.passwordResetExpires = getResetExpiryDate();
+  user.passwordResetTokenHash = hashedToken;
+  user.passwordResetExpiresAt = getResetExpiryDate();
 
   await user.save();
 
@@ -139,8 +139,8 @@ router.post("/forgot-password", async (req, res) => {
       resetUrl,
     });
   } catch (error) {
-    user.passwordResetToken = null;
-    user.passwordResetExpires = null;
+    user.passwordResetTokenHash = null;
+    user.passwordResetExpiresAt = null;
     await user.save();
     console.error("Error enviando correo de recuperación", error);
     return res.status(500).json({ error: "No se pudo enviar el correo de recuperación" });
@@ -159,8 +159,8 @@ router.post("/reset-password", async (req, res) => {
   const hashedToken = createHash("sha256").update(token).digest("hex");
 
   const user = await User.findOne({
-    passwordResetToken: hashedToken,
-    passwordResetExpires: { $gt: new Date() },
+    passwordResetTokenHash: hashedToken,
+    passwordResetExpiresAt: { $gt: new Date() },
   });
 
   if (!user) {
@@ -168,8 +168,8 @@ router.post("/reset-password", async (req, res) => {
   }
 
   user.passwordHash = await argon2.hash(password);
-  user.passwordResetToken = null;
-  user.passwordResetExpires = null;
+  user.passwordResetTokenHash = null;
+  user.passwordResetExpiresAt = null;
 
   await user.save();
 
