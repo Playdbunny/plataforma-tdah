@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { isAxiosError } from "axios";
 import Navbar from "../../Components/Navbar/Navbar";
 import styles from "./Forgot.module.css";
+import { requestPasswordReset } from "../../api/auth";
 
 export default function Forgot() {
 
@@ -14,14 +16,26 @@ export default function Forgot() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    // TODO: integra con tu backend (endpoint POST /auth/forgot-password)
-    await new Promise((r) => setTimeout(r, 800)); // demo
-    setSent(true);
-    setLoading(false);
+    setLoading(true);    
+    setError(null);
+
+    try {
+      await requestPasswordReset({ email });
+      setSent(true);
+    } catch (err) {
+      if (isAxiosError(err)) {
+        const message = (err.response?.data as { error?: string } | undefined)?.error;
+        setError(message ?? "No pudimos enviar el correo. Inténtalo nuevamente en unos minutos.");
+      } else {
+        setError("Ocurrió un error inesperado. Inténtalo nuevamente.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -55,6 +69,8 @@ export default function Forgot() {
                     autoComplete="email"
                   />
                 </label>
+
+                {error && <div className={styles.error}>{error}</div>}
 
                 <button type="submit" className={`${styles.pxBtn} ${styles.btnCyan}`} disabled={loading}>
                   {loading ? "Enviando..." : "Recupera tu contraseña"}
