@@ -4,7 +4,7 @@ import argon2 from "argon2";
 import jwt, { Secret, SignOptions } from "jsonwebtoken";
 import { randomBytes, createHash } from "crypto";
 import { User } from "../models/User";
-import { sendPasswordResetEmail } from "../services/email";
+import { sendPasswordResetEmail } from "../services/mailer";
 
 const router = Router();
 

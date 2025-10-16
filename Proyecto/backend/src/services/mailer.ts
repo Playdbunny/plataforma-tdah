@@ -1,4 +1,5 @@
-import nodemailer, { Transporter } from "nodemailer";
+import nodemailer from "nodemailer";
+import type { Transporter } from "nodemailer";
 
 export interface PasswordResetEmailParams {
   to: string;
@@ -14,6 +15,22 @@ export interface PasswordResetEmailResult {
 let cachedTransporterPromise: Promise<Transporter> | null = null;
 let fallbackFromAddress: string | null = null;
 
+function parseBoolean(value: string | undefined, fallback: boolean): boolean {
+  if (typeof value === "undefined") return fallback;
+  return value === "true" || value === "1";
+}
+
+function resolveGmailCredentials() {
+  const user = process.env.SMTP_USER || process.env.GMAIL_USER;
+  const pass = process.env.SMTP_PASS || process.env.GMAIL_PASS;
+
+  if (user && pass) {
+    return { user, pass };
+  }
+
+  return null;
+}
+
 async function resolveTransporter(): Promise<Transporter> {
   if (cachedTransporterPromise) return cachedTransporterPromise;
 
@@ -23,11 +40,23 @@ async function resolveTransporter(): Promise<Transporter> {
       return nodemailer.createTransport(smtpUrl);
     }
 
+    const preferGmail = parseBoolean(process.env.SMTP_USE_GMAIL, false);
+    const gmailAuth = resolveGmailCredentials();
+
+    if (preferGmail || gmailAuth) {
+      if (!gmailAuth) {
+        console.warn("[email] SMTP_USE_GMAIL está activo pero faltan credenciales.");
+      } else {
+        return nodemailer.createTransport({
+          service: "gmail",
+          auth: gmailAuth,
+        });
+      }
+    }
     const host = process.env.SMTP_HOST;
     if (host) {
       const port = Number(process.env.SMTP_PORT ?? 587);
-      const secureEnv = process.env.SMTP_SECURE;
-      const secure = secureEnv ? secureEnv === "true" || secureEnv === "1" : port === 465;
+      const secure = parseBoolean(process.env.SMTP_SECURE, port === 465);
 
       const user = process.env.SMTP_USER;
       const pass = process.env.SMTP_PASS;
@@ -37,6 +66,13 @@ async function resolveTransporter(): Promise<Transporter> {
         port,
         secure,
         auth: user && pass ? { user, pass } : undefined,
+      });
+    }
+
+    if (gmailAuth) {
+      return nodemailer.createTransport({
+        service: "gmail",
+        auth: gmailAuth,
       });
     }
 
@@ -66,8 +102,9 @@ function getFromAddress(): string {
     process.env.EMAIL_FROM ||
     process.env.SMTP_FROM ||
     process.env.SMTP_USER ||
+    process.env.GMAIL_USER ||
     fallbackFromAddress ||
-    "no-reply@plataforma-tdah.com"
+    "synapquest@gmail.com"
   );
 }
 

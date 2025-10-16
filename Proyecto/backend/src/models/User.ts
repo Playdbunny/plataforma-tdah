@@ -47,8 +47,8 @@ export interface IUserDoc extends Document {
   updatedAt: Date;
 
   // Campos para recuperación de password
-  passwordResetToken?: string | null;
-  passwordResetExpires?: Date | null;
+  passwordResetTokenHash?: string | null;
+  passwordResetExpiresAt?: Date | null;
 
   // Campos para OAuth con Google
   googleId?: string | null;
@@ -108,8 +108,8 @@ const UserSchema = new Schema<IUserDoc>(
     lastLogin: { type: Date, default: null, index: true }, // para saber cuándo fue la última vez que se conectó
 
     // Campos para recuperación de password
-    passwordResetToken: { type: String, default: null, index: true },
-    passwordResetExpires: { type: Date, default: null },
+    passwordResetTokenHash: { type: String, default: null },
+    passwordResetExpiresAt: { type: Date, default: null },
 
     // Para usuarios que se registraron con Google OAuth
     googleId: { type: String, default: null, index: true },
