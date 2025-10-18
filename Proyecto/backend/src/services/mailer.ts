@@ -1,25 +1,30 @@
 import nodemailer from "nodemailer";
 import type { Transporter } from "nodemailer";
 
+// Parámetros para el correo de restablecimiento de contraseña
 export interface PasswordResetEmailParams {
   to: string;
   resetUrl: string;
   name?: string | null;
 }
 
+// Resultado del envío del correo de restablecimiento de contraseña
 export interface PasswordResetEmailResult {
   previewUrl?: string;
   messageId?: string;
 }
 
+// Función para enviar el correo de restablecimiento de contraseña
 let cachedTransporterPromise: Promise<Transporter> | null = null;
 let fallbackFromAddress: string | null = null;
 
+// Analiza un valor de cadena como booleano, con un valor predeterminado
 function parseBoolean(value: string | undefined, fallback: boolean): boolean {
   if (typeof value === "undefined") return fallback;
   return value === "true" || value === "1";
 }
 
+// Resuelve las credenciales de Gmail desde las variables de entorno
 function resolveGmailCredentials() {
   const user = process.env.SMTP_USER || process.env.GMAIL_USER;
   const pass = process.env.SMTP_PASS || process.env.GMAIL_PASS;
@@ -31,9 +36,11 @@ function resolveGmailCredentials() {
   return null;
 }
 
+// Resuelve el transportador de correo electrónico basado en la configuración
 async function resolveTransporter(): Promise<Transporter> {
   if (cachedTransporterPromise) return cachedTransporterPromise;
 
+  // Inicializa el transportador de correo electrónico
   cachedTransporterPromise = (async () => {
     const smtpUrl = process.env.SMTP_URL;
     if (smtpUrl) {
