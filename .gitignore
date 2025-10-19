@@ -19,6 +19,7 @@ Proyecto/frontend/*.local
 # Dependencias y build del backend
 Proyecto/backend/node_modules/
 Proyecto/backend/dist/
+Proyecto/backend/uploads/
 
 # Archivos de entorno
 **/.env

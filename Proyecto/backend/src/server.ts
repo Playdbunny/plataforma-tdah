@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import path from "path";
 import { connectDB } from "./db";
 import authRouter from "./routes/auth.routes";
 import profileRouter from "./routes/profile.routes";
@@ -19,6 +20,8 @@ app.use(cors());
 const bodyLimit = process.env.JSON_BODY_LIMIT || "10mb";
 app.use(express.json({ limit: bodyLimit }));
 app.use(express.urlencoded({ extended: true, limit: bodyLimit }));
+
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 app.use("/admin", adminRouter);
 app.use("/auth", authRouter);
