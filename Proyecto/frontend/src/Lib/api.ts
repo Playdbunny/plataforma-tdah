@@ -8,7 +8,7 @@ export const getApiBaseUrl = () => baseURL;
 // Crea una instancia de Axios con la URL base
 export const api = axios.create({
   baseURL,
-  headers: { "Content-Type": "application/json", Accept: "application/json" },
+  headers: { Accept: "application/json" },
 });
 
 // "Inyección" de funciones para evitar import circular con el store

@@ -40,26 +40,13 @@ export const deleteSubject = async (subjectId: string) => {
   await api.delete(`/admin/subjects/${subjectId}`);
 };
 
-const fileToDataUrl = (file: File) =>
-  new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result !== "string") {
-        reject(new Error("No se pudo leer el archivo"));
-        return;
-      }
-      resolve(reader.result);
-    };
-    reader.onerror = () => reject(reader.error ?? new Error("Error leyendo archivo"));
-    reader.readAsDataURL(file);
-  });
-
 export const uploadSubjectBanner = async (subjectId: string, file: File) => {
-  const banner = await fileToDataUrl(file);
+  const formData = new FormData();
+  formData.append("banner", file);
 
-  const { data } = await api.post<SubjectResponse>(
+  const { data } = await api.patch<SubjectResponse>(
     `/admin/subjects/${subjectId}/banner`,
-    { banner },
+    formData,
   );
 
   return data;
