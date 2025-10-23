@@ -50,15 +50,21 @@ router.patch("/", async (req: any, res) => {
     user.email = updates.email.toLowerCase();
   }
 
-  if (updates.username) {
+  if (typeof updates.username === "string") {
     const username = updates.username.trim();
-    if (username && username !== user.username) {
+    if (!username) {
+      return res.status(400).json({ error: "El nombre de usuario es obligatorio" });
+    }
+
+    const currentUsername = typeof user.username === "string" ? user.username.trim() : null;
+    if (!currentUsername || username !== currentUsername) {
       const existingUsername = await User.findOne({ username, _id: { $ne: userId } });
       if (existingUsername) {
         return res.status(409).json({ error: "El nombre de usuario no está disponible" });
       }
-      user.username = username;
     }
+  
+    user.username = username;
   }
 
   if (typeof updates.name === "string") {

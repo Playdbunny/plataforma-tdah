@@ -61,7 +61,7 @@ export default function EditProfile() {
     const trimmedEducation = education.trim();
     return (
       trimmedUsername.length >= 3 &&
-      trimmedEducation.length > 0 &&
+      trimmedEducation.length >= 2 &&
       /\S+@\S+\.\S+/.test(trimmedEmail)
     );
   }, [username, email, education]);
@@ -114,11 +114,16 @@ export default function EditProfile() {
     setSaving(true);
     setErrorMsg(null);
 
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim();
+    const trimmedUsername = username.trim();
+    const trimmedEducation = education.trim();
+
     const payload = {
-      name: name.trim(),
-      email: email.trim(),
-      username: username.trim(),
-      education: education.trim(),
+      name: trimmedName,
+      email: trimmedEmail,
+      username: trimmedUsername,
+      education: trimmedEducation,
       avatarUrl: avatarPreview,
       character: { id: c.id, name: c.name, sprite: c.sprite },
       ownedCharacters,
