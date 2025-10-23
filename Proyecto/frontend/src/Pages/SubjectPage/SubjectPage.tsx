@@ -43,7 +43,8 @@ export default function SubjectPage() {
 
   // Determina el título y el banner a mostrar:
   const title = subject?.name ?? slug.charAt(0).toUpperCase() + slug.slice(1);
-  const bannerUrl = subject?.bannerUrl ?? "/Gifs/8banner.gif";
+  const heroBannerUrl = subject?.bannerUrl ?? "/Gifs/8banner.gif";
+  const defaultActivityBanner = heroBannerUrl;
 
   // Actividades: mock por slug (hasta que migres a backend)
   const {
@@ -94,7 +95,7 @@ export default function SubjectPage() {
         <div
           className={styles.heroArt}
           aria-hidden
-          style={{ backgroundImage: `url('${bannerUrl}')` }}
+          style={{ backgroundImage: `url("${heroBannerUrl}")` }}
         />
         <div className={styles.heroText}>
           <h1 className={styles.title}>{title}</h1>
@@ -124,18 +125,27 @@ export default function SubjectPage() {
             <div className={styles.empty}>Aún no hay actividades para esta materia.</div>
           ) : (
             <div className={styles.grid} role="list">
-              {filteredActivities.map((a) => (
-                <article
-                  key={a.id}
-                  className={styles.card}
-                  role="listitem"
-                  tabIndex={0}
-                  title={a.title}
-                >
-                  <div className={styles.cardThumb} />
-                  <h3 className={styles.cardTitle}>{a.title}</h3>
-                </article>
-              ))}
+              {filteredActivities.map((a) => {
+                const cardBanner = a.bannerUrl ?? defaultActivityBanner;
+
+                return (
+                  <article
+                    key={a.id}
+                    className={styles.card}
+                    role="listitem"
+                    tabIndex={0}
+                    title={a.title}
+                  >
+                    <img
+                      className={styles.cardThumb}
+                      src={cardBanner}
+                      alt={`Banner de ${a.title}`}
+                      loading="lazy"
+                    />
+                    <h3 className={styles.cardTitle}>{a.title}</h3>
+                  </article>
+                );
+              })}
             </div>
           )}
         </section>

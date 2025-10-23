@@ -231,6 +231,22 @@ async function findSubjectOr404(id: string, res: Response) {
   return subject;
 }
 
+// GET /subjects - Listar materias para clientes públicos/autenticados
+router.get(
+  "/subjects",
+  async (_req: Request, res: Response) => {
+    try {
+      const subjects = await Subject.find()
+        .sort({ name: 1 })
+        .select("name slug description bannerUrl");
+
+      res.json(subjects);
+    } catch (err) {
+      handleError(res, err, "Error al obtener materias");
+    }
+  },
+);
+
 // GET /admin/subjects - Listar todas las materias (solo admin)
 router.get(
   "/admin/subjects",

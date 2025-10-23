@@ -1,4 +1,4 @@
-import { api } from "../Lib/api";
+import { api, getAdminApiBaseUrl } from "../Lib/api";
 
 export type SubjectResponse = {
   _id: string;
@@ -16,12 +16,16 @@ export type SubjectPayload = {
 
 // Obtener todas las materias desde el backend
 export const getSubjects = async () => {
-  const { data } = await api.get<SubjectResponse[]>("/admin/subjects");
+  const { data } = await api.get<SubjectResponse[]>("/subjects", {
+    baseURL: getAdminApiBaseUrl(),
+  });
   return data;
 };
 
 export const createSubject = async (payload: SubjectPayload) => {
-  const { data } = await api.post<SubjectResponse>("/admin/subjects", payload);
+  const { data } = await api.post<SubjectResponse>("/subjects", payload, {
+    baseURL: getAdminApiBaseUrl(),
+  });
   return data;
 };
 
@@ -30,14 +34,17 @@ export const updateSubject = async (
   payload: Partial<SubjectPayload>,
 ) => {
   const { data } = await api.put<SubjectResponse>(
-    `/admin/subjects/${subjectId}`,
+    `/subjects/${subjectId}`,
     payload,
+    { baseURL: getAdminApiBaseUrl() },
   );
   return data;
 };
 
 export const deleteSubject = async (subjectId: string) => {
-  await api.delete(`/admin/subjects/${subjectId}`);
+  await api.delete(`/subjects/${subjectId}`, {
+    baseURL: getAdminApiBaseUrl(),
+  });
 };
 
 export const uploadSubjectBanner = async (subjectId: string, file: File) => {
@@ -45,8 +52,9 @@ export const uploadSubjectBanner = async (subjectId: string, file: File) => {
   formData.append("banner", file);
 
   const { data } = await api.patch<SubjectResponse>(
-    `/admin/subjects/${subjectId}/banner`,
+    `/subjects/${subjectId}/banner`,
     formData,
+    { baseURL: getAdminApiBaseUrl() },
   );
 
   return data;
@@ -54,7 +62,8 @@ export const uploadSubjectBanner = async (subjectId: string, file: File) => {
 
 export const clearSubjectBanner = async (subjectId: string) => {
   const { data } = await api.delete<SubjectResponse>(
-    `/admin/subjects/${subjectId}/banner`,
+    `/subjects/${subjectId}/banner`,
+    { baseURL: getAdminApiBaseUrl() },
   );
   return data;
 };

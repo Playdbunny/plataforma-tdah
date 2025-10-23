@@ -1,9 +1,22 @@
 import axios from 'axios';
 
 // Configura la URL base del backend desde una variable de entorno
-const baseURL = import.meta.env.VITE_API_URL ?? "http://localhost:4000";
+const envBaseUrl = import.meta.env.VITE_API_URL;
+const rawBaseUrl = envBaseUrl && envBaseUrl.trim() !== ""
+  ? envBaseUrl.trim()
+  : "http://localhost:4000";
+
+const baseURL = rawBaseUrl.replace(/\/+$/, "");
 
 export const getApiBaseUrl = () => baseURL;
+
+export const getAdminApiBaseUrl = () => {
+  const trimmed = baseURL.replace(/\/+$/, "");
+  if (trimmed.endsWith("/admin")) {
+    return trimmed;
+  }
+  return `${trimmed}/admin`;
+};
 
 // Crea una instancia de Axios con la URL base
 export const api = axios.create({

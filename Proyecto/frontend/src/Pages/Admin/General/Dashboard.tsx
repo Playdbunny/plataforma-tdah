@@ -1,39 +1,19 @@
 // Dashboard.tsx
 // Vista principal del panel de admin con:
-// - KPIs (Estudiantes activos, XP total, Materiales, Alumno destacado)
+// - KPIs (Alumnos conectados, XP rank 1, Total actividades, Alumno destacado)
 // - Gráfico de "Evolución XP" (SVG sin librerías externas) con selector de rango
 // - Actividad reciente (timeline) + skeleton/empty
 
 import styles from "./Dashboard.module.css";
-import { useMemo, useState } from "react";
-
-// Tipos mínimos para conectar luego con tu backend
-type Student = {
-  id: string;
-  name: string;
-  xp: number;
-  lastActiveAt?: string; // ISO
-};
-
-type Material = {
-  id: string;
-  title: string;
-  subjectId: string;
-};
+import { useEffect, useMemo, useState } from "react";
+import { getAdminDashboardOverview, type AdminDashboardOverview } from "../../../api/admin";
 
 // Helper: formateo de números según ES
 const formatNumber = (n: number) =>
   new Intl.NumberFormat("es-CL").format(n);
 
 export default function AdminDashboard() {
-  // ───────────── MOCK DATA (reemplázalo con datos reales del backend) ─────────────
-  const students: Student[] = [
-    { id: "1", name: "Ana", xp: 850, lastActiveAt: "2025-08-30T11:00:00Z" },
-    { id: "2", name: "Juan", xp: 520, lastActiveAt: "2025-08-30T08:50:00Z" },
-    { id: "3", name: "Pedro", xp: 430, lastActiveAt: "2025-08-29T21:10:00Z" },
-  ];
-
-  const materials: Material[] = [];
+  const [overview, setOverview] = useState<AdminDashboardOverview | null>(null);
 
   // Rangos (para cuando conectes al backend puedes pedir 7/30/90 días)
   const [range, setRange] = useState<"7d" | "30d" | "90d">("7d");
@@ -51,26 +31,36 @@ export default function AdminDashboard() {
   // Selección de serie según rango
   const serie = weeklyXPByRange[range];
 
-  // Alumno destacado (máximo XP)
-  const topStudent = useMemo(
-    () => students.slice().sort((a, b) => b.xp - a.xp)[0],
-    [students]
-  );
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Métricas básicas
-  const totalXP = useMemo(
-    () => students.reduce((acc, s) => acc + (s.xp || 0), 0),
-    [students]
-  );
-  const activeStudents = useMemo(
-    // Mock: “activo” = tiene XP > 0; ajusta a tu definición real
-    () => students.filter((s) => (s.xp || 0) > 0).length,
-    [students]
-  );
+  useEffect(() => {
+    let active = true;
 
-  // (cuando tengas fetch real) usa estos flags
-  const isLoading = false;
-  const error: string | null = null;
+    async function loadOverview() {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const data = await getAdminDashboardOverview();
+        if (active) setOverview(data);
+      } catch (err) {
+        if (!active) return;
+        console.error("Error cargando overview del dashboard", err);
+        const message =
+          (err as any)?.response?.data?.error ??
+          (err instanceof Error ? err.message : "No se pudo cargar la información");
+        setError(message);
+        setOverview(null);
+      } finally {
+        if (active) setIsLoading(false);
+      }
+    }
+
+    loadOverview();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // ───────────── Helpers para gráfico (coordenadas SVG) ─────────────
   const chart = useMemo(() => {
@@ -127,36 +117,44 @@ export default function AdminDashboard() {
         <div className={styles.skelRow} aria-hidden />
       ) : (
         <section className={styles.kpis}>
-          <div className={styles.kpi} role="group" aria-label="Estudiantes activos">
+          <div className={styles.kpi} role="group" aria-label="Alumnos conectados">
             <div className={styles.kpiIcon} aria-hidden>👥</div>
             <div className={styles.kpiText}>
-              <div className={styles.kpiNumber}>{formatNumber(activeStudents)}</div>
-              <div className={styles.kpiLabel}>Estudiantes activos</div>
+              <div className={styles.kpiNumber}>
+                {formatNumber(overview?.connectedStudents ?? 0)}
+              </div>
+              <div className={styles.kpiLabel}>Alumnos conectados</div>
             </div>
           </div>
 
-          <div className={styles.kpi} role="group" aria-label="XP total">
+          <div className={styles.kpi} role="group" aria-label="XP alumno rank 1">
             <div className={styles.kpiIcon} aria-hidden>⭐</div>
             <div className={styles.kpiText}>
-              <div className={styles.kpiNumber}>{formatNumber(totalXP)}</div>
-              <div className={styles.kpiLabel}>XP total</div>
+              <div className={styles.kpiNumber}>
+                {formatNumber(overview?.topStudent?.xp ?? 0)}
+              </div>
+              <div className={styles.kpiLabel}>XP alumno rank 1</div>
             </div>
           </div>
 
-          <div className={styles.kpi} role="group" aria-label="Materiales">
-            <div className={styles.kpiIcon} aria-hidden>📚</div>
+          <div className={styles.kpi} role="group" aria-label="Total actividades">
+            <div className={styles.kpiIcon} aria-hidden>🧩</div>
             <div className={styles.kpiText}>
-              <div className={styles.kpiNumber}>{formatNumber(materials.length)}</div>
-              <div className={styles.kpiLabel}>Materiales</div>
+              <div className={styles.kpiNumber}>
+                {formatNumber(overview?.totalActivities ?? 0)}
+              </div>
+              <div className={styles.kpiLabel}>Total actividades</div>
             </div>
           </div>
 
-          <div className={styles.kpi} role="group" aria-label="Alumno destacado">
+          <div className={styles.kpi} role="group" aria-label="Alumno rank 1">
             <div className={styles.kpiIcon} aria-hidden>🏅</div>
             <div className={styles.kpiText}>
-              <div className={styles.kpiNumber}>{topStudent?.name ?? "—"}</div>
+              <div className={styles.kpiNumber}>{overview?.topStudent?.name ?? "—"}</div>
               <div className={styles.kpiLabel}>
-                {topStudent ? `${formatNumber(topStudent.xp)} XP` : "Sin datos"}
+                {overview?.topStudent
+                  ? `${formatNumber(overview.topStudent.xp)} XP`
+                  : "Sin datos"}
               </div>
             </div>
           </div>

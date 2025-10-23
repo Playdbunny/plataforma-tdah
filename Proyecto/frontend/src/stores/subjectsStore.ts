@@ -12,6 +12,8 @@ import type {
   SubjectPayload,
   SubjectResponse,
 } from "../api/subjects";
+import { getApiBaseUrl } from "../Lib/api";
+import { useAppStore } from "./appStore";
 
 // ========================
 // Tipo base de una materia
@@ -61,6 +63,20 @@ function toSlug(name: string) {
     .replace(/(^-|-$)+/g, "");
 }
 
+function resolveBannerUrl(url?: string | null): string | null {
+  if (!url) return null;
+  const trimmed = url.trim();
+  if (!trimmed) return null;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+
+  const base = getApiBaseUrl().replace(/\/+$/, "");
+  if (trimmed.startsWith("/")) {
+    return `${base}${trimmed}`;
+  }
+
+  return `${base}/${trimmed}`;
+}
+
 function normalizeSubject(subject: SubjectResponse | Subject): Subject {
   const rawMongoId = (subject as any)._id ?? null;
   const legacyId = (subject as any).id ?? null;
@@ -76,7 +92,7 @@ function normalizeSubject(subject: SubjectResponse | Subject): Subject {
     ...subject,
     _id: String(rawMongoId ?? finalId),
     id: String(finalId),
-    bannerUrl: subject.bannerUrl ?? null,
+    bannerUrl: resolveBannerUrl(subject.bannerUrl ?? null),
   } as Subject;
 }
 
@@ -89,8 +105,18 @@ function extractErrorMessage(err: any, fallback: string) {
   return typeof message === "string" ? message : fallback;
 }
 
-async function fetchAndSetSubjects(set: (partial: Partial<SubjectsState>) => void) {
-  const data = await api.getSubjects();
+type FetchSubjectsOptions = {
+  forceAdmin?: boolean;
+};
+
+async function fetchAndSetSubjects(
+  set: (partial: Partial<SubjectsState>) => void,
+  options?: FetchSubjectsOptions,
+) {
+  const appState = useAppStore.getState();
+  const useAdminEndpoints = options?.forceAdmin ?? appState.isAdmin();
+
+  const data = await api.getSubjects({ public: !useAdminEndpoints });
   const normalized = data.map(normalizeSubject);
   set({ items: normalized, error: null });
   return normalized;
@@ -126,7 +152,7 @@ export const useSubjectsStore = create<SubjectsState>()(
             description: trimmedDescription || undefined,
           });
           const normalized = normalizeSubject(created);
-          await fetchAndSetSubjects(set);
+          await fetchAndSetSubjects(set, { forceAdmin: true });
           return (
             get().items.find(
               (subject) => subject._id === normalized._id || subject.id === normalized.id,
@@ -165,7 +191,7 @@ export const useSubjectsStore = create<SubjectsState>()(
         try {
           const updated = await api.updateSubject(target._id, normalizedPatch);
           const normalized = normalizeSubject(updated);
-          await fetchAndSetSubjects(set);
+          await fetchAndSetSubjects(set, { forceAdmin: true });
           return (
             get().items.find(
               (subject) => subject._id === normalized._id || subject.id === normalized.id,
@@ -194,7 +220,7 @@ export const useSubjectsStore = create<SubjectsState>()(
         set({ loading: true, error: null });
         try {
           await api.deleteSubject(target._id);
-          await fetchAndSetSubjects(set);
+          await fetchAndSetSubjects(set, { forceAdmin: true });
         } catch (err: any) {
           const message = extractErrorMessage(err, "No se pudo eliminar la materia");
           set({ error: message });
@@ -219,7 +245,7 @@ export const useSubjectsStore = create<SubjectsState>()(
         try {
           const updated = await api.uploadSubjectBanner(target._id, file);
           const normalized = normalizeSubject(updated);
-          await fetchAndSetSubjects(set);
+          await fetchAndSetSubjects(set, { forceAdmin: true });
           return (
             get().items.find(
               (subject) => subject._id === normalized._id || subject.id === normalized.id,
@@ -249,7 +275,7 @@ export const useSubjectsStore = create<SubjectsState>()(
         try {
           const updated = await api.clearSubjectBanner(target._id);
           const normalized = normalizeSubject(updated);
-          await fetchAndSetSubjects(set);
+          await fetchAndSetSubjects(set, { forceAdmin: true });
           return (
             get().items.find(
               (subject) => subject._id === normalized._id || subject.id === normalized.id,

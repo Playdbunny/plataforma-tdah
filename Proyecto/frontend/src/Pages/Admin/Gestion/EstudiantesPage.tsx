@@ -6,9 +6,9 @@
 // ======================================================================
 
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import styles from "./Estudiantes.module.css";
-import { useStudentsStore, type Student } from "../../../stores/studentsStore";
+import { useStudentsStore } from "../../../stores/studentsStore";
 
 // Utilidad para “hace Xh”
 function timeAgo(iso?: string) {
@@ -23,13 +23,15 @@ function timeAgo(iso?: string) {
 }
 
 export default function EstudiantesPage() {
-  const { items, list, loading } = useStudentsStore();
+  const { items, list, loading, error } = useStudentsStore();
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
   const pageSize = 6; // filas por página (ajústalo)
 
   useEffect(() => {
-    if (!items || items.length === 0) list();
+    if (!items || items.length === 0) {
+      void list();
+    }
   }, [items, list]);
 
   // Filtrado en memoria por nombre/email
@@ -89,6 +91,12 @@ export default function EstudiantesPage() {
                   Cargando…
                 </td>
               </tr>
+            ) : error ? (
+              <tr>
+                <td className={styles.empty} colSpan={5}>
+                  {error}
+                </td>
+              </tr>
             ) : pageItems.length === 0 ? (
               <tr>
                 <td className={styles.empty} colSpan={5}>
@@ -121,15 +129,11 @@ export default function EstudiantesPage() {
                   </td>
                   <td className={styles.mono}>{s.email}</td>
                   <td>
-                    {/* “Progreso” simple: promedio de progressBySubject */}
-                    {Math.round(
-                      (s.progressBySubject?.reduce((a, b) => a + b.progress, 0) ||
-                        0) /
-                        Math.max(1, s.progressBySubject?.length || 1)
-                    )}
-                    %
+                    {Math.round(s.progressAverage ?? 0)}%
                   </td>
-                  <td className={styles.muted}>{timeAgo(s.lastActiveAt)}</td>
+                  <td className={styles.muted}>
+                    {timeAgo(s.lastActivityAt ?? s.lastLogin ?? undefined)}
+                  </td>
                 </tr>
               ))
             )}

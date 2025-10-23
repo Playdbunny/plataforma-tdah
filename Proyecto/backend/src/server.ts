@@ -13,6 +13,7 @@ import { initGoogleStrategy } from "./auth/google";
 import googleRouter from "./routes/google.routes";
 import adminActivitiesRouter from "./routes/adminActivities.routes";
 import adminSubjectsRouter from "./routes/adminSubjects.routes";
+import adminStudentsRouter from "./routes/adminStudents.routes";
 
 const app = express();
 app.use(cors());
@@ -24,6 +25,7 @@ app.use(express.urlencoded({ extended: true, limit: bodyLimit }));
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 app.use("/admin", adminRouter);
+app.use("/admin", adminStudentsRouter);
 app.use("/auth", authRouter);
 app.use("/profile", profileRouter);
 
