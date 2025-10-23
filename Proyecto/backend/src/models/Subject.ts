@@ -76,9 +76,20 @@ const subjectSchema = new Schema<SubjectDocument, SubjectModel>(
       default: null,
       // valida solo si trae string (no valida null/undefined)
       validate: {
-        validator: (v: unknown) =>
-          v == null || (typeof v === "string" && /^https?:\/\/\S+$/i.test(v)),
-        message: "bannerUrl must be an absolute http(s) URL",
+        validator: (v: unknown) => {
+          if (v == null) return true;
+          if (typeof v !== "string") return false;
+
+          const trimmed = v.trim();
+          if (!trimmed) return false;
+
+          // Permitimos URLs absolutas http(s) o rutas relativas al directorio de uploads.
+          if (/^https?:\/\/\S+$/i.test(trimmed)) return true;
+          if (trimmed.startsWith("/uploads/")) return true;
+
+          return false;
+        },
+        message: "bannerUrl must be an absolute http(s) URL or start with /uploads/",
       },
     },
   },

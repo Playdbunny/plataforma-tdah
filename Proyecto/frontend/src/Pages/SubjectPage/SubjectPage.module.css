@@ -110,8 +110,12 @@
 .cardThumb{
   width: 100%;
   height: 120px;
-  background: #ffffff;
   border-radius: 12px;
+  background-color: #ffffff;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  box-shadow: inset 0 0 0 1px rgba(17, 31, 63, 0.15);
 }
 
 .cardTitle{

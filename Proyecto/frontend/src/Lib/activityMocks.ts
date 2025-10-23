@@ -14,6 +14,13 @@ export type SubjectActivityType =
 
 export type SubjectActivityStatus = "published" | "draft" | "archived";
 
+export type ActivityKind =
+  | "multiple_choice"
+  | "true_false"
+  | "video_quiz"
+  | "ppt_review"
+  | "embedded_quiz";
+
 export type SubjectActivity = {
   id: string;
   title: string;
@@ -27,6 +34,9 @@ export type SubjectActivity = {
   fieldsJSON?: Record<string, any>;
   slug?: string;
   templateType?: string;
+  kind?: ActivityKind;
+  xpReward?: number;
+  config?: Record<string, any>;
 };
 
 // Permitir campos extra para compatibilidad backend
@@ -35,6 +45,9 @@ export type BackendActivityPayload = Partial<SubjectActivity> & {
   templateType?: string;
   slug?: string;
   subjectId?: string;
+  kind?: ActivityKind;
+  config?: Record<string, any>;
+  xpReward?: number;
 };
 
 export const SUBJECT_ACTIVITY_TYPE_LABELS: Record<SubjectActivityType, string> = {

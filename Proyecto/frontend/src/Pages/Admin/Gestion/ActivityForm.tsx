@@ -2,7 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { useActivitiesStore } from "../../../stores/activitiesStore";
 import { useSubjectsStore } from "../../../stores/subjectsStore";
-import { SubjectActivityType, SUBJECT_ACTIVITY_TYPE_LABELS, BackendActivityPayload } from "../../../Lib/activityMocks";
+import {
+  SubjectActivityType,
+  SUBJECT_ACTIVITY_TYPE_LABELS,
+  BackendActivityPayload,
+  ActivityKind,
+} from "../../../Lib/activityMocks";
 import styles from "./ActivityForm.module.css";
 
 interface ActivityFormProps {
@@ -41,6 +46,18 @@ const BANNER_ACCEPT = "image/png,image/jpeg,image/webp,image/gif";
 const MAX_BANNER_SIZE_MB = 10;
 const MAX_BANNER_SIZE = MAX_BANNER_SIZE_MB * 1024 * 1024;
 const BANNER_TYPE_REGEX = /^image\/(png|jpe?g|webp|gif)$/i;
+
+const DEFAULT_ACTIVITY_KIND: ActivityKind = "embedded_quiz";
+
+const KIND_BY_TYPE: Record<SubjectActivityType, ActivityKind> = {
+  infografia: "embedded_quiz",
+  video: "video_quiz",
+  "ppt-animada": "ppt_review",
+  quiz: "multiple_choice",
+  juego: "embedded_quiz",
+};
+
+const DEFAULT_XP_REWARD = 150;
 
 function getFileExtension(file: File) {
   return file.name.split(".").pop()?.toLowerCase() ?? "";
@@ -358,6 +375,9 @@ export default function ActivityForm({ subjectSlug, onClose }: ActivityFormProps
         bannerDataUrl = await fileToDataUrl(bannerFile);
       }
 
+      const activityKind = KIND_BY_TYPE[type] ?? DEFAULT_ACTIVITY_KIND;
+      const config = { ...fieldsJSON };
+
       const payload: BackendActivityPayload = {
         title: normalizedTitle,
         type,
@@ -367,6 +387,9 @@ export default function ActivityForm({ subjectSlug, onClose }: ActivityFormProps
         subjectSlug,
         // Campos requeridos por el backend:
         fieldsJSON,
+        config,
+        kind: activityKind,
+        xpReward: DEFAULT_XP_REWARD,
         templateType: "default",
         slug: normalizedTitle
           .toLowerCase()

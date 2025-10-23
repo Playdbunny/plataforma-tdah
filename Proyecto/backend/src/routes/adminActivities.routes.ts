@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import Activity, { IActivity } from '../models/Activity';
+import Activity, { type ActivityAttrs } from '../models/Activity';
 import Subject from '../models/Subject';
 import { requireAuth, requireRole, AuthPayload } from '../middleware/requireAuth';
 
@@ -51,7 +51,7 @@ router.post('/admin/activities', requireAuth, requireRole('admin'), async (req: 
       return res.status(401).json({ error: 'Usuario no autenticado.' });
     }
 
-    const payload: Partial<IActivity> = {
+    const payload: Partial<ActivityAttrs> = {
       ...req.body,
       subjectId: subject._id,
       subjectSlug: req.body?.subjectSlug ?? subject.slug,

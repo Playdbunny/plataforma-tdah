@@ -1,41 +1,13 @@
 // Ranking.tsx
-// Página de Ranking de estudiantes con:
+// Página de Ranking de estudiantes con datos reales desde el backend.
 // - Búsqueda por nombre
 // - Ordenamiento por columnas (posición, nombre, xp, progreso, última actividad)
 // - Paginación
 // - Estilos accesibles y responsivos
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import styles from "./Ranking.module.css";
-
-// ====================
-// Tipo de datos Student
-// ====================
-type Student = {
-  id: string;
-  name: string;
-  xp: number;            // XP total acumulado
-  progress: number;      // % progreso (0..100)
-  lastActiveHours: number; // horas desde última actividad (ej: "hace 2h")
-};
-
-// ====================
-// Datos MOCK (ejemplo)
-// ====================
-// ⚠️ En el futuro esto vendrá desde el backend.
-const MOCK_STUDENTS: Student[] = [
-  { id: "1", name: "Ana Torres", xp: 850, progress: 90, lastActiveHours: 2 },
-  { id: "2", name: "Juan Pérez", xp: 800, progress: 85, lastActiveHours: 3 },
-  { id: "3", name: "Pedro Rojas", xp: 650, progress: 70, lastActiveHours: 6 },
-  { id: "4", name: "Valentina Díaz", xp: 620, progress: 75, lastActiveHours: 1 },
-  { id: "5", name: "Camila Soto", xp: 580, progress: 60, lastActiveHours: 9 },
-  { id: "6", name: "Ignacio Mora", xp: 545, progress: 58, lastActiveHours: 4 },
-  { id: "7", name: "Felipe Reyes", xp: 530, progress: 57, lastActiveHours: 11 },
-  { id: "8", name: "Sofía Álvarez", xp: 520, progress: 65, lastActiveHours: 7 },
-  { id: "9", name: "Martín Silva", xp: 505, progress: 62, lastActiveHours: 5 },
-  { id: "10", name: "Luisa Godoy", xp: 480, progress: 55, lastActiveHours: 10 },
-  { id: "11", name: "Franco Constanzo", xp: 440, progress: 42, lastActiveHours: 10 },
-];
+import { useStudentsStore } from "../../../stores/studentsStore";
 
 // ====================
 // Tipos para ordenar
@@ -46,18 +18,65 @@ type SortDir = "asc" | "desc";
 // Formateador de números con separador de miles
 const nf = new Intl.NumberFormat("es-CL");
 
+function timeAgo(iso?: string | null) {
+  if (!iso) return "—";
+  const ts = new Date(iso).getTime();
+  if (!Number.isFinite(ts)) return "—";
+  const diff = Date.now() - ts;
+  if (diff < 0) return "—";
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 1) return "ahora";
+  if (minutes < 60) return `hace ${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 48) return `hace ${hours}h`;
+  const days = Math.floor(hours / 24);
+  return `hace ${days}d`;
+}
+
 export default function AdminRanking() {
+  // Estado global de estudiantes
+  const { items, list, loading, error } = useStudentsStore();
+
   // ============
   // Estado de UI
   // ============
   const [query, setQuery] = useState(""); // búsqueda
-  const [page, setPage] = useState(1);    // página actual
+  const [page, setPage] = useState(1); // página actual
   const [pageSize, setPageSize] = useState(10); // filas por página
   const [sortKey, setSortKey] = useState<SortKey>("xp"); // columna activa
   const [sortDir, setSortDir] = useState<SortDir>("desc"); // dirección de orden
 
-  // En un futuro → fetch desde backend
-  const all = MOCK_STUDENTS;
+  useEffect(() => {
+    if (!items.length) {
+      void list();
+    }
+  }, [items.length, list]);
+
+  type DerivedStudent = {
+    id: string;
+    name: string;
+    xp: number;
+    progress: number;
+    lastActiveIso: string | null;
+    lastActiveHours: number | null;
+  };
+
+  const all = useMemo<DerivedStudent[]>(() => {
+    return items.map((student) => {
+      const lastIso = student.lastActivityAt ?? student.lastLogin ?? null;
+      const lastHours = lastIso
+        ? Math.max(0, Math.floor((Date.now() - new Date(lastIso).getTime()) / 36e5))
+        : null;
+      return {
+        id: student.id,
+        name: student.name,
+        xp: student.xp ?? 0,
+        progress: Math.round(student.progressAverage ?? 0),
+        lastActiveIso: lastIso,
+        lastActiveHours: lastHours,
+      };
+    });
+  }, [items]);
 
   // ======================
   // 1. Filtrado por nombre
@@ -74,12 +93,10 @@ export default function AdminRanking() {
   const sorted = useMemo(() => {
     const arr = [...filtered];
 
-    // Calculamos la "posición real" = orden XP desc
     const rankingOrder = [...arr].sort((a, b) => b.xp - a.xp);
     const idToPosition = new Map<string, number>();
     rankingOrder.forEach((s, i) => idToPosition.set(s.id, i + 1));
 
-    // Orden según columna elegida
     arr.sort((a, b) => {
       const posA = idToPosition.get(a.id)!;
       const posB = idToPosition.get(b.id)!;
@@ -89,12 +106,16 @@ export default function AdminRanking() {
       else if (sortKey === "name") cmp = a.name.localeCompare(b.name, "es");
       else if (sortKey === "xp") cmp = a.xp - b.xp;
       else if (sortKey === "progress") cmp = a.progress - b.progress;
-      else if (sortKey === "lastActive") cmp = a.lastActiveHours - b.lastActiveHours;
+      else if (sortKey === "lastActive") {
+        if (a.lastActiveHours == null && b.lastActiveHours == null) cmp = 0;
+        else if (a.lastActiveHours == null) cmp = 1;
+        else if (b.lastActiveHours == null) cmp = -1;
+        else cmp = a.lastActiveHours - b.lastActiveHours;
+      }
 
       return sortDir === "asc" ? cmp : -cmp;
     });
 
-    // Devolvemos la lista con posición adjunta
     return arr.map((s) => ({ ...s, position: idToPosition.get(s.id)! }));
   }, [filtered, sortKey, sortDir]);
 
@@ -112,22 +133,16 @@ export default function AdminRanking() {
   // ======================
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {
-      // Si clicas la misma columna → alterna asc/desc
       setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     } else {
-      // Si cambias de columna → default: asc para texto, desc para números
       setSortKey(key);
       setSortDir(key === "name" ? "asc" : "desc");
     }
   };
 
-  // Medallas para top 3
   const medal = (position: number) =>
     position === 1 ? "🥇" : position === 2 ? "🥈" : position === 3 ? "🥉" : "";
 
-  // ======================
-  // Render
-  // ======================
   return (
     <div className={styles.screen}>
       {/* Header con título y acciones */}
@@ -137,7 +152,6 @@ export default function AdminRanking() {
         </div>
 
         <div className={styles.actions}>
-          {/* Buscador */}
           <input
             className={styles.search}
             placeholder="Buscar estudiante…"
@@ -145,14 +159,17 @@ export default function AdminRanking() {
             onChange={(e) => { setQuery(e.target.value); setPage(1); }}
             aria-label="Buscar estudiante"
           />
-          {/* Selector de tamaño de página */}
           <select
             className={styles.pageSize}
             value={pageSize}
             onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
             aria-label="Tamaño de página"
           >
-            {[5, 10, 20, 50].map(n => <option key={n} value={n}>{n}/pág</option>)}
+            {[5, 10, 20, 50].map((n) => (
+              <option key={n} value={n}>
+                {n}/pág
+              </option>
+            ))}
           </select>
         </div>
       </header>
@@ -162,36 +179,53 @@ export default function AdminRanking() {
         <table className={styles.table}>
           <thead>
             <tr>
-              {/* Encabezados clickeables para ordenar */}
-              <Th active={sortKey==="position"} dir={sortDir} onClick={()=>toggleSort("position")} label="Posición" />
-              <Th active={sortKey==="name"}     dir={sortDir} onClick={()=>toggleSort("name")}     label="Estudiante" />
-              <Th active={sortKey==="xp"}       dir={sortDir} onClick={()=>toggleSort("xp")}       label="XP" />
-              <Th active={sortKey==="progress"} dir={sortDir} onClick={()=>toggleSort("progress")} label="% Progreso" />
-              <Th active={sortKey==="lastActive"} dir={sortDir} onClick={()=>toggleSort("lastActive")} label="Última Actividad" />
+              <Th active={sortKey === "position"} dir={sortDir} onClick={() => toggleSort("position")} label="Posición" />
+              <Th active={sortKey === "name"} dir={sortDir} onClick={() => toggleSort("name")} label="Estudiante" />
+              <Th active={sortKey === "xp"} dir={sortDir} onClick={() => toggleSort("xp")} label="XP" />
+              <Th active={sortKey === "progress"} dir={sortDir} onClick={() => toggleSort("progress")} label="% Progreso" />
+              <Th active={sortKey === "lastActive"} dir={sortDir} onClick={() => toggleSort("lastActive")} label="Última Actividad" />
             </tr>
           </thead>
           <tbody>
-            {pageItems.length === 0 ? (
-              // Caso sin resultados
-              <tr><td className={styles.empty} colSpan={5}>Sin resultados</td></tr>
-            ) : pageItems.map((s) => (
-              <tr key={s.id}>
-                <td className={styles.pos}>
-                  {/* Medalla si aplica */}
-                  <span className={styles.medal} aria-hidden>{medal((s as any).position)}</span>
-                  {(s as any).position}
+            {loading ? (
+              <tr>
+                <td className={styles.empty} colSpan={5}>
+                  Cargando…
                 </td>
-                <td className={styles.name}>{s.name}</td>
-                <td className={styles.xp}>{nf.format(s.xp)} XP</td>
-                <td className={styles.progress}>
-                  <div className={styles.bar}>
-                    <div className={styles.fill} style={{ width: `${s.progress}%` }} />
-                  </div>
-                  <span className={styles.pct}>{s.progress}%</span>
-                </td>
-                <td className={styles.last}>hace {s.lastActiveHours}h</td>
               </tr>
-            ))}
+            ) : error ? (
+              <tr>
+                <td className={styles.empty} colSpan={5}>
+                  {error}
+                </td>
+              </tr>
+            ) : pageItems.length === 0 ? (
+              <tr>
+                <td className={styles.empty} colSpan={5}>
+                  Sin resultados
+                </td>
+              </tr>
+            ) : (
+              pageItems.map((s) => (
+                <tr key={s.id}>
+                  <td className={styles.pos}>
+                    <span className={styles.medal} aria-hidden>
+                      {medal((s as any).position)}
+                    </span>
+                    {(s as any).position}
+                  </td>
+                  <td className={styles.name}>{s.name}</td>
+                  <td className={styles.xp}>{nf.format(s.xp)} XP</td>
+                  <td className={styles.progress}>
+                    <div className={styles.bar}>
+                      <div className={styles.fill} style={{ width: `${s.progress}%` }} />
+                    </div>
+                    <span className={styles.pct}>{s.progress}%</span>
+                  </td>
+                  <td className={styles.last}>{timeAgo(s.lastActiveIso)}</td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -220,10 +254,6 @@ export default function AdminRanking() {
   );
 }
 
-// ======================
-// Componente auxiliar <Th>
-// ======================
-// Encabezado de columna clickeable para ordenar
 function Th({
   label,
   active,
