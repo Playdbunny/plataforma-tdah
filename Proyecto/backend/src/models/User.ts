@@ -62,6 +62,10 @@ export interface IUserDoc extends Document {
   passwordResetTokenHash?: string | null;
   passwordResetExpiresAt?: Date | null;
 
+    // Tokens de refresco
+  refreshTokenHash?: string | null;
+  refreshTokenExpiresAt?: Date | null;
+  
   // Campos para OAuth con Google
   googleId?: string | null;
   authProvider?: "local" | "google";
@@ -141,6 +145,10 @@ const UserSchema = new Schema<IUserDoc>(
     passwordResetTokenHash: { type: String, default: null },
     passwordResetExpiresAt: { type: Date, default: null },
 
+    // Tokens de refresco
+    refreshTokenHash: { type: String, default: null },
+    refreshTokenExpiresAt: { type: Date, default: null },
+
     // Para usuarios que se registraron con Google OAuth
     googleId: { type: String, default: null, index: true },
     authProvider: { type: String, enum: ["local","google"], default: "local", index: true },
@@ -161,6 +169,8 @@ const UserSchema = new Schema<IUserDoc>(
         Reflect.deleteProperty(ret, "passwordHash");
         Reflect.deleteProperty(ret, "passwordResetTokenHash");
         Reflect.deleteProperty(ret, "passwordResetExpiresAt");
+        Reflect.deleteProperty(ret, "refreshTokenHash");
+        Reflect.deleteProperty(ret, "refreshTokenExpiresAt");
         return ret;
       }
     }

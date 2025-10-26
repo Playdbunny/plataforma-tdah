@@ -1,10 +1,10 @@
 import { Router } from "express";
 import { z } from "zod";
 import argon2 from "argon2";
-import jwt, { Secret, SignOptions } from "jsonwebtoken";
 import { randomBytes, createHash } from "crypto";
 import { User } from "../models/User";
 import { sendPasswordResetEmail } from "../services/mailer";
+import { hashRefreshToken, issueSession } from "./helpers/session";
 
 const router = Router();
 
@@ -41,26 +41,6 @@ const resetSchema = z.object({
   password: z.string().min(8, "Mínimo 8 caracteres"),
 });
 
-/* ── Helper JWT (compat v9) ────────────────────────────────── */
-// Tipamos expiresIn en función del propio tipo de SignOptions
-type Expires = NonNullable<SignOptions["expiresIn"]>;
-
-function getExpiresIn(): Expires {
-  const v = process.env.JWT_EXPIRES;
-  if (!v) return "7d" as Expires;              // por defecto
-  const n = Number(v);
-  return (Number.isFinite(n) ? n : (v as Expires));
-}
-
-function signToken(payload: object): string {
-  const secretEnv = process.env.JWT_SECRET;
-  if (!secretEnv) throw new Error("JWT_SECRET is missing in environment variables");
-
-  const secret: Secret = secretEnv;
-  const options: SignOptions = { expiresIn: getExpiresIn() };
-  return jwt.sign(payload, secret, options);
-}
-
 /* ── POST /auth/register ───────────────────────────────────── */
 router.post("/register", async (req, res) => {
   const parsed = registerSchema.safeParse(req.body);
@@ -74,8 +54,8 @@ router.post("/register", async (req, res) => {
   const passwordHash = await argon2.hash(password);
   const user = await User.create({ name, email, passwordHash, tdahType: tdahType ?? null });
 
-  const token = signToken({ sub: user.id, role: user.role });
-  return res.status(201).json({ token, user: user.toJSON() });
+  const session = await issueSession(user);
+  return res.status(201).json(session);
 });
 
 /* ── POST /auth/login ──────────────────────────────────────── */
@@ -92,10 +72,9 @@ router.post("/login", async (req, res) => {
   if (!ok) return res.status(401).json({ error: "Credenciales inválidas" });
 
   user.lastLogin = new Date();
-  await user.save();
-
-  const token = signToken({ sub: user.id, role: user.role });
-  return res.json({ token, user: user.toJSON() });
+  
+  const session = await issueSession(user);
+  return res.json(session);
 });
 
 /* ── POST /auth/forgot-password ────────────────────────────── */
@@ -174,6 +153,29 @@ router.post("/reset-password", async (req, res) => {
   await user.save();
 
   return res.json({ ok: true });
+});
+
+/* ── POST /auth/refresh ────────────────────────────────────── */
+const refreshSchema = z.object({
+  refreshToken: z.string().min(10, "Token de refresco inválido"),
+});
+
+router.post("/refresh", async (req, res) => {
+  const parsed = refreshSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+
+  const hashedToken = hashRefreshToken(parsed.data.refreshToken);
+  const user = await User.findOne({
+    refreshTokenHash: hashedToken,
+    refreshTokenExpiresAt: { $gt: new Date() },
+  });
+
+  if (!user) {
+    return res.status(401).json({ error: "Token de refresco inválido o expirado" });
+  }
+
+  const session = await issueSession(user);
+  return res.json(session);
 });
 
 export default router;
