@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { isAxiosError } from "axios";
+import axios from "axios";
 import Navbar from "../../Components/Navbar/Navbar";
 import styles from "./Forgot.module.css";
 import { requestPasswordReset } from "../../api/auth";
@@ -26,8 +26,8 @@ export default function Forgot() {
     try {
       await requestPasswordReset({ email });
       setSent(true);
-    } catch (err) {
-      if (isAxiosError(err)) {
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
         const message = (err.response?.data as { error?: string } | undefined)?.error;
         setError(message ?? "No pudimos enviar el correo. Inténtalo nuevamente en unos minutos.");
       } else {

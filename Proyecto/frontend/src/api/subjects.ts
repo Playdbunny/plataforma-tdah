@@ -1,4 +1,4 @@
-import { api, getAdminApiBaseUrl } from "../Lib/api";
+import { api, getAdminApiBaseUrl, getApiBaseUrl } from "../Lib/api";
 
 export type SubjectResponse = {
   _id: string;
@@ -15,9 +15,10 @@ export type SubjectPayload = {
 };
 
 // Obtener todas las materias desde el backend
-export const getSubjects = async () => {
+export const getSubjects = async (options?: { public?: boolean }) => {
+  const baseURL = options?.public ? getApiBaseUrl() : getAdminApiBaseUrl();
   const { data } = await api.get<SubjectResponse[]>("/subjects", {
-    baseURL: getAdminApiBaseUrl(),
+    baseURL,
   });
   return data;
 };

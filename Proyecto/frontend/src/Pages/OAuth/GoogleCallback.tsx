@@ -4,6 +4,8 @@ import { useAuthStore } from "../../stores/authStore";
 
 type MessagePayload = {
   token?: string;
+  refreshToken?: string;
+  refreshTokenExpiresAt?: string | number;
   user?: unknown;
   next?: string;
   payload?: MessagePayload;
@@ -53,10 +55,19 @@ type NextResolution = {
 
 type OAuthJwtPayload = {
   token?: unknown;
+  refreshToken?: unknown;
+  refreshTokenExpiresAt?: unknown;
   user?: unknown;
 };
 
-function parseOAuthJwt(raw: string | null): { token: string; user: unknown } | null {
+type OAuthSession = {
+  token: string;
+  refreshToken: string;
+  refreshTokenExpiresAt: string;
+  user: unknown;
+};
+
+function parseOAuthJwt(raw: string | null): OAuthSession | null {
   if (!raw) return null;
 
   const [, middle] = raw.split(".");
@@ -71,8 +82,18 @@ function parseOAuthJwt(raw: string | null): { token: string; user: unknown } | n
       .map((char) => `%${`00${char.charCodeAt(0).toString(16)}`.slice(-2)}`)
       .join("");
     const parsed = JSON.parse(decodeURIComponent(decoded)) as OAuthJwtPayload;
-    if (typeof parsed.token === "string" && parsed.user !== undefined) {
-      return { token: parsed.token, user: parsed.user };
+    if (
+      typeof parsed.token === "string" &&
+      typeof parsed.refreshToken === "string" &&
+      parsed.refreshTokenExpiresAt !== undefined &&
+      parsed.user !== undefined
+    ) {
+      return {
+        token: parsed.token,
+        refreshToken: parsed.refreshToken,
+        refreshTokenExpiresAt: String(parsed.refreshTokenExpiresAt),
+        user: parsed.user,
+      };
     }
   } catch {
     return null;
@@ -151,7 +172,7 @@ export default function GoogleCallback() {
       navigate(loginUrl, { replace: true, state: { notice: reason } });
     };
 
-    const succeed = (token: string, user: unknown) => {
+    const succeed = (session: OAuthSession) => {
       if (handled) return;
       handled = true;
       setMessage("Sesión verificada. Redirigiendo…");
@@ -160,7 +181,7 @@ export default function GoogleCallback() {
         timeoutRef.current = null;
       }      
       try {
-        useAuthStore.getState().acceptOAuthSession({ token, user });
+        useAuthStore.getState().acceptOAuthSession(session);
       } catch (error) {
         fail("No se pudo guardar la sesión de Google. Intenta nuevamente.");
         return;
@@ -176,7 +197,7 @@ export default function GoogleCallback() {
           handled = true;
         };
       }
-      succeed(parsedPayload.token, parsedPayload.user);
+      succeed(parsedPayload);
       return () => {
         handled = true;
       };
@@ -185,8 +206,10 @@ export default function GoogleCallback() {
     const attemptFromQuery = () => {
       const queryToken = params.get("token");
       const queryUser = params.get("user");
+      const queryRefreshToken = params.get("refreshToken");
+      const queryRefreshExpires = params.get("refreshTokenExpiresAt");
 
-      if (!queryToken || !queryUser) return false;
+      if (!queryToken || !queryUser || !queryRefreshToken || !queryRefreshExpires) return false;
 
       const parsedUser = parseUser(queryUser);
       if (!parsedUser) {
@@ -194,7 +217,12 @@ export default function GoogleCallback() {
         return true;
       }
 
-      succeed(queryToken, parsedUser);
+      succeed({
+        token: queryToken,
+        refreshToken: queryRefreshToken,
+        refreshTokenExpiresAt: queryRefreshExpires,
+        user: parsedUser,
+      });
       return true;
     };
 
@@ -208,9 +236,13 @@ export default function GoogleCallback() {
       if (handled) return;
       const payload = extractPayload(event.data);
       if (!payload) return;
-      const { token, user } = payload;
+      const { token, user, refreshToken, refreshTokenExpiresAt } = payload;
       if (typeof token !== "string") {
         fail("Respuesta de Google incompleta: falta el token.");
+        return;
+      }
+      if (typeof refreshToken !== "string" || refreshTokenExpiresAt === undefined) {
+        fail("Respuesta de Google incompleta: falta el token de refresco.");
         return;
       }
       const parsedUser = parseUser(user);
@@ -218,7 +250,12 @@ export default function GoogleCallback() {
         fail("Respuesta de Google incompleta: falta el usuario.");
         return;
       }
-      succeed(token, parsedUser);
+      succeed({
+        token,
+        refreshToken,
+        refreshTokenExpiresAt: String(refreshTokenExpiresAt),
+        user: parsedUser,
+      });
     };
 
     window.addEventListener("message", handleMessage);
