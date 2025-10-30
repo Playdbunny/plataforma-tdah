@@ -14,21 +14,7 @@ import {
   type AdminStudentActivity,
   type AdminStudentDetail,
 } from "../../../api/adminStudents";
-
-function timeAgo(iso?: string | null) {
-  if (!iso) return "—";
-  const ts = new Date(iso).getTime();
-  if (!Number.isFinite(ts)) return "—";
-  const diff = Date.now() - ts;
-  if (diff < 0) return "—";
-  const minutes = Math.floor(diff / 60000);
-  if (minutes < 1) return "ahora";
-  if (minutes < 60) return `hace ${minutes}m`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 48) return `hace ${hours}h`;
-  const days = Math.floor(hours / 24);
-  return `hace ${days}d`;
-}
+import { timeAgo } from "../../../utils/timeAgo";
 
 function formatActivity(ev: AdminStudentActivity) {
   const amount = ev.amount >= 0 ? `+${ev.amount}` : `${ev.amount}`;

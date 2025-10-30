@@ -39,6 +39,7 @@ export function initGoogleStrategy() {
         if (!email) return done(new Error("No pudimos obtener el email de Google"), undefined);
 
         let user = await User.findOne({ googleId });
+        const now = new Date();
 
         // si no existe por googleId, tratamos de enlazar por email
         if (!user) {
@@ -48,7 +49,6 @@ export function initGoogleStrategy() {
             user.authProvider = "google";
             // si venía TDAH desde onboarding y el user lo tiene null, lo guardamos
             if (tdahFromState && !user.tdahType) user.tdahType = tdahFromState;
-            await user.save();
           }
         }
 
@@ -65,7 +65,11 @@ export function initGoogleStrategy() {
             authProvider: "google",
             role: "student",      // nunca creamos admin por Google
             tdahType: tdahFromState ?? null,
+            lastLogin: now,
           });
+        } else {
+          user.lastLogin = now;
+          await user.save();
         }
 
         return done(null, user);
