@@ -1,5 +1,9 @@
 import nodemailer from "nodemailer";
-import type { Transporter } from "nodemailer";
+import type {
+  Transporter,
+  SentMessageInfo,
+  SendMailOptions,
+} from "nodemailer";
 
 // Parámetros para el correo de restablecimiento de contraseña
 export interface PasswordResetEmailParams {
@@ -17,6 +21,76 @@ export interface PasswordResetEmailResult {
 // Función para enviar el correo de restablecimiento de contraseña
 let cachedTransporterPromise: Promise<Transporter> | null = null;
 let fallbackFromAddress: string | null = null;
+
+// Retorna la cantidad máxima de intentos para el envío de correos
+function resolveMaxEmailAttempts(): number {
+  const raw = process.env.SMTP_MAX_RETRIES;
+  if (!raw) return 3;
+
+  const parsed = Number.parseInt(raw, 10);
+  if (Number.isNaN(parsed) || parsed < 1) {
+    console.warn(
+      `[email] Valor inválido para SMTP_MAX_RETRIES="${raw}". Se usará el valor predeterminado (3).`,
+    );
+    return 3;
+  }
+
+  return parsed;
+}
+
+// Retorna el retraso inicial entre reintentos en milisegundos
+function resolveRetryDelay(): number {
+  const raw = process.env.SMTP_RETRY_DELAY_MS;
+  if (!raw) return 2_000;
+
+  const parsed = Number.parseInt(raw, 10);
+  if (Number.isNaN(parsed) || parsed < 0) {
+    console.warn(
+      `[email] Valor inválido para SMTP_RETRY_DELAY_MS="${raw}". Se usará el valor predeterminado (2000ms).`,
+    );
+    return 2_000;
+  }
+
+  return parsed;
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// Envía un correo con reintentos en caso de error temporal
+async function sendMailWithRetry(
+  transporter: Transporter,
+  options: SendMailOptions,
+): Promise<SentMessageInfo> {
+  const maxAttempts = resolveMaxEmailAttempts();
+  const baseDelay = resolveRetryDelay();
+
+  let attempt = 0;
+  let lastError: unknown;
+
+  while (attempt < maxAttempts) {
+    attempt += 1;
+    try {
+      return await transporter.sendMail(options);
+    } catch (error) {
+      lastError = error;
+      if (attempt >= maxAttempts) {
+        break;
+      }
+
+      const delay = baseDelay * attempt;
+      console.warn(
+        `[email] Falló el envío (intento ${attempt}/${maxAttempts}). Reintentando en ${delay}ms...`,
+        error,
+      );
+      await sleep(delay);
+    }
+  }
+
+  console.error("[email] Falló el envío tras agotar los reintentos.", lastError);
+  throw lastError instanceof Error ? lastError : new Error("Falló el envío de correo");
+}
 
 // Analiza un valor de cadena como booleano, con un valor predeterminado
 function parseBoolean(value: string | undefined, fallback: boolean): boolean {
@@ -161,7 +235,7 @@ export async function sendPasswordResetEmail(
     <p style="margin-top:16px;">— El equipo de SynapQuest</p>
   `;
 
-  const info = await transporter.sendMail({
+  const info = await sendMailWithRetry(transporter, {
     to,
     from,
     subject: "Recupera tu contraseña",
