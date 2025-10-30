@@ -1,11 +1,11 @@
-import { useMemo, useState } from "react";
+import { type ChangeEvent, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "./EditProfile.module.css";
 import cardStyles from "../../Components/CharacterCard/CharacterCard.module.css"; // 👈 NUEVO
 import Navbar from "../../Components/Navbar/Navbar";
 import { useAppStore } from "../../stores/appStore";
 import { useAuthStore } from "../../stores/authStore";
-import { updateProfile } from "../../api/users";
+import { updateProfile, type UpdateProfilePayload } from "../../api/users";
 
 // Catálogo con rareza y precio (solo pagan los no-comunes)
 const CHARACTERS = [
@@ -31,6 +31,23 @@ const RARITY_LABEL: Record<Rarity,string> = {
   legendary: "Legendario",
 };
 
+const MAX_AVATAR_SIZE = 5 * 1024 * 1024; // 5MB
+
+const readFileAsDataUrl = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result;
+      if (typeof result === "string") {
+        resolve(result);
+      } else {
+        reject(new Error("Formato de imagen inválido"));
+      }
+    };
+    reader.onerror = () => reject(new Error("No se pudo leer la imagen"));
+    reader.readAsDataURL(file);
+  });
+
 export default function EditProfile() {
   const navigate = useNavigate();
 
@@ -50,6 +67,7 @@ export default function EditProfile() {
   const [username, setUsername] = useState(user?.username ?? "");
   const [education, setEducation] = useState(user?.education ?? "");
   const [avatarPreview, setAvatarPreview] = useState<string>(user?.avatarUrl ?? "/Images/default-profile.jpg");
+  const [avatarDataUrl, setAvatarDataUrl] = useState<string | null>(null);
   const [selectedChar, setSelectedChar]   = useState<string>(user?.character?.id ?? CHARACTERS[0].id);
   const [saving, setSaving]               = useState(false);
   const [errorMsg, setErrorMsg]           = useState<string | null>(null);
@@ -67,11 +85,27 @@ export default function EditProfile() {
   }, [username, email, education]);
 
   // Previsualizar avatar (frontend)
-  const onPickAvatar = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const onPickAvatar = async (e: ChangeEvent<HTMLInputElement>) => {
+    const input = e.target;
+    const file = input.files?.[0];
     if (!file) return;
-    const url = URL.createObjectURL(file);
-    setAvatarPreview(url);
+
+    if (file.size > MAX_AVATAR_SIZE) {
+      setErrorMsg("La imagen debe pesar menos de 5MB.");
+      input.value = "";
+      return;
+    }
+
+    try {
+      setErrorMsg(null);
+      const dataUrl = await readFileAsDataUrl(file);
+      setAvatarPreview(dataUrl);
+      setAvatarDataUrl(dataUrl);
+    } catch (_err) {
+      setErrorMsg("No se pudo leer la imagen seleccionada. Intenta con otro archivo.");
+    } finally {
+      input.value = "";
+    }
   };
 
   const handleSelect = (id: string) => {
@@ -119,16 +153,21 @@ export default function EditProfile() {
     const trimmedUsername = username.trim();
     const trimmedEducation = education.trim();
 
-    const payload = {
+    const avatarUrlToPersist = avatarDataUrl ?? (typeof user?.avatarUrl === "string" ? user.avatarUrl : undefined);
+
+    const payload: UpdateProfilePayload = {
       name: trimmedName,
       email: trimmedEmail,
       username: trimmedUsername,
       education: trimmedEducation,
-      avatarUrl: avatarPreview,
       character: { id: c.id, name: c.name, sprite: c.sprite },
       ownedCharacters,
       coins: coins,
     };
+
+    if (typeof avatarUrlToPersist === "string" && avatarUrlToPersist.trim().length > 0) {
+      payload.avatarUrl = avatarUrlToPersist.trim();
+    }
 
     try {
       const updatedUser = await updateProfile(payload);
@@ -228,15 +267,25 @@ export default function EditProfile() {
               const isActive  = selectedChar === c.id;
 
               return (
-                <button
+                <div
                   key={c.id}
-                  type="button"
                   className={[
                     cardStyles.card,                                 // base visual de card
                     isActive ? cardStyles.selected : "",
                     cardStyles[c.rarity],                             // color por rareza
                   ].join(" ")}
+                  role="button"
+                  tabIndex={locked ? -1 : 0}
+                  aria-disabled={locked}
+                  aria-pressed={isActive}
                   onClick={() => (locked ? undefined : handleSelect(c.id))}
+                  onKeyDown={(e) => {
+                    if (locked) return;
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleSelect(c.id);
+                    }
+                  }}
                   title={c.name}
                 >
                   {/* Badge rareza (arriba izq) */}
@@ -268,7 +317,7 @@ export default function EditProfile() {
                       </button>
                     </div>
                   )}
-                </button>
+                </div>
               );
             })}
           </div>

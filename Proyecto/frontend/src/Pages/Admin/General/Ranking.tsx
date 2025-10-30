@@ -8,6 +8,7 @@
 import { useEffect, useMemo, useState } from "react";
 import styles from "./Ranking.module.css";
 import { useStudentsStore } from "../../../stores/studentsStore";
+import { timeAgo } from "../../../utils/timeAgo";
 
 // ====================
 // Tipos para ordenar
@@ -17,21 +18,6 @@ type SortDir = "asc" | "desc";
 
 // Formateador de números con separador de miles
 const nf = new Intl.NumberFormat("es-CL");
-
-function timeAgo(iso?: string | null) {
-  if (!iso) return "—";
-  const ts = new Date(iso).getTime();
-  if (!Number.isFinite(ts)) return "—";
-  const diff = Date.now() - ts;
-  if (diff < 0) return "—";
-  const minutes = Math.floor(diff / 60000);
-  if (minutes < 1) return "ahora";
-  if (minutes < 60) return `hace ${minutes}m`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 48) return `hace ${hours}h`;
-  const days = Math.floor(hours / 24);
-  return `hace ${days}d`;
-}
 
 export default function AdminRanking() {
   // Estado global de estudiantes

@@ -9,24 +9,13 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "./Estudiantes.module.css";
 import { useStudentsStore } from "../../../stores/studentsStore";
-
-// Utilidad para “hace Xh”
-function timeAgo(iso?: string) {
-  if (!iso) return "—";
-  const diff = Date.now() - new Date(iso).getTime();
-  const h = Math.floor(diff / 36e5);
-  if (h < 1) {
-    const m = Math.max(1, Math.floor(diff / 6e4));
-    return `hace ${m}m`;
-  }
-  return `hace ${h}h`;
-}
+import { timeAgo } from "../../../utils/timeAgo";
 
 export default function EstudiantesPage() {
   const { items, list, loading, error } = useStudentsStore();
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
-  const pageSize = 6; // filas por página (ajústalo)
+  const pageSize = 10; // filas por página (ajústalo)
 
   useEffect(() => {
     if (!items || items.length === 0) {
