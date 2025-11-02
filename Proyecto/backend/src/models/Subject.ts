@@ -57,7 +57,6 @@ const subjectSchema = new Schema<SubjectDocument, SubjectModel>(
       type: String,
       trim: true,
       lowercase: true,
-      unique: true,
       // el formato se valida solo si viene valor
       validate: {
         validator: (v: string | undefined) =>

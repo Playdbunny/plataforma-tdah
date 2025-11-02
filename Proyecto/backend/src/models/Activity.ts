@@ -85,7 +85,6 @@ const ActivitySchema = new Schema<ActivityDocument, ActivityModel>(
       type: String,
       trim: true,
       lowercase: true,
-      unique: false, // la unicidad real es por (subjectId, slug)
       validate: {
         validator: (v: string | undefined) =>
           v == null || /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(v),

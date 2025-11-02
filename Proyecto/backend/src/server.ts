@@ -14,6 +14,8 @@ import googleRouter from "./routes/google.routes";
 import adminActivitiesRouter from "./routes/adminActivities.routes";
 import adminSubjectsRouter from "./routes/adminSubjects.routes";
 import adminStudentsRouter from "./routes/adminStudents.routes";
+import Subject from "./models/Subject";
+import Activity from "./models/Activity";
 
 const app = express();
 app.use(cors());
@@ -63,6 +65,15 @@ const PORT = process.env.PORT || 4000;
 (async () => {
   if (process.env.MONGO_URI) {
     await connectDB(process.env.MONGO_URI);
+
+    if (process.env.NODE_ENV !== "production") {
+      try {
+        await Promise.all([Subject.syncIndexes(), Activity.syncIndexes()]);
+        console.log("[indexes] Sincronizados");
+      } catch (error) {
+        console.error("[indexes] Error al sincronizar", error);
+      }
+    }
   } else {
     console.warn("⚠️ MONGO_URI no definido. El servidor corre sin DB.");
   }
