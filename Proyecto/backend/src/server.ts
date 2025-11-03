@@ -18,12 +18,8 @@ import Subject from "./models/Subject";
 import Activity from "./models/Activity";
 
 const app = express();
-app.use(
-  cors({
-    origin: true,
-    credentials: true,
-  })
-);
+const apiRouter = express.Router();
+app.use(cors());
 
 const bodyLimit = process.env.JSON_BODY_LIMIT || "10mb";
 app.use(express.json({ limit: bodyLimit }));
@@ -42,20 +38,20 @@ app.use(passport.initialize());
 app.use(passport.session());
 initGoogleStrategy();
 
-const apiRouter = Router();
-
-apiRouter.use("/admin", adminRouter);
-apiRouter.use("/admin", adminStudentsRouter);
-apiRouter.use("/admin", adminActivitiesRouter);
-apiRouter.use("/admin", adminSubjectsRouter);
+// Rutas bajo /api
 apiRouter.use("/auth", authRouter);
 apiRouter.use("/auth", googleRouter);
 apiRouter.use("/profile", profileRouter);
+apiRouter.use("/admin", adminRouter);
+apiRouter.use("/admin", adminStudentsRouter);
+apiRouter.use(adminActivitiesRouter);
+apiRouter.use(adminSubjectsRouter);
 
+// Ruta protegida genérica
 apiRouter.get("/me", requireAuth, (req: any, res) => {
   res.json({ userId: req.auth.sub, role: req.auth.role });
 });
-
+// Ruta solo para admins
 apiRouter.get("/admin/ping", requireAuth, requireRole("admin"), (_req, res) => {
   res.json({ pong: true });
 });
@@ -81,7 +77,7 @@ const PORT = process.env.PORT || 4000;
   }
 
   app.listen(PORT, () => {
-    console.log(`🚀 API corriendo en http://localhost:${PORT}`);
+    console.log(`🚀 API corriendo en http://127.0.0.1:${PORT}`);
   });
 })();
 

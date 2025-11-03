@@ -53,7 +53,8 @@ npm run dev
 ### 🔹 Frontend
 
 1. Crear un archivo **.env** basandose en el archivo de ejemplo **.env.example**.
-> Asegurarse de que esté la URL correcta del backend (http://localhost:4000). 
+> Si no defines `VITE_API_URL`, el frontend usará el proxy de Vite (`/api`).
+> Mantén el mismo host entre frontend y backend durante el desarrollo (por ejemplo, `http://127.0.0.1`).
 2. En la terminal poner estos comandos uno por uno
 ```bash
 cd Proyecto/frontend
@@ -61,7 +62,7 @@ npm install
 npm install axios
 npm run dev
 ```
-> El frontend quedará en http://localhost:5173.
+> El frontend quedará en http://127.0.0.1:5173 (usa este host para evitar problemas de cookies con OAuth).
 
 ## 🧩 Activity model & API (CRUD + validation)
 ### 🔹 Backend

@@ -94,7 +94,7 @@ function getResetExpiryDate(): Date {
 }
 
 function buildResetUrl(token: string): string {
-  const baseEnv = process.env.FRONTEND_URL || "http://localhost:5173";
+  const baseEnv = process.env.FRONTEND_URL || "http://127.0.0.1:5173";
   const base = baseEnv.replace(/\/$/, "");
   return `${base}/reset/${token}`;
 }
