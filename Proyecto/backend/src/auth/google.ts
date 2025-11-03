@@ -11,7 +11,7 @@ export function initGoogleStrategy() {
     return;
   }
 
-  passport.use(new GoogleStrategy(
+  const strategy = new GoogleStrategy(
     {
       clientID: GOOGLE_CLIENT_ID,
       clientSecret: GOOGLE_CLIENT_SECRET,
@@ -77,7 +77,17 @@ export function initGoogleStrategy() {
         return done(err as Error, undefined);
       }
     }
-  ));
+  );
+
+  const anyStrategy = strategy as any;
+  const realCallbackUrl =
+    anyStrategy._callbackURL ??
+    anyStrategy._oauth2?._callbackURL ??
+    anyStrategy._options?.callbackURL ??
+    GOOGLE_CALLBACK_URL;
+  console.log(`🔐 Google OAuth callback URL configurado: ${realCallbackUrl}`);
+
+  passport.use(strategy);
 
   passport.serializeUser((user: any, done) => done(null, user.id));
   passport.deserializeUser(async (id: string, done) => {

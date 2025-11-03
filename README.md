@@ -48,13 +48,15 @@ npm install google-auth-library
 npm install nodemailer
 npm run dev
 ```
-> El backend quedará corriendo en http://localhost:4000.
+> El backend quedará corriendo en http://127.0.0.1:4000.
+
+> En Google Cloud Console → OAuth → **Authorized redirect URIs**, registra exactamente `http://127.0.0.1:4000/api/auth/google/callback`.
+> Evita mezclar `localhost` y `127.0.0.1` en el flujo de OAuth: usa siempre `127.0.0.1` en las variables de entorno y en Google Cloud.
 
 ### 🔹 Frontend
 
 1. Crear un archivo **.env** basandose en el archivo de ejemplo **.env.example**.
-> Si no defines `VITE_API_URL`, el frontend usará el proxy de Vite (`/api`).
-> Mantén el mismo host entre frontend y backend durante el desarrollo (por ejemplo, `http://127.0.0.1`).
+> Asegurarse de que esté la URL correcta del backend (http://127.0.0.1:4000).
 2. En la terminal poner estos comandos uno por uno
 ```bash
 cd Proyecto/frontend
@@ -62,7 +64,7 @@ npm install
 npm install axios
 npm run dev
 ```
-> El frontend quedará en http://127.0.0.1:5173 (usa este host para evitar problemas de cookies con OAuth).
+> El frontend quedará en http://127.0.0.1:5173.
 
 ## 🧩 Activity model & API (CRUD + validation)
 ### 🔹 Backend
