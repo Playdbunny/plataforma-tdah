@@ -6,7 +6,7 @@ import { setRefreshTokenCookie } from "./helpers/authCookies";
 import { GoogleTokenVerificationError, verifyGoogleIdToken } from "../services/googleVerifier";
 // URL base del frontend. Se toma de la variable de entorno y, si no existe,
 // se usa localhost como respaldo para entornos de desarrollo.
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://127.0.0.1:5173";
 /**
  * Construye una URL absoluta hacia el frontend combinando el host definido
  * en la configuración con el pathname y cualquier parámetro de query extra.
@@ -67,7 +67,7 @@ router.get("/google", (req, res, next) => {
 // Callback: emite TU JWT y, si vino tdahType y el user lo tenía null, lo setea (lo haremos en la estrategia)
 router.get(
   "/google/callback",
-  passport.authenticate("google", { failureRedirect: "/auth/google/failure", session: true }),
+  passport.authenticate("google", { failureRedirect: "/api/auth/google/failure", session: true }),
   async (req: any, res) => {
     try {
       const user = req.user;

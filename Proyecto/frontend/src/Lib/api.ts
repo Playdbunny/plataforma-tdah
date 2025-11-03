@@ -10,17 +10,18 @@ type SessionRefreshPayload = {
 
 // Configura la URL base del backend desde una variable de entorno
 const envBaseUrl = import.meta.env.VITE_API_URL;
-const rawBaseUrl = envBaseUrl && envBaseUrl.trim() !== ""
-  ? envBaseUrl.trim()
-  : "http://localhost:4000";
+const normalizedEnvBase = envBaseUrl?.trim() ?? "";
 
 function ensureApiBase(url: string) {
   const trimmed = url.replace(/\/+$/, "");
+  if (trimmed === "") return "/api";
   if (trimmed.endsWith("/api")) return trimmed;
   return `${trimmed}/api`;
 }
 
-const baseURL = ensureApiBase(rawBaseUrl);
+const baseURL = normalizedEnvBase !== ""
+  ? ensureApiBase(normalizedEnvBase)
+  : "/api";
 
 export const getApiBaseUrl = () => baseURL;
 

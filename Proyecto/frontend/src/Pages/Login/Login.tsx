@@ -4,7 +4,6 @@ import Navbar from "../../Components/Navbar/Navbar";
 import styles from "./Login.module.css";
 import { useAuthStore } from "../../stores/authStore";
 import { useAppStore } from "../../stores/appStore";
-import { getApiBaseUrl } from "../../Lib/api";
 
 export default function Login() {
 
@@ -49,11 +48,11 @@ export default function Login() {
 
   /* Handler del botón Google: redirige al backend */
   const handleGoogle = () => {
-    const apiBaseUrl = getApiBaseUrl();
     const params = new URLSearchParams();
     if (nextParam) params.set("next", nextParam);
     const query = params.toString();
-    window.location.href = `${apiBaseUrl}/auth/google${query ? `?${query}` : ""}`;
+    const target = `/api/auth/google${query ? `?${query}` : ""}`;
+    window.location.assign(target);
   };
 
   /* Submit del formulario: llama al backend usando el store */
