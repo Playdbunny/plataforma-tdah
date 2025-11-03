@@ -5,7 +5,6 @@ export type UpdateProfilePayload = {
   name?: string;
   email?: string;
   username?: string;
-  avatarUrl?: string | null;
   education?: string | null;
   character?: { id: string; name: string; sprite: string } | null;
   ownedCharacters?: string[];
@@ -15,4 +14,13 @@ export type UpdateProfilePayload = {
 export async function updateProfile(payload: UpdateProfilePayload): Promise<IUserSafe> {
   const { data } = await api.patch<{ user: IUserSafe }>("/profile", payload);
   return data.user;
+}
+
+export async function uploadAvatar(file: File): Promise<string> {
+  const form = new FormData();
+  form.append("avatar", file);
+  const { data } = await api.post<{ avatarUrl: string }>("/profile/avatar", form, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return data.avatarUrl;
 }

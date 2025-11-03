@@ -2,6 +2,7 @@ import { Router } from "express";
 import passport from "passport";
 import { signToken } from "./helpers/jwt-sign";
 import { issueSession } from "./helpers/session";
+import { setRefreshTokenCookie } from "./helpers/authCookies";
 import { GoogleTokenVerificationError, verifyGoogleIdToken } from "../services/googleVerifier";
 // URL base del frontend. Se toma de la variable de entorno y, si no existe,
 // se usa localhost como respaldo para entornos de desarrollo.
@@ -75,9 +76,11 @@ router.get(
       }
       // Firmamos un JWT "interno" con los datos mínimos para el backend.
       const session = await issueSession(user);
+      setRefreshTokenCookie(res, session.refreshToken, session.refreshTokenExpiresAt);
       // Firmamos un segundo token con la información que enviaremos al
       // frontend (token de sesión, datos del usuario serializados y el proveedor).
-      const payload = signToken({ ...session, provider: "google" });
+      const { refreshToken: _omitRefreshToken, ...sessionForFrontend } = session;
+      const payload = signToken({ ...sessionForFrontend, provider: "google" });
       // Construimos la URL final del frontend donde la SPA recibirá la respuesta
       // e interpretará el payload firmado para completar el login.
       const redirectUrl = buildFrontendUrl("/oauth/google/callback", { payload });

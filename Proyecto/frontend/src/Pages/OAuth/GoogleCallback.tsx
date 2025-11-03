@@ -62,9 +62,9 @@ type OAuthJwtPayload = {
 
 type OAuthSession = {
   token: string;
-  refreshToken: string;
-  refreshTokenExpiresAt: string;
   user: unknown;
+  refreshToken?: string;
+  refreshTokenExpiresAt?: string;
 };
 
 function parseOAuthJwt(raw: string | null): OAuthSession | null {
@@ -82,18 +82,18 @@ function parseOAuthJwt(raw: string | null): OAuthSession | null {
       .map((char) => `%${`00${char.charCodeAt(0).toString(16)}`.slice(-2)}`)
       .join("");
     const parsed = JSON.parse(decodeURIComponent(decoded)) as OAuthJwtPayload;
-    if (
-      typeof parsed.token === "string" &&
-      typeof parsed.refreshToken === "string" &&
-      parsed.refreshTokenExpiresAt !== undefined &&
-      parsed.user !== undefined
-    ) {
-      return {
+    if (typeof parsed.token === "string" && parsed.user !== undefined) {
+      const session: OAuthSession = {
         token: parsed.token,
-        refreshToken: parsed.refreshToken,
-        refreshTokenExpiresAt: String(parsed.refreshTokenExpiresAt),
         user: parsed.user,
       };
+      if (typeof parsed.refreshToken === "string") {
+        session.refreshToken = parsed.refreshToken;
+      }
+      if (parsed.refreshTokenExpiresAt !== undefined) {
+        session.refreshTokenExpiresAt = String(parsed.refreshTokenExpiresAt);
+      }
+      return session;
     }
   } catch {
     return null;
@@ -209,7 +209,7 @@ export default function GoogleCallback() {
       const queryRefreshToken = params.get("refreshToken");
       const queryRefreshExpires = params.get("refreshTokenExpiresAt");
 
-      if (!queryToken || !queryUser || !queryRefreshToken || !queryRefreshExpires) return false;
+      if (!queryToken || !queryUser) return false;
 
       const parsedUser = parseUser(queryUser);
       if (!parsedUser) {
@@ -219,9 +219,9 @@ export default function GoogleCallback() {
 
       succeed({
         token: queryToken,
-        refreshToken: queryRefreshToken,
-        refreshTokenExpiresAt: queryRefreshExpires,
         user: parsedUser,
+        refreshToken: queryRefreshToken ?? undefined,
+        refreshTokenExpiresAt: queryRefreshExpires ?? undefined,
       });
       return true;
     };
@@ -241,10 +241,6 @@ export default function GoogleCallback() {
         fail("Respuesta de Google incompleta: falta el token.");
         return;
       }
-      if (typeof refreshToken !== "string" || refreshTokenExpiresAt === undefined) {
-        fail("Respuesta de Google incompleta: falta el token de refresco.");
-        return;
-      }
       const parsedUser = parseUser(user);
       if (!parsedUser) {
         fail("Respuesta de Google incompleta: falta el usuario.");
@@ -252,9 +248,12 @@ export default function GoogleCallback() {
       }
       succeed({
         token,
-        refreshToken,
-        refreshTokenExpiresAt: String(refreshTokenExpiresAt),
         user: parsedUser,
+        refreshToken: typeof refreshToken === "string" ? refreshToken : undefined,
+        refreshTokenExpiresAt:
+          refreshTokenExpiresAt !== undefined
+            ? String(refreshTokenExpiresAt)
+            : undefined,
       });
     };
 

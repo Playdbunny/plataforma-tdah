@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 export interface AuthPayload {
   sub: string;                // user.id → lo guardamos en el "subject"
   role: "student" | "admin";  // rol del usuario
+  avatarUrl?: string | null;   // avatar corto opcional
   iat: number;                // issued at (lo pone JWT automáticamente)
   exp: number;                // expiration (lo pone JWT automáticamente)
 }

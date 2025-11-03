@@ -82,8 +82,21 @@ export function initGoogleStrategy() {
   passport.serializeUser((user: any, done) => done(null, user.id));
   passport.deserializeUser(async (id: string, done) => {
     try {
-      const user = await User.findById(id);
-      done(null, user);
+      const user = await User.findById(id)
+        .select({ _id: 1, role: 1, avatarUrl: 1 })
+        .lean<{ _id: unknown; role: string; avatarUrl?: string | null } | null>();
+
+      if (!user) {
+        done(null, null);
+        return;
+      }
+
+      const safeUser = {
+        id: String(user._id),
+        role: user.role,
+        avatarUrl: typeof user.avatarUrl === "string" ? user.avatarUrl : null,
+      };
+      done(null, safeUser as any);
     } catch (err) {
       done(err as Error, null);
     }
