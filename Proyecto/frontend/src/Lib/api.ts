@@ -1,6 +1,15 @@
 import axios from "axios";
 import type { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from "axios";
 
+// ---- Extensión de tipos para una flag custom en requests ----
+declare module "axios" {
+  // Permitimos usar `skipAuthRefresh` en la config sin errores de TS
+  interface InternalAxiosRequestConfig<D = any> {
+    skipAuthRefresh?: boolean;
+    _retry?: boolean;
+  }
+}
+
 type SessionRefreshPayload = {
   token: string;
   refreshToken?: string;
@@ -8,9 +17,11 @@ type SessionRefreshPayload = {
   user?: unknown;
 };
 
-// Configura la URL base del backend desde una variable de entorno
-const envBaseUrl = import.meta.env.VITE_API_URL;
-const normalizedEnvBase = envBaseUrl?.trim() ?? "";
+// ===== Base URL =====
+// Lee desde VITE_API_URL; si no existe, usamos el proxy de Vite con "/api"
+const envBaseUrl = (import.meta as any)?.env?.VITE_API_URL ?? "";
+const normalizedEnvBase =
+  typeof envBaseUrl === "string" ? envBaseUrl.trim().replace(/\/+$/, "") : "";
 
 function ensureApiBase(url: string) {
   const trimmed = url.replace(/\/+$/, "");
@@ -19,21 +30,17 @@ function ensureApiBase(url: string) {
   return `${trimmed}/api`;
 }
 
-const baseURL = normalizedEnvBase !== ""
-  ? ensureApiBase(normalizedEnvBase)
-  : "/api";
+const baseURL =
+  normalizedEnvBase !== "" ? ensureApiBase(normalizedEnvBase) : "/api";
 
 export const getApiBaseUrl = () => baseURL;
 
 export const getAdminApiBaseUrl = () => {
   const trimmed = baseURL.replace(/\/+$/, "");
-  if (trimmed.endsWith("/admin")) {
-    return trimmed;
-  }
-  return `${trimmed}/admin`;
+  return trimmed.endsWith("/admin") ? trimmed : `${trimmed}/admin`;
 };
 
-// Crea una instancia de Axios con la URL base
+// ===== Axios instance =====
 export const api = axios.create({
   baseURL,
   withCredentials: true,
@@ -68,17 +75,13 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   return config;
 });
 
-// Interceptor de response → si 401, dispara logout del store
+// Interceptor de response → si 401, intenta refresh una vez
 let refreshPromise: Promise<SessionRefreshPayload> | null = null;
 
 async function requestRefresh(): Promise<SessionRefreshPayload> {
   if (!refreshPromise) {
     refreshPromise = api
-      .post<SessionRefreshPayload>(
-        "/auth/refresh",
-        {},
-        { skipAuthRefresh: true }
-      )
+      .post<SessionRefreshPayload>("/auth/refresh", {}, { skipAuthRefresh: true })
       .then((response: AxiosResponse<SessionRefreshPayload>) => {
         const payload = response.data;
         _onSessionRefresh?.(payload);
@@ -88,7 +91,6 @@ async function requestRefresh(): Promise<SessionRefreshPayload> {
         refreshPromise = null;
       });
   }
-
   return refreshPromise!;
 }
 
@@ -96,7 +98,7 @@ api.interceptors.response.use(
   (res: AxiosResponse) => res,
   async (err: AxiosError) => {
     const status = err.response?.status;
-    const originalRequest = err.config as InternalAxiosRequestConfig & { _retry?: boolean } | undefined;
+    const originalRequest = err.config as InternalAxiosRequestConfig | undefined;
 
     if (
       status === 401 &&
@@ -105,13 +107,10 @@ api.interceptors.response.use(
       !originalRequest._retry
     ) {
       originalRequest._retry = true;
-
       try {
         const refreshData = await requestRefresh();
         const newToken = refreshData.token;
-        if (!newToken) {
-          throw new Error("Respuesta de refresh inválida: falta el token");
-        }
+        if (!newToken) throw new Error("Respuesta de refresh inválida: falta el token");
 
         const headers: any = (originalRequest.headers ??= {} as any);
         if (typeof headers.set === "function") headers.set("Authorization", `Bearer ${newToken}`);
