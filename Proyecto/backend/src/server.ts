@@ -1,5 +1,5 @@
 import "dotenv/config";
-import express from "express";
+import express, { Router } from "express";
 import cors from "cors";
 import path from "path";
 import { connectDB } from "./db";
@@ -18,34 +18,18 @@ import Subject from "./models/Subject";
 import Activity from "./models/Activity";
 
 const app = express();
-app.use(cors());
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+  })
+);
 
 const bodyLimit = process.env.JSON_BODY_LIMIT || "10mb";
 app.use(express.json({ limit: bodyLimit }));
 app.use(express.urlencoded({ extended: true, limit: bodyLimit }));
 
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
-
-app.use("/admin", adminRouter);
-app.use("/admin", adminStudentsRouter);
-app.use("/auth", authRouter);
-app.use("/profile", profileRouter);
-
-// Ruta protegida genérica
-app.get("/me", requireAuth, (req: any, res) => {
-  res.json({ userId: req.auth.sub, role: req.auth.role });
-});
-// Ruta solo para admins
-app.get("/admin/ping", requireAuth, requireRole("admin"), (_req, res) => {
-  res.json({ pong: true });
-});
-
-app.get("/me", requireAuth, (req: any, res) => {
-  res.json({ userId: req.auth.sub, role: req.auth.role });
-});
-app.get("/admin/ping", requireAuth, requireRole("admin"), (_req, res) => {
-  res.json({ pong: true });
-});
 
 // 1) Sesión mínima para el handshake de OAuth (no para proteger APIs)
 app.use(session({
@@ -57,8 +41,26 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 initGoogleStrategy();
-// 3) Rutas de Google OAuth
-app.use("/auth", googleRouter);
+
+const apiRouter = Router();
+
+apiRouter.use("/admin", adminRouter);
+apiRouter.use("/admin", adminStudentsRouter);
+apiRouter.use("/admin", adminActivitiesRouter);
+apiRouter.use("/admin", adminSubjectsRouter);
+apiRouter.use("/auth", authRouter);
+apiRouter.use("/auth", googleRouter);
+apiRouter.use("/profile", profileRouter);
+
+apiRouter.get("/me", requireAuth, (req: any, res) => {
+  res.json({ userId: req.auth.sub, role: req.auth.role });
+});
+
+apiRouter.get("/admin/ping", requireAuth, requireRole("admin"), (_req, res) => {
+  res.json({ pong: true });
+});
+
+app.use("/api", apiRouter);
 
 const PORT = process.env.PORT || 4000;
 
@@ -82,9 +84,4 @@ const PORT = process.env.PORT || 4000;
     console.log(`🚀 API corriendo en http://localhost:${PORT}`);
   });
 })();
-
-// Ruta de adminActivity
-app.use(adminActivitiesRouter);
-// Ruta de adminSubjects
-app.use(adminSubjectsRouter);
 

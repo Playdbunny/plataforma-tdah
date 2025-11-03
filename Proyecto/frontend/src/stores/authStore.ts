@@ -18,16 +18,14 @@ type LoginBody = {
 };
 type AuthResponse = {
   token: string;
-  refreshToken: string;
-  refreshTokenExpiresAt: string | Date;
+  refreshToken?: string;
+  refreshTokenExpiresAt?: string | Date;
   user?: any; // llega con strings → lo revivimos
 };
 
 type AuthState = {
   user: IUserSafe | null;
   token: string | null;
-  refreshToken: string | null;
-  refreshTokenExpiresAt: string | null;
   loading: boolean;
   error: string | null;
 
@@ -58,7 +56,7 @@ export const useAuthStore = create<AuthState>()(
         }
       };
 
-       const clearAppStoreSession = () => {
+      const clearAppStoreSession = () => {
         try {
           useAppStore.getState().logout();
         } catch {
@@ -69,15 +67,10 @@ export const useAuthStore = create<AuthState>()(
       const applySession = (session: AuthResponse) => {
         const baseUser = session.user ?? get().user;
         const revivedUser = baseUser ? reviveUserDates(baseUser) : null;
-        const refreshExpires = session.refreshTokenExpiresAt
-          ? new Date(session.refreshTokenExpiresAt).toISOString()
-          : null;
 
         setAuthHeader(session.token);
         set({
           token: session.token,
-          refreshToken: session.refreshToken,
-          refreshTokenExpiresAt: refreshExpires,
           user: revivedUser,
           error: null,
         });
@@ -87,8 +80,6 @@ export const useAuthStore = create<AuthState>()(
       return {
         user: null,
         token: null,
-        refreshToken: null,
-        refreshTokenExpiresAt: null,
         loading: false,
         error: null,
 
@@ -138,12 +129,11 @@ export const useAuthStore = create<AuthState>()(
         },
 
         logout: () => {
+          void api.post("/auth/logout").catch(() => {});
           setAuthHeader(null);
           set({
             user: null,
             token: null,
-            refreshToken: null,
-            refreshTokenExpiresAt: null,
             error: null,
             loading: false,
           });
@@ -160,8 +150,6 @@ export const useAuthStore = create<AuthState>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         token: state.token,
-        refreshToken: state.refreshToken,
-        refreshTokenExpiresAt: state.refreshTokenExpiresAt,
         user: state.user,
       }),
       onRehydrateStorage: () => (state) => {
@@ -169,9 +157,6 @@ export const useAuthStore = create<AuthState>()(
         setAuthHeader(state?.token ?? null);
         if (state?.user) {
           state.user = reviveUserDates(state.user as any);
-        }
-        if (state?.refreshTokenExpiresAt) {
-          state.refreshTokenExpiresAt = new Date(state.refreshTokenExpiresAt).toISOString();
         }
       },
     }

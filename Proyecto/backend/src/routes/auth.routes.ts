@@ -4,7 +4,13 @@ import argon2 from "argon2";
 import { randomBytes, createHash } from "crypto";
 import { User } from "../models/User";
 import { sendPasswordResetEmail } from "../services/mailer";
-import { hashRefreshToken, issueSession } from "./helpers/session";
+import { requireAuth } from "../middleware/requireAuth";
+import {
+  clearRefreshTokenCookies,
+  readRefreshTokenFromRequest,
+  setRefreshTokenCookie,
+} from "./helpers/authCookies";
+import { hashRefreshToken, issueSession, revokeSession } from "./helpers/session";
 
 const router = Router();
 
@@ -55,6 +61,7 @@ router.post("/register", async (req, res) => {
   const user = await User.create({ name, email, passwordHash, tdahType: tdahType ?? null });
 
   const session = await issueSession(user);
+  setRefreshTokenCookie(res, session.refreshToken, session.refreshTokenExpiresAt);
   return res.status(201).json(session);
 });
 
@@ -72,8 +79,9 @@ router.post("/login", async (req, res) => {
   if (!ok) return res.status(401).json({ error: "Credenciales inválidas" });
 
   user.lastLogin = new Date();
-  
+
   const session = await issueSession(user);
+  setRefreshTokenCookie(res, session.refreshToken, session.refreshTokenExpiresAt);
   return res.json(session);
 });
 
@@ -157,25 +165,49 @@ router.post("/reset-password", async (req, res) => {
 
 /* ── POST /auth/refresh ────────────────────────────────────── */
 const refreshSchema = z.object({
-  refreshToken: z.string().min(10, "Token de refresco inválido"),
+  refreshToken: z.string().min(10, "Token de refresco inválido").optional(),
 });
 
 router.post("/refresh", async (req, res) => {
-  const parsed = refreshSchema.safeParse(req.body);
+  const parsed = refreshSchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
 
-  const hashedToken = hashRefreshToken(parsed.data.refreshToken);
+  const providedToken = parsed.data.refreshToken ?? readRefreshTokenFromRequest(req);
+  if (!providedToken) {
+    clearRefreshTokenCookies(res);
+    return res.status(401).json({ error: "Token de refresco inválido o expirado" });
+  }
+
+  const hashedToken = hashRefreshToken(providedToken);
   const user = await User.findOne({
     refreshTokenHash: hashedToken,
     refreshTokenExpiresAt: { $gt: new Date() },
   });
 
   if (!user) {
+    clearRefreshTokenCookies(res);
     return res.status(401).json({ error: "Token de refresco inválido o expirado" });
   }
 
   const session = await issueSession(user);
+  setRefreshTokenCookie(res, session.refreshToken, session.refreshTokenExpiresAt);
   return res.json(session);
+});
+
+router.post("/logout", requireAuth, async (req: any, res) => {
+  try {
+    const userId = req.auth.sub;
+    const user = await User.findById(userId);
+    if (user) {
+      await revokeSession(user);
+    }
+  } catch (error) {
+    console.error("Error al cerrar sesión", error);
+  } finally {
+    clearRefreshTokenCookies(res);
+  }
+
+  return res.status(204).send();
 });
 
 export default router;

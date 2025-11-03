@@ -1,5 +1,5 @@
 import { randomBytes, createHash } from "crypto";
-import { IUserDoc } from "../../models/User";
+import { IUserDoc, isSafeAvatarUrl } from "../../models/User";
 import { signToken } from "./jwt-sign";
 
 export type SessionPayload = {
@@ -36,8 +36,22 @@ function generateRefreshToken() {
   return { refreshToken, refreshTokenHash, refreshTokenExpiresAt };
 }
 
+function buildAccessTokenPayload(user: IUserDoc) {
+  const payload: Record<string, unknown> = {
+    sub: user.id,
+    role: user.role,
+  };
+
+  const avatar = typeof user.avatarUrl === "string" ? user.avatarUrl : null;
+  if (avatar && isSafeAvatarUrl(avatar)) {
+    payload.avatarUrl = avatar;
+  }
+
+  return payload;
+}
+
 export async function issueSession(user: IUserDoc): Promise<SessionPayload> {
-  const accessToken = signToken({ sub: user.id, role: user.role });
+  const accessToken = signToken(buildAccessTokenPayload(user));
   const { refreshToken, refreshTokenHash, refreshTokenExpiresAt } = generateRefreshToken();
 
   user.refreshTokenHash = refreshTokenHash;

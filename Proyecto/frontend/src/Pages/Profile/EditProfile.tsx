@@ -1,11 +1,11 @@
-import { type ChangeEvent, useMemo, useState } from "react";
+import { type ChangeEvent, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "./EditProfile.module.css";
 import cardStyles from "../../Components/CharacterCard/CharacterCard.module.css"; // 👈 NUEVO
 import Navbar from "../../Components/Navbar/Navbar";
 import { useAppStore } from "../../stores/appStore";
 import { useAuthStore } from "../../stores/authStore";
-import { updateProfile, type UpdateProfilePayload } from "../../api/users";
+import { updateProfile, type UpdateProfilePayload, uploadAvatar } from "../../api/users";
 
 // Catálogo con rareza y precio (solo pagan los no-comunes)
 const CHARACTERS = [
@@ -33,21 +33,6 @@ const RARITY_LABEL: Record<Rarity,string> = {
 
 const MAX_AVATAR_SIZE = 5 * 1024 * 1024; // 5MB
 
-const readFileAsDataUrl = (file: File): Promise<string> =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result;
-      if (typeof result === "string") {
-        resolve(result);
-      } else {
-        reject(new Error("Formato de imagen inválido"));
-      }
-    };
-    reader.onerror = () => reject(new Error("No se pudo leer la imagen"));
-    reader.readAsDataURL(file);
-  });
-
 export default function EditProfile() {
   const navigate = useNavigate();
 
@@ -67,7 +52,7 @@ export default function EditProfile() {
   const [username, setUsername] = useState(user?.username ?? "");
   const [education, setEducation] = useState(user?.education ?? "");
   const [avatarPreview, setAvatarPreview] = useState<string>(user?.avatarUrl ?? "/Images/default-profile.jpg");
-  const [avatarDataUrl, setAvatarDataUrl] = useState<string | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [selectedChar, setSelectedChar]   = useState<string>(user?.character?.id ?? CHARACTERS[0].id);
   const [saving, setSaving]               = useState(false);
   const [errorMsg, setErrorMsg]           = useState<string | null>(null);
@@ -98,15 +83,25 @@ export default function EditProfile() {
 
     try {
       setErrorMsg(null);
-      const dataUrl = await readFileAsDataUrl(file);
-      setAvatarPreview(dataUrl);
-      setAvatarDataUrl(dataUrl);
+      if (avatarPreview.startsWith("blob:")) {
+        URL.revokeObjectURL(avatarPreview);
+      }
+      const objectUrl = URL.createObjectURL(file);
+      setAvatarPreview(objectUrl);
+      setAvatarFile(file);
     } catch (_err) {
       setErrorMsg("No se pudo leer la imagen seleccionada. Intenta con otro archivo.");
     } finally {
       input.value = "";
     }
   };
+
+  useEffect(() => {
+    if (!avatarPreview.startsWith("blob:")) return;
+    return () => {
+      URL.revokeObjectURL(avatarPreview);
+    };
+  }, [avatarPreview]);
 
   const handleSelect = (id: string) => {
     const c = CHARACTERS.find(x => x.id === id) ?? CHARACTERS[0];
@@ -153,8 +148,6 @@ export default function EditProfile() {
     const trimmedUsername = username.trim();
     const trimmedEducation = education.trim();
 
-    const avatarUrlToPersist = avatarDataUrl ?? (typeof user?.avatarUrl === "string" ? user.avatarUrl : undefined);
-
     const payload: UpdateProfilePayload = {
       name: trimmedName,
       email: trimmedEmail,
@@ -165,14 +158,17 @@ export default function EditProfile() {
       coins: coins,
     };
 
-    if (typeof avatarUrlToPersist === "string" && avatarUrlToPersist.trim().length > 0) {
-      payload.avatarUrl = avatarUrlToPersist.trim();
-    }
-
     try {
+      let uploadedAvatarUrl: string | null = null;
+      if (avatarFile) {
+        uploadedAvatarUrl = await uploadAvatar(avatarFile);
+      }
       const updatedUser = await updateProfile(payload);
-      setAppUser(updatedUser as any);
-      setAuthUser(updatedUser);
+      const finalUser = uploadedAvatarUrl
+        ? { ...updatedUser, avatarUrl: uploadedAvatarUrl }
+        : updatedUser;
+      setAppUser(finalUser as any);
+      setAuthUser(finalUser);
       navigate("/profile");
     } catch (err: any) {
       const message =

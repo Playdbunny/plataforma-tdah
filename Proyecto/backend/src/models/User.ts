@@ -33,6 +33,28 @@ export interface IUserSafe {
   lastLogin?: Date | null;
 }
 
+export const MAX_AVATAR_URL_LENGTH = 512;
+
+export function isSafeAvatarUrl(value: unknown): value is string {
+  if (typeof value !== "string") return false;
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+  if (trimmed.length > MAX_AVATAR_URL_LENGTH) return false;
+  if (/^data:/i.test(trimmed)) return false;
+  if (trimmed.includes(";base64")) return false;
+  if (/\s/.test(trimmed)) return false;
+  if (/^https?:\/\//i.test(trimmed)) return true;
+  if (trimmed.startsWith("/uploads/")) return true;
+  return false;
+}
+
+export function normalizeAvatarUrl(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  return isSafeAvatarUrl(trimmed) ? trimmed : null;
+}
+
 /** Cómo luce el documento dentro de Mongo (incluye passwordHash) - Documento Real almacenado en Mongo */
 export interface IUserDoc extends Document {
   // Campos básicos
@@ -102,7 +124,18 @@ const UserSchema = new Schema<IUserDoc>(
     },
 
     username: { type: String, trim: true, minlength: 2, maxlength: 100, unique: true, sparse: true, index: true }, // puede ser null, pero si existe debe ser único
-    avatarUrl: { type: String, default: null },
+    avatarUrl: {
+      type: String,
+      default: null,
+      maxlength: MAX_AVATAR_URL_LENGTH,
+      set: normalizeAvatarUrl,
+      validate: {
+        validator(value: string | null) {
+          return value === null || isSafeAvatarUrl(value);
+        },
+        message: "avatarUrl must be an http(s) URL or start with /uploads/",
+      },
+    },
     education: { type: String, trim: true, default: null },
 
     // Nunca almacenamos el password en texto plano

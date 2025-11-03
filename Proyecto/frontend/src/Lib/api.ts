@@ -3,8 +3,8 @@ import type { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from "axio
 
 type SessionRefreshPayload = {
   token: string;
-  refreshToken: string;
-  refreshTokenExpiresAt: string;
+  refreshToken?: string;
+  refreshTokenExpiresAt?: string;
   user?: unknown;
 };
 
@@ -14,7 +14,13 @@ const rawBaseUrl = envBaseUrl && envBaseUrl.trim() !== ""
   ? envBaseUrl.trim()
   : "http://localhost:4000";
 
-const baseURL = rawBaseUrl.replace(/\/+$/, "");
+function ensureApiBase(url: string) {
+  const trimmed = url.replace(/\/+$/, "");
+  if (trimmed.endsWith("/api")) return trimmed;
+  return `${trimmed}/api`;
+}
+
+const baseURL = ensureApiBase(rawBaseUrl);
 
 export const getApiBaseUrl = () => baseURL;
 
@@ -29,21 +35,17 @@ export const getAdminApiBaseUrl = () => {
 // Crea una instancia de Axios con la URL base
 export const api = axios.create({
   baseURL,
+  withCredentials: true,
   headers: { Accept: "application/json" },
 });
 
 // "Inyección" de funciones para evitar import circular con el store
 let _getToken: () => string | null = () => null;
-let _getRefreshToken: () => string | null = () => null;
 let _onUnauthorized: () => void = () => {};
 let _onSessionRefresh: (payload: SessionRefreshPayload) => void = () => {};
 
 export function setAuthTokenGetter(getter: () => string | null) {
   _getToken = getter;
-}
-
-export function setRefreshTokenGetter(getter: () => string | null) {
-  _getRefreshToken = getter;
 }
 
 export function setOnUnauthorized(cb: () => void) {
@@ -70,15 +72,10 @@ let refreshPromise: Promise<SessionRefreshPayload> | null = null;
 
 async function requestRefresh(): Promise<SessionRefreshPayload> {
   if (!refreshPromise) {
-    const refreshToken = _getRefreshToken?.();
-    if (!refreshToken) {
-      return Promise.reject(new Error("No hay token de refresco disponible"));
-    }
-
     refreshPromise = api
       .post<SessionRefreshPayload>(
         "/auth/refresh",
-        { refreshToken },
+        {},
         { skipAuthRefresh: true }
       )
       .then((response: AxiosResponse<SessionRefreshPayload>) => {

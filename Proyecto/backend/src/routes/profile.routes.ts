@@ -1,7 +1,46 @@
 import { Router } from "express";
 import { z } from "zod";
+import path from "path";
+import fsPromises from "fs/promises";
 import { requireAuth } from "../middleware/requireAuth";
-import { User } from "../models/User";
+import {
+  MAX_AVATAR_URL_LENGTH,
+  User,
+  isSafeAvatarUrl,
+  normalizeAvatarUrl,
+} from "../models/User";
+import {
+  extractMultipartFile,
+  HttpError,
+} from "./helpers/multipart";
+
+const AVATAR_DIR = path.join(process.cwd(), "uploads", "avatars");
+const MAX_AVATAR_SIZE = 5 * 1024 * 1024; // 5MB
+const ALLOWED_AVATAR_MIME = /image\/(png|jpeg|jpg|webp|gif)/i;
+
+async function removeStoredAvatar(url: string | null | undefined) {
+  if (!url || !url.startsWith("/uploads/avatars/")) return;
+
+  const filename = path.basename(url);
+  const absolute = path.join(AVATAR_DIR, filename);
+
+  try {
+    await fsPromises.unlink(absolute);
+  } catch (err: any) {
+    if (err?.code !== "ENOENT") {
+      console.warn(`No se pudo eliminar el avatar anterior: ${absolute}`, err);
+    }
+  }
+}
+
+function getExtensionFromMime(mimeType: string) {
+  const normalized = mimeType.toLowerCase();
+  if (normalized === "image/png") return ".png";
+  if (normalized === "image/jpeg" || normalized === "image/jpg") return ".jpg";
+  if (normalized === "image/webp") return ".webp";
+  if (normalized === "image/gif") return ".gif";
+  return "";
+}
 
 const router = Router();
 
@@ -18,7 +57,19 @@ const updateProfileSchema = z
     name: z.string().trim().min(2).max(100).optional(),
     email: z.string().trim().email().optional(),
     username: z.string().trim().min(3).max(100).optional(),
-    avatarUrl: z.string().trim().min(1).optional(),
+    avatarUrl: z
+      .union([
+        z
+          .string()
+          .trim()
+          .min(1)
+          .max(MAX_AVATAR_URL_LENGTH)
+          .refine((value) => isSafeAvatarUrl(value), {
+            message: "avatarUrl inválido",
+          }),
+        z.literal(null),
+      ])
+      .optional(),
     education: z.string().trim().min(2).max(200).optional(),
     character: characterSchema.nullable().optional(),
     ownedCharacters: z.array(z.string().min(1)).optional(),
@@ -27,6 +78,56 @@ const updateProfileSchema = z
   .strict();
 
 router.use(requireAuth);
+
+router.post("/avatar", async (req: any, res) => {
+  try {
+    const file = await extractMultipartFile(req, {
+      field: "avatar",
+      maxSize: MAX_AVATAR_SIZE,
+      allowedMime: ALLOWED_AVATAR_MIME,
+      tooLargeMessage: "El avatar excede el tamaño permitido (5MB)",
+    });
+
+    if (!file) {
+      return res.status(400).json({ error: "No se recibió un avatar" });
+    }
+
+    const userId = req.auth.sub;
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    await fsPromises.mkdir(AVATAR_DIR, { recursive: true });
+
+    const originalExt = path.extname(file.filename).toLowerCase();
+    const inferredExt = getExtensionFromMime(file.mimeType);
+    const candidateExt = originalExt || inferredExt || ".png";
+    const safeExtension = /^\.[a-z0-9]+$/i.test(candidateExt) ? candidateExt : ".png";
+    const uniqueName = `${Date.now()}-${Math.random().toString(36).slice(2)}${safeExtension}`;
+
+    const destination = path.join(AVATAR_DIR, uniqueName);
+    await fsPromises.writeFile(destination, file.buffer);
+
+    const nextUrl = `/uploads/avatars/${uniqueName}`;
+    const previousUrl = user.avatarUrl ?? null;
+
+    user.avatarUrl = nextUrl;
+    await user.save();
+
+    if (previousUrl && previousUrl !== nextUrl) {
+      await removeStoredAvatar(previousUrl);
+    }
+
+    return res.json({ avatarUrl: nextUrl });
+  } catch (error) {
+    if (error instanceof HttpError) {
+      return res.status(error.status).json({ error: error.message });
+    }
+    console.error("Error al actualizar avatar", error);
+    return res.status(500).json({ error: "No se pudo actualizar el avatar" });
+  }
+});
 
 router.patch("/", async (req: any, res) => {
   const parsed = updateProfileSchema.safeParse(req.body);
@@ -71,8 +172,14 @@ router.patch("/", async (req: any, res) => {
     user.name = updates.name.trim();
   }
 
-  if (typeof updates.avatarUrl === "string") {
-    user.avatarUrl = updates.avatarUrl.trim();
+  if (updates.avatarUrl === null) {
+    user.avatarUrl = null;
+  } else if (typeof updates.avatarUrl === "string") {
+    const normalized = normalizeAvatarUrl(updates.avatarUrl);
+    if (!normalized) {
+      return res.status(400).json({ error: "avatarUrl inválido" });
+    }
+    user.avatarUrl = normalized;
   }
 
   if (typeof updates.education === "string") {
