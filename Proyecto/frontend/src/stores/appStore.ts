@@ -4,6 +4,7 @@
 // ============================================================
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { normalizeAvatarUrl } from "../utils/avatar";
 
 /* ======================
    Tipos base del dominio
@@ -112,23 +113,41 @@ export const useAppStore = create<AppState>()(
       setTdahType: (t) => set({ tdahType: t }),
 
       setUser: (u) => {
-        // Si te llega un usuario con coins, sincronizamos compat con wallet/points
-        if (u && typeof u.coins === "number") {
-          const coins = Math.max(0, Math.floor(u.coins));
-          set({ user: { ...u, coins }, points: coins, wallet: { coins } });
-        } else {
+        if (!u) {
           set({ user: u });
+          return;
+        }
+
+        const normalizedAvatar = normalizeAvatarUrl(u.avatarUrl);
+        const nextUser =
+          normalizedAvatar === u.avatarUrl
+            ? u
+            : ({ ...u, avatarUrl: normalizedAvatar } as typeof u);
+
+        // Si te llega un usuario con coins, sincronizamos compat con wallet/points
+        if (typeof nextUser.coins === "number") {
+          const coins = Math.max(0, Math.floor(nextUser.coins));
+          set({ user: { ...nextUser, coins }, points: coins, wallet: { coins } });
+        } else {
+          set({ user: nextUser });
         }
       },
 
       updateUser: (patch) =>
         set((s) => {
           if (!s.user) return s; // nada que actualizar si no hay sesión
-          const nextUser = { ...s.user, ...patch };
+          const normalizedPatch =
+            patch.avatarUrl !== undefined
+              ? { ...patch, avatarUrl: normalizeAvatarUrl(patch.avatarUrl) }
+              : patch;
+          const nextUser = { ...s.user, ...normalizedPatch };
 
           // Si el patch trae coins válidas, sincronizamos todo (compat)
-          if (typeof patch.coins === "number" && Number.isFinite(patch.coins)) {
-            const coins = Math.max(0, Math.floor(patch.coins));
+          if (
+            typeof normalizedPatch.coins === "number" &&
+            Number.isFinite(normalizedPatch.coins)
+          ) {
+            const coins = Math.max(0, Math.floor(normalizedPatch.coins));
             return {
               user: { ...nextUser, coins },
               points: coins, // compat: points = coins
@@ -143,7 +162,11 @@ export const useAppStore = create<AppState>()(
         set((s) => (s.user ? { user: { ...s.user, character: c } } : s)),
 
       setAvatar: (url) =>
-        set((s) => (s.user ? { user: { ...s.user, avatarUrl: url } } : s)),
+        set((s) => {
+          if (!s.user) return s;
+          const normalized = normalizeAvatarUrl(url, { cacheBuster: Date.now() });
+          return { user: { ...s.user, avatarUrl: normalized } };
+        }),
 
       // ⤵️ Compat: sumar puntos también suma monedas
       addPoints: (n) =>

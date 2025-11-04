@@ -5,6 +5,7 @@ import api from "../Lib/api";
 import { IUserSafe, TDAHType } from "../types/user";
 import { useAppStore } from "./appStore";
 import { reviveUserDates } from "../utils/user_serializers";
+import { normalizeAvatarUrl } from "../utils/avatar";
 
 type RegisterBody = {
   name: string;
@@ -86,7 +87,23 @@ export const useAuthStore = create<AuthState>()(
         setUser: (u) => {
           const current = get().user;
           if (!current) return;
-          set({ user: { ...current, ...u, streak: { ...current.streak, ...u.streak } } });
+
+          const patch: Partial<IUserSafe> = { ...u };
+          if (patch.avatarUrl !== undefined) {
+            patch.avatarUrl = normalizeAvatarUrl(patch.avatarUrl);
+          }
+
+          const { streak: patchStreak, ...restPatch } = patch;
+
+          set({
+            user: {
+              ...current,
+              ...restPatch,
+              streak: patchStreak
+                ? { ...current.streak, ...patchStreak }
+                : current.streak,
+            },
+          });
         },
 
         setSession: (session) => {
