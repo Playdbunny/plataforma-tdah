@@ -15,6 +15,7 @@ export type UpdateProfilePayload = {
 
 export async function updateProfile(payload: UpdateProfilePayload): Promise<IUserSafe> {
   const { data } = await api.patch<{ user: IUserSafe }>("/profile", payload);
+  return reviveUserDates(data.user);
 }
 
 export async function uploadAvatar(file: File): Promise<string> {
