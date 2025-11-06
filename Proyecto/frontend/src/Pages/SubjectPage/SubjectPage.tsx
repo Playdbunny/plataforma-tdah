@@ -6,6 +6,7 @@
 
 import { useParams, Navigate } from "react-router-dom";
 import { useMemo, useEffect, useState } from "react";
+import { useOnceWhen, useBusyFlag } from "@/lib/hooks";
 
 
 // Navbar y estilos existentes
@@ -48,16 +49,19 @@ export default function SubjectPage() {
   const defaultActivityBanner = heroBannerUrl;
 
   // Actividades: mock por slug (hasta que migres a backend)
-  const activities = useActivitiesStore(
-    (state) => state.activitiesBySubject[slug] ?? [],
-  ) as PublicActivity[];
+  const list = useActivitiesStore((state) => state.activitiesBySubject[slug]);
   const fetchActivities = useActivitiesStore((state) => state.fetchActivities);
-  const activitiesVersion = useActivitiesStore((state) => state.version);
 
-  useEffect(() => {
+  const busy = useBusyFlag();
+
+  useOnceWhen(Boolean(slug) && list === undefined, () => {
     if (!slug) return;
-    fetchActivities(slug).catch(() => {});
-  }, [slug, fetchActivities, activitiesVersion]);
+    if (!busy.isBusy()) {
+      busy.run(fetchActivities(slug)).catch(() => {});
+    }
+  }, [slug, list, fetchActivities]);
+
+  const activities = (list ?? []) as PublicActivity[];
 
   const [query, setQuery] = useState("");
   const filteredActivities = activities.filter((a) =>
@@ -114,7 +118,7 @@ export default function SubjectPage() {
 
                 return (
                   <article
-                    key={a.id}
+                    key={a._id ?? a.id}
                     className={styles.card}
                     role="listitem"
                     tabIndex={0}

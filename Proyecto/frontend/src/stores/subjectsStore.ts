@@ -121,6 +121,7 @@ function extractErrorMessage(err: any, fallback: string) {
 }
 
 type FetchSubjectsOptions = {
+  force?: boolean;
   forceAdmin?: boolean;
 };
 
