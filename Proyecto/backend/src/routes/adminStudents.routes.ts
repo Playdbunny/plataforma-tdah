@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { Types } from "mongoose";
 import { requireAuth, requireRole } from "../middleware/requireAuth";
-import { User, type TDAHType } from "../models/User";
+import { User, type TDAHType, type IUserCharacter } from "../models/User";
 import UserProgress from "../models/UserProgress";
 import Subject from "../models/Subject";
 import Activity from "../models/Activity";
@@ -42,6 +42,7 @@ type StudentSummaryDto = {
   coins: number;
   level: number;
   avatarUrl: string | null;
+  character: IUserCharacter | null;
   streakCount: number;
   streakLastCheck: string | null;
   lastLogin: string | null;
@@ -74,6 +75,7 @@ type UserLean = {
   coins?: number;
   level?: number;
   avatarUrl?: string | null;
+  character?: IUserCharacter | null;
   streak?: { count: number; lastCheck?: Date | null } | null;
   lastLogin?: Date | null;
   createdAt: Date;
@@ -88,7 +90,7 @@ router.get(
     try {
       const users = await User.find({ role: "student" })
         .select(
-          "name email tdahType xp coins level avatarUrl streak lastLogin createdAt updatedAt"
+          "name email tdahType xp coins level avatarUrl character streak lastLogin createdAt updatedAt"
         )
         .lean<UserLean[]>();
 
@@ -202,6 +204,7 @@ router.get(
           coins: user.coins ?? 0,
           level: user.level ?? 0,
           avatarUrl: user.avatarUrl ?? null,
+          character: user.character ?? null,
           streakCount: user.streak?.count ?? 0,
           streakLastCheck: toISO(user.streak?.lastCheck ?? null),
           lastLogin: toISO(user.lastLogin ?? null),
@@ -233,7 +236,7 @@ router.get(
 
       const user = await User.findOne({ _id: id, role: "student" })
         .select(
-          "name email tdahType xp coins level avatarUrl streak lastLogin createdAt updatedAt"
+          "name email tdahType xp coins level avatarUrl character streak lastLogin createdAt updatedAt"
         )
         .lean<UserLean | null>();
 
@@ -385,6 +388,7 @@ router.get(
         coins: user.coins ?? 0,
         level: user.level ?? 0,
         avatarUrl: user.avatarUrl ?? null,
+        character: user.character ?? null,
         streakCount: user.streak?.count ?? 0,
         streakLastCheck: toISO(user.streak?.lastCheck ?? null),
         lastLogin: toISO(user.lastLogin ?? null),

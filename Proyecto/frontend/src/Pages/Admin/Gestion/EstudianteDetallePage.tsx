@@ -23,6 +23,11 @@ function formatActivity(ev: AdminStudentActivity) {
   return `${amount} ${currency} — ${source} · ${timeAgo(ev.createdAt)}`;
 }
 
+const DEFAULT_CHARACTER = {
+  sprite: "/Characters/boy.gif",
+  name: "Personaje",
+};
+
 export default function EstudianteDetallePage() {
   const { id } = useParams<{ id: string }>();
   const [student, setStudent] = useState<AdminStudentDetail | null>(null);
@@ -100,8 +105,11 @@ export default function EstudianteDetallePage() {
           <div className={styles.headerCard}>
             <img
               className={styles.avatar}
-              src={student.avatarUrl || "/Images/default-profile.jpg"}
-              alt={`Avatar de ${student.name}`}
+              src={student.character?.sprite || DEFAULT_CHARACTER.sprite}
+              alt={`Personaje de ${student.name}`}
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).src = DEFAULT_CHARACTER.sprite;
+              }}
             />
             <div className={styles.meta}>
               <h2 className={styles.name}>{student.name}</h2>
