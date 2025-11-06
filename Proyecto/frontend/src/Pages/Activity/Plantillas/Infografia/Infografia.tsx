@@ -110,14 +110,14 @@ const Infografia = () => {
 									disabled={page === questions.length - 1}
 								>Siguiente</button>
 								<span className={styles.progressIndicator}>
-									{questions.map((_, i) => (
-										<span
-											key={i}
-											className={
-												styles.progressDot + (i === page ? ' ' + styles.active : '')
-											}
-										></span>
-									))}
+                                                                        {questions.map((_, i) => (
+                                                                                <span
+                                                                                        key={`dot-${i}`}
+                                                                                        className={
+                                                                                                styles.progressDot + (i === page ? ' ' + styles.active : '')
+                                                                                        }
+                                                                               ></span>
+                                                                        ))}
 								</span>
 								<button className={styles.finishedBtn}>
 									Finished

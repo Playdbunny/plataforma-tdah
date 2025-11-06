@@ -1,10 +1,40 @@
-import { api, getAdminApiBaseUrl } from "../Lib/api";
+import { api, getAdminApiBaseUrl, getApiBaseUrl } from "../Lib/api";
 import { SubjectActivity } from "../Lib/activityMocks";
 
+export type ActivitySummary = {
+  id: string;
+  _id?: string;
+  subjectId?: string | null;
+  subjectSlug?: string | null;
+  slug?: string | null;
+  title: string;
+  bannerUrl?: string | null;
+  kind?: string | null;
+  xpReward?: number | null;
+  status?: string | null;
+  updatedAt?: string | null;
+  estimatedMinutes?: number | null;
+  material?: { type: string | null; url: string } | null;
+};
+
 // Obtener todas las actividades
-export const getActivities = async () => {
+export const getAdminActivities = async () => {
   const { data } = await api.get<SubjectActivity[]>("/activities", {
     baseURL: getAdminApiBaseUrl(),
+  });
+  return data;
+};
+
+export const getSubjectActivities = async (slug: string) => {
+  const { data } = await api.get<ActivitySummary[]>(`/subjects/${slug}/activities`, {
+    baseURL: getApiBaseUrl(),
+  });
+  return data;
+};
+
+export const getActivityDetail = async (id: string) => {
+  const { data } = await api.get<ActivitySummary>(`/activities/${id}`, {
+    baseURL: getApiBaseUrl(),
   });
   return data;
 };

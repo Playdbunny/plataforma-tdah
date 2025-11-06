@@ -197,7 +197,7 @@ export default function AdminDashboard() {
                 const y = chart.padding + i * ((chart.height - chart.padding * 2) / 5);
                 return (
                   <line
-                    key={i}
+                    key={`grid-${i}`}
                     x1={chart.padding}
                     x2={chart.width - chart.padding}
                     y1={y}
@@ -215,7 +215,7 @@ export default function AdminDashboard() {
                 const y = chart.padding + (5 - i) * ((chart.height - chart.padding * 2) / 5);
                 return (
                   <text
-                    key={i}
+                    key={`tick-${i}-${val}`}
                     x={chart.padding - 10}
                     y={y + 4}
                     textAnchor="end"
@@ -232,14 +232,20 @@ export default function AdminDashboard() {
 
               {/* Puntos */}
               {serie.map((v, i) => (
-                <circle key={i} cx={chart.x(i)} cy={chart.y(v)} r={4} fill="#2563eb" />
+                <circle
+                  key={`point-${i}-${v}`}
+                  cx={chart.x(i)}
+                  cy={chart.y(v)}
+                  r={4}
+                  fill="#2563eb"
+                />
               ))}
 
               {/* Etiquetas de X */}
               {(range === "7d" ? weekLabels7 : serie.map((_, i) => (i + 1).toString())).map(
                 (lbl, i) => (
                   <text
-                    key={i}
+                    key={`label-${i}-${lbl}`}
                     x={chart.x(i)}
                     y={chart.height - chart.padding / 2}
                     textAnchor="middle"

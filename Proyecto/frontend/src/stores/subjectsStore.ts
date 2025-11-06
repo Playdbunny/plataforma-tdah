@@ -19,12 +19,13 @@ import { useAppStore } from "./appStore";
 // Tipo base de una materia
 // ========================
 export type Subject = {
-  _id: string; // ObjectId de MongoDB
-  id: string; // Alias derivado para compatibilidad con componentes legacy
-  slug: string; // p.ej. "matematicas"
-  name: string; // "Matemáticas"
-  description?: string; // descripción corta
-  bannerUrl?: string | null; // URL del banner (subido o mock)
+  _id: string;
+  id: string;
+  slug: string;
+  name: string;
+  description?: string | null;
+  bannerUrl?: string | null;
+  updatedAt?: string | null;
 };
 
 // ========================
@@ -34,8 +35,12 @@ type SubjectsState = {
   items: Subject[];
   loading: boolean;
   error: string | null;
+  version: number;
+  loadedVersion: number | null;
 
+  fetchSubjects: (options?: { force?: boolean }) => Promise<Subject[]>;
   list: () => Promise<void>;
+  invalidateSubjects: () => void;
   create: (
     p: { name: string; description?: string; slug?: string },
   ) => Promise<Subject>;
@@ -48,10 +53,12 @@ type SubjectsState = {
   clearBanner: (id: string) => Promise<Subject>;
 };
 
-const INITIAL_STATE: Pick<SubjectsState, "items" | "loading" | "error"> = {
+const INITIAL_STATE: Pick<SubjectsState, "items" | "loading" | "error" | "version" | "loadedVersion"> = {
   items: [],
   loading: false,
   error: null,
+  version: 0,
+  loadedVersion: null,
 };
 
 function toSlug(name: string) {
@@ -67,14 +74,16 @@ function resolveBannerUrl(url?: string | null): string | null {
   if (!url) return null;
   const trimmed = url.trim();
   if (!trimmed) return null;
+  if (trimmed.startsWith("data:")) return null;
   if (/^https?:\/\//i.test(trimmed)) return trimmed;
 
   const base = getApiBaseUrl().replace(/\/+$/, "");
+  const origin = base.replace(/\/?api$/, "");
   if (trimmed.startsWith("/")) {
-    return `${base}${trimmed}`;
+    return `${origin}${trimmed}` || trimmed;
   }
 
-  return `${base}/${trimmed}`;
+  return `${origin}/${trimmed}`;
 }
 
 function normalizeSubject(subject: SubjectResponse | Subject): Subject {
@@ -88,11 +97,17 @@ function normalizeSubject(subject: SubjectResponse | Subject): Subject {
 
   const finalId = resolvedId || `subject-${Math.random().toString(36).slice(2, 10)}`;
 
+  const resolvedBanner = resolveBannerUrl(subject.bannerUrl ?? null);
+  const updatedAt = (subject as any).updatedAt
+    ? new Date((subject as any).updatedAt).toISOString()
+    : null;
+
   return {
     ...subject,
     _id: String(rawMongoId ?? finalId),
     id: String(finalId),
-    bannerUrl: resolveBannerUrl(subject.bannerUrl ?? null),
+    bannerUrl: resolvedBanner,
+    updatedAt,
   } as Subject;
 }
 
@@ -111,14 +126,19 @@ type FetchSubjectsOptions = {
 
 async function fetchAndSetSubjects(
   set: (partial: Partial<SubjectsState>) => void,
+  get: () => SubjectsState,
   options?: FetchSubjectsOptions,
-) {
+): Promise<Subject[]> {
   const appState = useAppStore.getState();
   const useAdminEndpoints = options?.forceAdmin ?? appState.isAdmin();
 
   const data = await api.getSubjects({ public: !useAdminEndpoints });
   const normalized = data.map(normalizeSubject);
-  set({ items: normalized, error: null });
+  set({
+    items: normalized,
+    error: null,
+    loadedVersion: get().version,
+  });
   return normalized;
 }
 
@@ -127,15 +147,40 @@ export const useSubjectsStore = create<SubjectsState>()(
     (set, get) => ({
       ...INITIAL_STATE,
 
-      list: async () => {
+      fetchSubjects: async (options) => {
+        const state = get();
+        const shouldFetch =
+          options?.force ||
+          state.loadedVersion !== state.version ||
+          state.items.length === 0;
+
+        if (!shouldFetch) {
+          return state.items;
+        }
+
         set({ loading: true, error: null });
         try {
-          await fetchAndSetSubjects(set);
+          const subjects = await fetchAndSetSubjects(set, get, options);
+          return subjects;
         } catch (err) {
-          set({ error: extractErrorMessage(err, "No se pudo listar materias") });
+          const error = extractErrorMessage(err, "No se pudo listar materias");
+          set({ error });
+          throw new Error(error);
         } finally {
           set({ loading: false });
         }
+      },
+
+      list: async () => {
+        await get().fetchSubjects({ force: true });
+      },
+
+      invalidateSubjects: () => {
+        set((state) => ({
+          items: [],
+          loadedVersion: null,
+          version: state.version + 1,
+        }));
       },
 
       create: async ({ name, description, slug }) => {
@@ -152,7 +197,9 @@ export const useSubjectsStore = create<SubjectsState>()(
             description: trimmedDescription || undefined,
           });
           const normalized = normalizeSubject(created);
-          await fetchAndSetSubjects(set, { forceAdmin: true });
+          set({ loadedVersion: null });
+          set((state) => ({ version: state.version + 1 }));
+          await fetchAndSetSubjects(set, get, { forceAdmin: true });
           return (
             get().items.find(
               (subject) => subject._id === normalized._id || subject.id === normalized.id,
@@ -191,7 +238,9 @@ export const useSubjectsStore = create<SubjectsState>()(
         try {
           const updated = await api.updateSubject(target._id, normalizedPatch);
           const normalized = normalizeSubject(updated);
-          await fetchAndSetSubjects(set, { forceAdmin: true });
+          set({ loadedVersion: null });
+          set((state) => ({ version: state.version + 1 }));
+          await fetchAndSetSubjects(set, get, { forceAdmin: true });
           return (
             get().items.find(
               (subject) => subject._id === normalized._id || subject.id === normalized.id,
@@ -220,7 +269,9 @@ export const useSubjectsStore = create<SubjectsState>()(
         set({ loading: true, error: null });
         try {
           await api.deleteSubject(target._id);
-          await fetchAndSetSubjects(set, { forceAdmin: true });
+          set({ loadedVersion: null });
+          set((state) => ({ version: state.version + 1 }));
+          await fetchAndSetSubjects(set, get, { forceAdmin: true });
         } catch (err: any) {
           const message = extractErrorMessage(err, "No se pudo eliminar la materia");
           set({ error: message });
@@ -245,7 +296,9 @@ export const useSubjectsStore = create<SubjectsState>()(
         try {
           const updated = await api.uploadSubjectBanner(target._id, file);
           const normalized = normalizeSubject(updated);
-          await fetchAndSetSubjects(set, { forceAdmin: true });
+          set({ loadedVersion: null });
+          set((state) => ({ version: state.version + 1 }));
+          await fetchAndSetSubjects(set, get, { forceAdmin: true });
           return (
             get().items.find(
               (subject) => subject._id === normalized._id || subject.id === normalized.id,
@@ -275,7 +328,9 @@ export const useSubjectsStore = create<SubjectsState>()(
         try {
           const updated = await api.clearSubjectBanner(target._id);
           const normalized = normalizeSubject(updated);
-          await fetchAndSetSubjects(set, { forceAdmin: true });
+          set({ loadedVersion: null });
+          set((state) => ({ version: state.version + 1 }));
+          await fetchAndSetSubjects(set, get, { forceAdmin: true });
           return (
             get().items.find(
               (subject) => subject._id === normalized._id || subject.id === normalized.id,
@@ -291,8 +346,8 @@ export const useSubjectsStore = create<SubjectsState>()(
       },
     }),
     {
-      name: "subjects-store-v2",
-      version: 2,
+      name: "subjects-store-v3",
+      version: 3,
       migrate: () => ({ ...INITIAL_STATE }),
     },
   ),

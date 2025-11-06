@@ -1,7 +1,8 @@
-import { Router, Request, Response } from 'express';
-import Activity, { type ActivityAttrs } from '../models/Activity';
-import Subject from '../models/Subject';
-import { requireAuth, requireRole, AuthPayload } from '../middleware/requireAuth';
+import { Router, type Request, type Response } from "express";
+import mongoose from "mongoose";
+import Activity, { type ActivityAttrs } from "../models/Activity";
+import Subject, { type SubjectDocument } from "../models/Subject";
+import { requireAuth, requireRole, type AuthPayload } from "../middleware/requireAuth";
 
 // Extiende la interfaz Request para incluir user con role
 declare global {
@@ -19,6 +20,47 @@ declare global {
 
 const router = Router();
 
+const VALID_STATUSES = new Set(["draft", "published"]);
+
+function normalizeStatus(status: unknown) {
+  if (typeof status !== "string") return undefined;
+  const trimmed = status.trim().toLowerCase();
+  return VALID_STATUSES.has(trimmed) ? (trimmed as "draft" | "published") : undefined;
+}
+
+async function resolveSubject(
+  subjectId?: unknown,
+  subjectSlug?: unknown,
+): Promise<SubjectDocument | null> {
+  if (typeof subjectId === "string" && mongoose.Types.ObjectId.isValid(subjectId)) {
+    const subject = await Subject.findById(subjectId);
+    if (subject) return subject;
+  }
+
+  if (typeof subjectSlug === "string" && subjectSlug.trim()) {
+    const subject = await Subject.findOne({ slug: subjectSlug.trim().toLowerCase() });
+    if (subject) return subject;
+  }
+
+  return null;
+}
+
+async function touchSubject(subjectId: mongoose.Types.ObjectId | string | null | undefined) {
+  if (!subjectId) return;
+  const id =
+    typeof subjectId === "string" && mongoose.Types.ObjectId.isValid(subjectId)
+      ? subjectId
+      : subjectId instanceof mongoose.Types.ObjectId
+      ? subjectId
+      : null;
+
+  if (!id) return;
+
+  await Subject.updateOne({ _id: id }, { $set: { updatedAt: new Date() } }).catch((err) => {
+    console.warn("[activities] No se pudo actualizar updatedAt de la materia", err);
+  });
+}
+
 // Centralizado manejo de errores
 function handleError(res: Response, err: any) {
   if (err?.name === 'ValidationError' || err?.code === 11000) {
@@ -28,38 +70,43 @@ function handleError(res: Response, err: any) {
 }
 
 // CREATE
-router.post('/admin/activities', requireAuth, requireRole('admin'), async (req: Request, res: Response) => {
+router.post("/admin/activities", requireAuth, requireRole("admin"), async (req: Request, res: Response) => {
   try {
     const { subjectId, subjectSlug } = req.body ?? {};
 
-    let subject = null;
-    if (subjectId) {
-      subject = await Subject.findById(subjectId);
-    }
-    if (!subject && subjectSlug) {
-      subject = await Subject.findOne({ slug: subjectSlug });
-    }
+    const subject = await resolveSubject(subjectId, subjectSlug);
 
     if (!subject) {
       return res.status(404).json({
-        error: 'Materia no encontrada para asociar la actividad.',
+        error: "Materia no encontrada para asociar la actividad.",
       });
     }
 
     const createdBy = req.auth?.sub;
     if (!createdBy) {
-      return res.status(401).json({ error: 'Usuario no autenticado.' });
+      return res.status(401).json({ error: "Usuario no autenticado." });
     }
 
-    const payload: Partial<ActivityAttrs> = {
+    const status = normalizeStatus(
+      req.body?.status ?? (req.body?.isPublished ? "published" : undefined),
+    );
+
+    const payload: Record<string, unknown> = {
       ...req.body,
       subjectId: subject._id,
-      subjectSlug: req.body?.subjectSlug ?? subject.slug,
       createdBy,
     };
 
-    const activity = new Activity(payload);
+    if (status) {
+      payload.status = status;
+    } else {
+      delete payload.status;
+    }
+    delete payload.isPublished;
+
+    const activity = new Activity(payload as Partial<ActivityAttrs>);
     await activity.save();
+    await touchSubject(subject._id);
     res.status(201).json(activity);
   } catch (err) {
     handleError(res, err);
@@ -67,7 +114,7 @@ router.post('/admin/activities', requireAuth, requireRole('admin'), async (req: 
 });
 
 // READ
-router.get('/admin/activities', requireAuth, requireRole('admin'), async (req: Request, res: Response) => {
+router.get("/admin/activities", requireAuth, requireRole("admin"), async (_req: Request, res: Response) => {
   try {
     const activities = await Activity.find();
     res.json(activities);
@@ -77,22 +124,56 @@ router.get('/admin/activities', requireAuth, requireRole('admin'), async (req: R
 });
 
 // UPDATE
-router.put('/admin/activities/:id', requireAuth, requireRole('admin'), async (req: Request, res: Response) => {
+router.put("/admin/activities/:id", requireAuth, requireRole("admin"), async (req: Request, res: Response) => {
   try {
-    const activity = await Activity.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
-    if (!activity) return res.status(404).json({ error: 'Actividad no encontrada.' });
-    res.json(activity);
+    const { id } = req.params;
+    const existing = await Activity.findById(id);
+    if (!existing) {
+      return res.status(404).json({ error: "Actividad no encontrada." });
+    }
+
+    let nextSubjectId = existing.subjectId;
+    if (req.body?.subjectId || req.body?.subjectSlug) {
+      const subject = await resolveSubject(req.body?.subjectId, req.body?.subjectSlug);
+      if (!subject) {
+        return res.status(404).json({ error: "Materia no encontrada para asociar la actividad." });
+      }
+      nextSubjectId = subject._id;
+      existing.subjectId = subject._id;
+    }
+
+    const status = normalizeStatus(
+      req.body?.status ?? (req.body?.isPublished ? "published" : undefined),
+    );
+
+    const updatable: Record<string, unknown> = {
+      ...req.body,
+      subjectId: nextSubjectId,
+    };
+
+    if (status) {
+      updatable.status = status;
+    } else {
+      delete updatable.status;
+    }
+    delete updatable.isPublished;
+
+    existing.set(updatable as Partial<ActivityAttrs>);
+    const updated = await existing.save();
+    await touchSubject(nextSubjectId);
+    res.json(updated);
   } catch (err) {
     handleError(res, err);
   }
 });
 
 // DELETE
-router.delete('/admin/activities/:id', requireAuth, requireRole('admin'), async (req: Request, res: Response) => {
+router.delete("/admin/activities/:id", requireAuth, requireRole("admin"), async (req: Request, res: Response) => {
   try {
     const activity = await Activity.findByIdAndDelete(req.params.id);
-    if (!activity) return res.status(404).json({ error: 'Actividad no encontrada.' });
-    res.json({ message: 'Actividad eliminada.' });
+    if (!activity) return res.status(404).json({ error: "Actividad no encontrada." });
+    await touchSubject(activity.subjectId);
+    res.json({ message: "Actividad eliminada." });
   } catch (err) {
     handleError(res, err);
   }

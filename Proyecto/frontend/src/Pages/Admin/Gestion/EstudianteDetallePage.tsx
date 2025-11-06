@@ -158,7 +158,7 @@ export default function EstudianteDetallePage() {
                       const y = chart.pad + (i * (chart.height - chart.pad * 2)) / 4;
                       return (
                         <line
-                          key={i}
+                          key={`grid-${i}`}
                           x1={chart.pad}
                           x2={chart.width - chart.pad}
                           y1={y}
@@ -169,12 +169,18 @@ export default function EstudianteDetallePage() {
                     })}
                     <path d={chart.d} fill="none" stroke="#8ab4ff" strokeWidth={3} />
                     {chart.data.map((v, i) => (
-                      <circle key={i} cx={chart.x(i)} cy={chart.y(v)} r={4} fill="#8ab4ff" />
+                      <circle
+                        key={`point-${i}-${v}`}
+                        cx={chart.x(i)}
+                        cy={chart.y(v)}
+                        r={4}
+                        fill="#8ab4ff"
+                      />
                     ))}
                     {/* etiquetas L..D */}
                     {["L", "M", "X", "J", "V", "S", "D"].map((lbl, i) => (
                       <text
-                        key={i}
+                        key={`label-${i}-${lbl}`}
                         x={chart.x(i)}
                         y={chart.height - chart.pad / 2}
                         textAnchor="middle"

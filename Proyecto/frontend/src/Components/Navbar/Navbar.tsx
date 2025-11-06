@@ -52,7 +52,9 @@ export default function Navbar({
   const user  = useAppStore((s:any) => s?.user ?? null);
   const setUser = useAppStore((s: any) => s?.setUser ?? (() => {}));
 
-  const { items: subjects, list: listSubjects } = useSubjectsStore();
+  const subjects = useSubjectsStore((state) => state.items);
+  const fetchSubjects = useSubjectsStore((state) => state.fetchSubjects);
+  const subjectsVersion = useSubjectsStore((state) => state.version);
 
   const showMenu = !homeOnly;
 
@@ -88,10 +90,8 @@ export default function Navbar({
   }, [DEV_ONLY, user, setUser]);
 
   useEffect(() => {
-    if (!subjects || subjects.length === 0) {
-      listSubjects();
-    }
-  }, [subjects, listSubjects]);
+    fetchSubjects().catch(() => {});
+  }, [fetchSubjects, subjectsVersion]);
 
   return (
     <header className={styles.navbar} role="banner">
