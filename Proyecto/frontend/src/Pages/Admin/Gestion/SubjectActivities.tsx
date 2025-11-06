@@ -47,13 +47,18 @@ export default function SubjectActivitiesAdminPage() {
   const { subjectId } = useParams<{ subjectId: string }>();
   const slug = useMemo(() => normalizeSubjectSlug(subjectId), [subjectId]);
 
-  const { items: subjects, list } = useSubjectsStore();
-  const { items: activities, fetch: fetchActivities } = useActivitiesStore();
+  const subjects = useSubjectsStore((state) => state.items);
+  const fetchSubjects = useSubjectsStore((state) => state.fetchSubjects);
+  const subjectsVersion = useSubjectsStore((state) => state.version);
+
+  const activities = useActivitiesStore((state) => state.adminItems);
+  const fetchAdminActivities = useActivitiesStore((state) => state.fetchAdmin);
+  const activitiesVersion = useActivitiesStore((state) => state.version);
 
   useEffect(() => {
-    if (!subjects || subjects.length === 0) list();
-    fetchActivities();
-  }, [subjects, list, fetchActivities]);
+    fetchSubjects().catch(() => {});
+    fetchAdminActivities().catch(() => {});
+  }, [fetchSubjects, fetchAdminActivities, subjectsVersion, activitiesVersion]);
 
   const subject = subjects.find((s) => s.slug.toLowerCase() === slug);
   const subjectName =

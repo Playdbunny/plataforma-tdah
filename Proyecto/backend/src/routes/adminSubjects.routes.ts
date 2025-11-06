@@ -2,7 +2,9 @@ import { Router, type Request, type Response } from "express";
 import mongoose from "mongoose";
 import path from "path";
 import fsPromises from "fs/promises";
+import mongoose from "mongoose";
 import Subject, { type SubjectDocument } from "../models/Subject";
+import Activity from "../models/Activity";
 import { requireAuth, requireRole } from "../middleware/requireAuth";
 import {
   extractMultipartFile,
@@ -65,6 +67,107 @@ function validateObjectId(id: string) {
   return mongoose.Types.ObjectId.isValid(id);
 }
 
+function sanitizeBannerUrl(url: unknown) {
+  if (typeof url !== "string") return null;
+  const trimmed = url.trim();
+  if (!trimmed || trimmed.startsWith("data:")) return null;
+  return trimmed;
+}
+
+function toISO(value: unknown) {
+  if (!value) return null;
+  try {
+    const date = value instanceof Date ? value : new Date(value as any);
+    return Number.isNaN(date.getTime()) ? null : date.toISOString();
+  } catch (err) {
+    return null;
+  }
+}
+
+type SubjectLean = {
+  _id: mongoose.Types.ObjectId;
+  slug?: string;
+  name: string;
+  description?: string;
+  bannerUrl?: string | null;
+  updatedAt?: Date;
+};
+
+async function findSubjectLean(identifier: string): Promise<SubjectLean | null> {
+  const normalized = identifier.trim().toLowerCase();
+
+  let subject = await Subject.findOne({ slug: normalized })
+    .select({ _id: 1, slug: 1, name: 1, description: 1, bannerUrl: 1, updatedAt: 1 })
+    .lean<SubjectLean>();
+
+  if (subject) return subject;
+
+  if (validateObjectId(normalized)) {
+    subject = await Subject.findById(normalized)
+      .select({ _id: 1, slug: 1, name: 1, description: 1, bannerUrl: 1, updatedAt: 1 })
+      .lean<SubjectLean>();
+    if (subject) return subject;
+  }
+
+  return null;
+}
+
+function mapSubject(subject: SubjectLean | SubjectDocument) {
+  const raw: SubjectLean = ("toObject" in subject
+    ? (subject as SubjectDocument).toObject({
+        transform: undefined,
+      })
+    : (subject as SubjectLean)) as SubjectLean;
+
+  const id = raw._id.toString();
+  return {
+    id,
+    _id: id,
+    slug: raw.slug ?? "",
+    name: raw.name,
+    description: raw.description ?? null,
+    bannerUrl: sanitizeBannerUrl(raw.bannerUrl),
+    updatedAt: toISO(raw.updatedAt),
+  };
+}
+
+type ActivityLean = {
+  _id: mongoose.Types.ObjectId;
+  slug?: string;
+  title: string;
+  bannerUrl?: string | null;
+  kind?: string;
+  xpReward?: number;
+  status?: string;
+  updatedAt?: Date;
+  subjectId?: mongoose.Types.ObjectId;
+};
+
+function mapActivity(
+  activity: ActivityLean,
+  subject: SubjectLean | SubjectDocument | null,
+): Record<string, unknown> {
+  const subjectId = (activity as any).subjectId ?? (subject as any)?._id;
+  const subjectSlug = (subject as any)?.slug ?? null;
+  const id = activity._id.toString();
+
+  return {
+    id,
+    _id: id,
+    subjectId: subjectId ? subjectId.toString() : null,
+    subjectSlug,
+    slug: activity.slug ?? null,
+    title: activity.title,
+    bannerUrl: sanitizeBannerUrl(activity.bannerUrl),
+    kind: activity.kind ?? null,
+    xpReward: activity.xpReward ?? null,
+    status: activity.status ?? null,
+    updatedAt: toISO(activity.updatedAt),
+    estimatedMinutes: null,
+    material: null,
+  };
+}
+
 async function findSubjectOr404(id: string, res: Response) {
   let subject: SubjectDocument | null = null;
 
@@ -102,15 +205,116 @@ router.get(
   async (_req: Request, res: Response) => {
     try {
       const subjects = await Subject.find()
-        .sort({ name: 1 })
-        .select("name slug description bannerUrl");
+        .sort({ updatedAt: -1, createdAt: -1 })
+        .select({ _id: 1, slug: 1, name: 1, description: 1, bannerUrl: 1, updatedAt: 1 })
+        .lean<SubjectLean[]>();
 
-      res.json(subjects);
+      const mapped = subjects.map(mapSubject);
+      res.json(mapped);
     } catch (err) {
       handleError(res, err, "Error al obtener materias");
     }
   },
 );
+
+router.get("/subjects/:slug", async (req: Request, res: Response) => {
+  try {
+    const { slug } = req.params;
+    const subject = await findSubjectLean(slug);
+    if (!subject) {
+      return res.status(404).json({ error: "Materia no encontrada" });
+    }
+
+    res.json(mapSubject(subject));
+  } catch (err) {
+    handleError(res, err, "Error al obtener materia");
+  }
+});
+
+router.get("/subjects/:slug/activities", async (req: Request, res: Response) => {
+  try {
+    const { slug } = req.params;
+    const subject = await findSubjectLean(slug);
+    if (!subject) {
+      return res.status(404).json({ error: "Materia no encontrada" });
+    }
+
+    const activities = await Activity.find({ subjectId: subject._id, status: "published" })
+      .sort({ updatedAt: -1, createdAt: -1 })
+      .select({
+        _id: 1,
+        slug: 1,
+        title: 1,
+        bannerUrl: 1,
+        kind: 1,
+        xpReward: 1,
+        status: 1,
+        updatedAt: 1,
+        subjectId: 1,
+      })
+      .lean<ActivityLean[]>();
+
+    const mapped = activities.map((activity) => mapActivity(activity, subject));
+    res.json(mapped);
+  } catch (err) {
+    handleError(res, err, "Error al obtener actividades");
+  }
+});
+
+router.get("/activities/:id", async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    let activity = null;
+
+    if (validateObjectId(id)) {
+      activity = await Activity.findById(id)
+        .select({
+          _id: 1,
+          slug: 1,
+          title: 1,
+          bannerUrl: 1,
+          kind: 1,
+          xpReward: 1,
+          status: 1,
+          updatedAt: 1,
+          subjectId: 1,
+        })
+        .lean<ActivityLean & { subjectId?: mongoose.Types.ObjectId }>();
+    }
+
+    if (!activity) {
+      activity = await Activity.findOne({ slug: id })
+        .select({
+          _id: 1,
+          slug: 1,
+          title: 1,
+          bannerUrl: 1,
+          kind: 1,
+          xpReward: 1,
+          status: 1,
+          updatedAt: 1,
+          subjectId: 1,
+        })
+        .lean<ActivityLean & { subjectId?: mongoose.Types.ObjectId }>();
+    }
+
+    if (!activity) {
+      return res.status(404).json({ error: "Actividad no encontrada" });
+    }
+
+    let subject: SubjectLean | null = null;
+    if (activity.subjectId) {
+      subject = await Subject.findById(activity.subjectId)
+        .select({ _id: 1, slug: 1, name: 1, description: 1, bannerUrl: 1, updatedAt: 1 })
+        .lean<SubjectLean>();
+    }
+
+    res.json(mapActivity(activity, subject));
+  } catch (err) {
+    handleError(res, err, "Error al obtener actividad");
+  }
+});
 
 // GET /admin/subjects - Listar todas las materias (solo admin)
 router.get(

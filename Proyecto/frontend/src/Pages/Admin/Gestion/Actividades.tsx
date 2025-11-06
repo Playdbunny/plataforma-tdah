@@ -13,15 +13,15 @@ import styles from "./Actividades.module.css";
 import { useSubjectsStore } from "../../../stores/subjectsStore";
 
 export default function ActividadesPage() {
-  const { items, list } = useSubjectsStore();
+  const items = useSubjectsStore((state) => state.items);
+  const fetchSubjects = useSubjectsStore((state) => state.fetchSubjects);
+  const version = useSubjectsStore((state) => state.version);
 
   // Si el store todavía no tiene materias (p.ej. primera carga en un navegador
   // nuevo), pedimos la lista mock para hidratar la vista.
   useEffect(() => {
-    if (!items || items.length === 0) {
-      list();
-    }
-  }, [items, list]);
+    fetchSubjects().catch(() => {});
+  }, [fetchSubjects, version]);
 
   // Orden alfabético estable para que la grilla sea más predecible.
   const subjects = useMemo(

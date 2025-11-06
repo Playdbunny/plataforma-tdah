@@ -156,7 +156,7 @@ export default function ActivityEditModal({ activity, onClose, onMockDelete, onB
     const shouldDeleteFromBackend = isMongoId(mongoId);
     try {
       if (shouldDeleteFromBackend) {
-        await remove(mongoId);
+        await remove(mongoId, activity.subjectSlug ?? null);
         if (onBackendDelete) onBackendDelete();
         else onClose();
       } else {

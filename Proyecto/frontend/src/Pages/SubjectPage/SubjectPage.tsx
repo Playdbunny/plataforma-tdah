@@ -15,10 +15,9 @@ import styles from "./SubjectPage.module.css";
 // 🔗 Store de materias (Fase 1: mock persistido en localStorage)
 // Update the import path if the file is located elsewhere, for example:
 import { useSubjectsStore } from "../../stores/subjectsStore";
-import { useActivitiesStore } from "../../stores/activitiesStore";
+import { useActivitiesStore, type PublicActivity } from "../../stores/activitiesStore";
 
 // ✅ Store de app para saber si el usuario es admin
-import { SubjectActivity } from "../../Lib/activityMocks";
 import { normalizeSubjectSlug } from "../../utils/subjects";
 
 export default function SubjectPage() {
@@ -31,15 +30,17 @@ export default function SubjectPage() {
   // ===============================================
   // 3) Store: traemos materias y refrescamos si hace falta
   // ===============================================
-  const { items, list } = useSubjectsStore();
+  const subjects = useSubjectsStore((state) => state.items);
+  const fetchSubjects = useSubjectsStore((state) => state.fetchSubjects);
+  const subjectsVersion = useSubjectsStore((state) => state.version);
 
   // En Fase 1 (mock) "list" no pega a un backend, pero deja listo el patrón.
   useEffect(() => {
-    if (!items || items.length === 0) list();
-  }, [items, list]);
+    fetchSubjects().catch(() => {});
+  }, [fetchSubjects, subjectsVersion]);
 
   // Busca la materia por slug
-  const subject = items.find((s) => s.slug.toLowerCase() === slug);
+  const subject = subjects.find((s) => s.slug.toLowerCase() === slug);
 
   // Determina el título y el banner a mostrar:
   const title = subject?.name ?? slug.charAt(0).toUpperCase() + slug.slice(1);
@@ -47,33 +48,16 @@ export default function SubjectPage() {
   const defaultActivityBanner = heroBannerUrl;
 
   // Actividades: mock por slug (hasta que migres a backend)
-  const {
-    items: activitiesStoreItems,
-    fetch: fetchActivities,
-    hasLoaded: hasLoadedActivities,
-  } = useActivitiesStore();
+  const activities = useActivitiesStore(
+    (state) => state.activitiesBySubject[slug] ?? [],
+  ) as PublicActivity[];
+  const fetchActivities = useActivitiesStore((state) => state.fetchActivities);
+  const activitiesVersion = useActivitiesStore((state) => state.version);
 
   useEffect(() => {
-    if (!hasLoadedActivities) {
-      fetchActivities();
-    }
-  }, [hasLoadedActivities, fetchActivities]);
-
-  const activities: SubjectActivity[] = useMemo(() => {
-    const bySubject = activitiesStoreItems.filter((activity) => {
-      if (activity.subjectSlug) {
-        return activity.subjectSlug.toLowerCase() === slug;
-      }
-      if (activity.subjectId && subject?._id) {
-        return String(activity.subjectId) === String(subject._id);
-      }
-      return false;
-    });
-
-    return bySubject.slice().sort(
-      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-    );
-  }, [activitiesStoreItems, slug, subject?._id]);
+    if (!slug) return;
+    fetchActivities(slug).catch(() => {});
+  }, [slug, fetchActivities, activitiesVersion]);
 
   const [query, setQuery] = useState("");
   const filteredActivities = activities.filter((a) =>

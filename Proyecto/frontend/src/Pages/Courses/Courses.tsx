@@ -17,12 +17,14 @@ import { useSubjectsStore } from "../../stores/subjectsStore";
 
 export default function Courses() {
   // Leemos materias del store + acción para “listar”
-  const { items, list } = useSubjectsStore();
+  const items = useSubjectsStore((state) => state.items);
+  const fetchSubjects = useSubjectsStore((state) => state.fetchSubjects);
+  const version = useSubjectsStore((state) => state.version);
 
   // Si entras con memoria “fría”, pedimos al store rehidratar/listar
   useEffect(() => {
-    if (!items || items.length === 0) list();
-  }, [items, list]);
+    fetchSubjects().catch(() => {});
+  }, [fetchSubjects, version]);
 
   return (
     <div className={styles.screen}>

@@ -6,6 +6,7 @@ export type SubjectResponse = {
   name: string;
   description?: string;
   bannerUrl?: string | null;
+  updatedAt?: string;
 };
 
 export type SubjectPayload = {
@@ -19,6 +20,13 @@ export const getSubjects = async (options?: { public?: boolean }) => {
   const baseURL = options?.public ? getApiBaseUrl() : getAdminApiBaseUrl();
   const { data } = await api.get<SubjectResponse[]>("/subjects", {
     baseURL,
+  });
+  return data;
+};
+
+export const getSubject = async (slug: string) => {
+  const { data } = await api.get<SubjectResponse>(`/subjects/${slug}`, {
+    baseURL: getApiBaseUrl(),
   });
   return data;
 };
