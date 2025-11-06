@@ -20,6 +20,11 @@ export type AdminStudentSummary = {
   coins: number;
   level: number;
   avatarUrl: string | null;
+  character: {
+    id: string;
+    name: string;
+    sprite: string;
+  } | null;
   streakCount: number;
   streakLastCheck: string | null;
   lastLogin: string | null;
