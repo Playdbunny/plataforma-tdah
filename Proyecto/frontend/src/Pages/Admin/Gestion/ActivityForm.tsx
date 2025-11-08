@@ -145,6 +145,23 @@ function fileToDataUrl(file: File) {
   });
 }
 
+function validateBannerUrl(u: string) {
+  const trimmed = u.trim();
+  if (!trimmed) {
+    throw new Error("La URL no puede estar vacía.");
+  }
+  if (trimmed.startsWith("data:")) {
+    throw new Error("URL no válida (data:)");
+  }
+  if (trimmed.length > 512) {
+    throw new Error("URL demasiado larga (>512)");
+  }
+  if (!/^https?:\/\//i.test(trimmed) && !trimmed.startsWith("/uploads/")) {
+    throw new Error("Debe ser http(s) o /uploads/");
+  }
+  return trimmed;
+}
+
 export default function ActivityForm({ subjectSlug, onClose }: ActivityFormProps) {
   const { create, loading, error } = useActivitiesStore();
   const { items: subjects } = useSubjectsStore();
@@ -155,6 +172,7 @@ export default function ActivityForm({ subjectSlug, onClose }: ActivityFormProps
   const [resourcePreview, setResourcePreview] = useState<string | null>(null);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+  const [bannerUrlInput, setBannerUrlInput] = useState("");
   const [videoMode, setVideoMode] = useState<"file" | "link">("file");
   const [videoLink, setVideoLink] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
@@ -191,12 +209,22 @@ export default function ActivityForm({ subjectSlug, onClose }: ActivityFormProps
     });
   };
 
-  const resetBannerState = () => {
+  const clearBannerFile = () => {
     setBannerFile(null);
-    setBannerPreview(null);
+    setBannerPreview((prev) => {
+      if (prev) {
+        URL.revokeObjectURL(prev);
+      }
+      return null;
+    });
     if (bannerInputRef.current) {
       bannerInputRef.current.value = "";
     }
+  };
+
+  const resetBannerState = () => {
+    clearBannerFile();
+    setBannerUrlInput("");
   };
 
   const handleBannerChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -221,10 +249,16 @@ export default function ActivityForm({ subjectSlug, onClose }: ActivityFormProps
       return;
     }
 
+    setBannerUrlInput("");
     setFormError(null);
     setBannerFile(file);
     const previewUrl = URL.createObjectURL(file);
-    setBannerPreview(previewUrl);
+    setBannerPreview((prev) => {
+      if (prev) {
+        URL.revokeObjectURL(prev);
+      }
+      return previewUrl;
+    });
   };
 
   const handleRemoveBanner = () => {
@@ -361,19 +395,21 @@ export default function ActivityForm({ subjectSlug, onClose }: ActivityFormProps
         }
       }
 
-      let bannerDataUrl: string | undefined;
-      if (bannerFile) {
-        if (!BANNER_TYPE_REGEX.test(bannerFile.type)) {
-          setFormError("Selecciona una imagen PNG, JPG, WEBP o GIF para el banner.");
-          return;
+      let manualBannerUrl: string | null = null;
+      if (!bannerFile) {
+        const trimmedUrl = bannerUrlInput.trim();
+        if (trimmedUrl) {
+          try {
+            manualBannerUrl = validateBannerUrl(trimmedUrl);
+          } catch (validationError) {
+            const message =
+              validationError instanceof Error
+                ? validationError.message
+                : "URL de banner no válida.";
+            setFormError(message);
+            return;
+          }
         }
-
-        if (bannerFile.size > MAX_BANNER_SIZE) {
-          setFormError(`El banner supera el límite de ${MAX_BANNER_SIZE_MB} MB.`);
-          return;
-        }
-
-        bannerDataUrl = await fileToDataUrl(bannerFile);
       }
 
       const activityKind = KIND_BY_TYPE[type] ?? DEFAULT_ACTIVITY_KIND;
@@ -397,10 +433,12 @@ export default function ActivityForm({ subjectSlug, onClose }: ActivityFormProps
           .replace(/[^a-z0-9]+/g, "-")
           .replace(/(^-|-$)+/g, ""),
         subjectId: subject._id,
-        bannerUrl: bannerDataUrl,
+        bannerUrl: manualBannerUrl ?? null,
       };
 
-      await create(payload);
+      const createOptions = bannerFile ? { bannerFile } : undefined;
+
+      await create(payload, createOptions);
       const latestError = useActivitiesStore.getState().error;
       if (latestError) {
         setFormError(latestError);
@@ -466,6 +504,23 @@ export default function ActivityForm({ subjectSlug, onClose }: ActivityFormProps
           accept={BANNER_ACCEPT}
           onChange={handleBannerChange}
         />
+        <input
+          type="text"
+          className={styles.formInput}
+          placeholder="https://ejemplo.com/banner.jpg o /uploads/banners/banner.png"
+          value={bannerUrlInput}
+          onChange={(event) => {
+            const value = event.target.value;
+            setBannerUrlInput(value);
+            setFormError(null);
+            if (bannerFile || bannerPreview) {
+              clearBannerFile();
+            }
+          }}
+        />
+        <p className={styles.helperText}>
+          También puedes pegar una URL http(s) o un path válido dentro de /uploads/.
+        </p>
         <p className={styles.helperText}>
           Formatos permitidos: PNG, JPG, WEBP o GIF (máx. {MAX_BANNER_SIZE_MB} MB).
         </p>

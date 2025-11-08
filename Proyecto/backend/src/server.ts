@@ -1,5 +1,6 @@
 import "dotenv/config";
-import express, { Router } from "express";
+import express from "express";
+import type { NextFunction, Request, Response } from "express";
 import cors from "cors";
 import path from "path";
 import { connectDB } from "./db";
@@ -19,24 +20,39 @@ import Activity from "./models/Activity";
 
 const app = express();
 const apiRouter = express.Router();
-app.use(cors());
 
-const bodyLimit = process.env.JSON_BODY_LIMIT || "10mb";
-app.use(express.json({ limit: bodyLimit }));
-app.use(express.urlencoded({ extended: true, limit: bodyLimit }));
+const PORT = Number(process.env.PORT) || 4000;
+const HOST = process.env.HOST || "127.0.0.1";
+
+app.use(
+  cors({
+    origin: ["http://127.0.0.1:5173", "http://localhost:5173"],
+    credentials: true,
+  }),
+);
+
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 // 1) Sesión mínima para el handshake de OAuth (no para proteger APIs)
-app.use(session({
-  secret: process.env.SESSION_SECRET as string,
-  resave: false,
-  saveUninitialized: false,
-}));
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET as string,
+    resave: false,
+    saveUninitialized: false,
+  }),
+);
 // 2) Passport
 app.use(passport.initialize());
 app.use(passport.session());
 initGoogleStrategy();
+
+// Health-check para el proxy de desarrollo
+app.get("/api/health", (_req, res) => {
+  res.json({ ok: true });
+});
 
 // Rutas bajo /api
 apiRouter.use("/auth", authRouter);
@@ -58,7 +74,10 @@ apiRouter.get("/admin/ping", requireAuth, requireRole("admin"), (_req, res) => {
 
 app.use("/api", apiRouter);
 
-const PORT = process.env.PORT || 4000;
+app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  console.error("[unhandled]", err);
+  res.status(500).json({ error: "INTERNAL_ERROR" });
+});
 
 (async () => {
   if (process.env.MONGO_URI) {
@@ -76,8 +95,7 @@ const PORT = process.env.PORT || 4000;
     console.warn("⚠️ MONGO_URI no definido. El servidor corre sin DB.");
   }
 
-  app.listen(PORT, () => {
-    console.log(`🚀 API corriendo en http://127.0.0.1:${PORT}`);
+  app.listen(PORT, HOST, () => {
+    console.log(`🚀 API corriendo en http://${HOST}:${PORT}`);
   });
 })();
-
