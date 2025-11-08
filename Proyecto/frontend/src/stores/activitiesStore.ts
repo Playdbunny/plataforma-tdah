@@ -26,6 +26,10 @@ export type PublicActivity = ActivitySummary & {
   config?: Record<string, unknown> | null;
 };
 
+type ActivityMutationOptions = {
+  bannerFile?: File;
+};
+
 type ActivitiesState = {
   adminItems: SubjectActivity[];
   adminHasLoaded: boolean;
@@ -42,8 +46,15 @@ type ActivitiesState = {
   ) => Promise<PublicActivity[]>;
   invalidateSubject: (slug: string) => void;
   clearSubject: (slug: string) => void;
-  create: (activity: Partial<SubjectActivity>) => Promise<void>;
-  update: (id: string, activity: Partial<SubjectActivity>) => Promise<void>;
+  create: (
+    activity: Partial<SubjectActivity>,
+    options?: ActivityMutationOptions,
+  ) => Promise<void>;
+  update: (
+    id: string,
+    activity: Partial<SubjectActivity>,
+    options?: ActivityMutationOptions,
+  ) => Promise<void>;
   remove: (id: string, subjectSlug?: string | null) => Promise<void>;
 };
 
@@ -219,10 +230,10 @@ export const useActivitiesStore = create<ActivitiesState>((set, get) => ({
     });
   },
 
-  create: async (activity) => {
+  create: async (activity, options) => {
     set({ loading: true, error: null });
     try {
-      const created = await createActivity(activity);
+      const created = await createActivity(activity, options);
       const slug = resolveSubjectSlug(activity, created);
       await get().fetchAdmin();
       if (slug) {
@@ -236,10 +247,10 @@ export const useActivitiesStore = create<ActivitiesState>((set, get) => ({
     }
   },
 
-  update: async (id, activity) => {
+  update: async (id, activity, options) => {
     set({ loading: true, error: null });
     try {
-      const updated = await updateActivity(id, activity);
+      const updated = await updateActivity(id, activity, options);
       const slug = resolveSubjectSlug(activity, updated);
       await get().fetchAdmin();
       if (slug) {

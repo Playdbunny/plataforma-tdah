@@ -18,20 +18,7 @@ type SessionRefreshPayload = {
 };
 
 // ===== Base URL =====
-// Lee desde VITE_API_URL; si no existe, usamos el proxy de Vite con "/api"
-const envBaseUrl = (import.meta as any)?.env?.VITE_API_URL ?? "";
-const normalizedEnvBase =
-  typeof envBaseUrl === "string" ? envBaseUrl.trim().replace(/\/+$/, "") : "";
-
-function ensureApiBase(url: string) {
-  const trimmed = url.replace(/\/+$/, "");
-  if (trimmed === "") return "/api";
-  if (trimmed.endsWith("/api")) return trimmed;
-  return `${trimmed}/api`;
-}
-
-const baseURL =
-  normalizedEnvBase !== "" ? ensureApiBase(normalizedEnvBase) : "/api";
+const baseURL = "/api";
 
 export const getApiBaseUrl = () => baseURL;
 

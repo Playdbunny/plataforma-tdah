@@ -43,17 +43,75 @@ export const getActivityDetail = async (id: string) => {
 };
 
 // Crear una nueva actividad
-export const createActivity = async (activity: Partial<SubjectActivity>) => {
+const appendFormValue = (formData: FormData, key: string, value: any) => {
+  if (value === undefined) return;
+  if (value === null) {
+    formData.append(key, "");
+    return;
+  }
+  if (value instanceof File) {
+    formData.append(key, value);
+    return;
+  }
+  if (value instanceof Blob) {
+    formData.append(key, value);
+    return;
+  }
+  if (typeof value === "object") {
+    formData.append(key, JSON.stringify(value));
+    return;
+  }
+  formData.append(key, String(value));
+};
+
+const buildActivityFormData = (
+  activity: Partial<SubjectActivity>,
+  bannerFile: File,
+) => {
+  const formData = new FormData();
+  Object.entries(activity).forEach(([key, value]) => {
+    appendFormValue(formData, key, value as any);
+  });
+  appendFormValue(formData, "banner", bannerFile);
+  return formData;
+};
+
+export const createActivity = async (
+  activity: Partial<SubjectActivity>,
+  options?: { bannerFile?: File },
+) => {
+  const baseURL = getAdminApiBaseUrl();
+  if (options?.bannerFile) {
+    const formData = buildActivityFormData(activity, options.bannerFile);
+    const { data } = await api.post<SubjectActivity>("/activities", formData, {
+      baseURL,
+    });
+    return data;
+  }
+
   const { data } = await api.post<SubjectActivity>("/activities", activity, {
-    baseURL: getAdminApiBaseUrl(),
+    baseURL,
   });
   return data;
 };
 
 // Actualizar una actividad existente
-export const updateActivity = async (id: string, activity: Partial<SubjectActivity>) => {
+export const updateActivity = async (
+  id: string,
+  activity: Partial<SubjectActivity>,
+  options?: { bannerFile?: File },
+) => {
+  const baseURL = getAdminApiBaseUrl();
+  if (options?.bannerFile) {
+    const formData = buildActivityFormData(activity, options.bannerFile);
+    const { data } = await api.put<SubjectActivity>(`/activities/${id}`, formData, {
+      baseURL,
+    });
+    return data;
+  }
+
   const { data } = await api.put<SubjectActivity>(`/activities/${id}`, activity, {
-    baseURL: getAdminApiBaseUrl(),
+    baseURL,
   });
   return data;
 };

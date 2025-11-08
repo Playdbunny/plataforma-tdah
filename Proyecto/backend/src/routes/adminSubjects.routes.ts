@@ -2,7 +2,6 @@ import { Router, type Request, type Response } from "express";
 import mongoose from "mongoose";
 import path from "path";
 import fsPromises from "fs/promises";
-import mongoose from "mongoose";
 import Subject, { type SubjectDocument } from "../models/Subject";
 import Activity from "../models/Activity";
 import { requireAuth, requireRole } from "../middleware/requireAuth";
@@ -11,9 +10,20 @@ import {
   HttpError,
   type ParsedFile,
 } from "./helpers/multipart";
+import { normalizeBannerUrl } from "../lib/normalizeBannerUrl";
 
 const BANNERS_DIR = path.join(process.cwd(), "uploads", "banners");
 const MAX_BANNER_SIZE = 10 * 1024 * 1024; // 10MB
+const PUBLIC_ORIGIN = (process.env.PUBLIC_BACKEND_ORIGIN ?? "http://127.0.0.1:4000").replace(
+  /\/+$/,
+  "",
+);
+const toAbsoluteBanner = (p?: string | null) => {
+  if (!p) return null;
+  if (/^https?:\/\//i.test(p)) return p;
+  const normalized = p.startsWith("/") ? p : `/${p}`;
+  return `${PUBLIC_ORIGIN}${normalized}`;
+};
 
 async function removeStoredBanner(url: string | null | undefined) {
   if (!url || !url.startsWith("/uploads/banners/")) return;
@@ -68,10 +78,8 @@ function validateObjectId(id: string) {
 }
 
 function sanitizeBannerUrl(url: unknown) {
-  if (typeof url !== "string") return null;
-  const trimmed = url.trim();
-  if (!trimmed || trimmed.startsWith("data:")) return null;
-  return trimmed;
+  const normalized = normalizeBannerUrl(typeof url === "string" ? url : null);
+  return toAbsoluteBanner(normalized);
 }
 
 function toISO(value: unknown) {
@@ -335,6 +343,7 @@ router.get("/activities/:id", async (req: Request, res: Response) => {
         .lean<SubjectLean>();
     }
 
+    res.set("Cache-Control", "no-store");
     res.json(mapActivity(activity, subject, { includeConfig: true }));
   } catch (err) {
     handleError(res, err, "Error al obtener actividad");

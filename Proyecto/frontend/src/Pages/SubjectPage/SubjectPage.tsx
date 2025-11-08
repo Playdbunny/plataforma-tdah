@@ -18,6 +18,7 @@ import { useSubjectsStore } from "../../stores/subjectsStore";
 import { useActivitiesStore, type PublicActivity } from "../../stores/activitiesStore";
 import { useContentVersionStore } from "../../stores/contentVersionStore";
 import { getSubject } from "../../api/subjects";
+import { getApiBaseUrl } from "../../Lib/api";
 
 // ✅ Store de app para saber si el usuario es admin
 import { normalizeSubjectSlug } from "../../utils/subjects";
@@ -36,6 +37,10 @@ export default function SubjectPage() {
   const fetchSubjects = useSubjectsStore((state) => state.fetchSubjects);
   const version = useContentVersionStore((state) => state.version);
   const navigate = useNavigate();
+  const apiOrigin = useMemo(
+    () => getApiBaseUrl().replace(/\/+api\/?$/, ""),
+    [],
+  );
 
   useEffect(() => {
     fetchSubjects({ force: true }).catch(() => {});
@@ -137,7 +142,11 @@ export default function SubjectPage() {
           ) : (
             <div className={styles.grid} role="list">
               {filteredActivities.map((a) => {
-                const cardBanner = a.bannerUrl ?? defaultActivityBanner;
+                const cardBanner = a.bannerUrl?.startsWith("http")
+                  ? a.bannerUrl
+                  : a.bannerUrl
+                  ? `${apiOrigin}${a.bannerUrl}`
+                  : defaultActivityBanner;
                 const activitySlug = a.slug ?? a.id;
                 const activityLink = `/subjects/${slug}/activities/${activitySlug}`;
 

@@ -18,10 +18,6 @@ export type ActivityKind =
 
 export type OrientedAt = "inatento" | "hiperactivo" | "combinado" | null;
 
-const BANNER_DATA_URL_REGEX =
-  /^data:(image\/(?:png|jpeg|jpg|webp|gif));base64,[A-Za-z0-9+/=]+$/;
-const MAX_BANNER_BYTES = 14 * 1024 * 1024; // ~14 MB en base64 (tamaño del string)
-
 export interface ActivityAttrs {
   subjectId: Types.ObjectId;
   title: string;
@@ -152,16 +148,13 @@ const ActivitySchema = new Schema<ActivityDocument, ActivityModel>(
         const trimmed = value.trim();
         return trimmed.length ? trimmed : null;
       },
+      maxlength: 512,
       validate: {
-        validator(value: string | null) {
-          if (value == null) return true;
-          if (typeof value !== "string") return false;
-          // si quieres permitir URLs http(s) además del dataURL, amplia esta validación:
-          // return /^https?:\/\/\S+$/i.test(value) || (BANNER_DATA_URL_REGEX.test(value) && Buffer.byteLength(value,'utf8') <= MAX_BANNER_BYTES);
-          if (!BANNER_DATA_URL_REGEX.test(value)) return false;
-          return Buffer.byteLength(value, "utf8") <= MAX_BANNER_BYTES;
+        validator(v: string | null) {
+          if (v == null) return true;
+          return /^(https?:\/\/|\/uploads\/)/i.test(v);
         },
-        message: "Banner inválido o demasiado grande",
+        message: "bannerUrl must be an http(s) URL or start with /uploads/",
       },
     },
 

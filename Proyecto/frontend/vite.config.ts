@@ -12,15 +12,10 @@ export default defineConfig({
   },
   server: {
     host: "127.0.0.1",
+    port: 5173,
     proxy: {
-      "/api": {
-        target: "http://127.0.0.1:4000",
-        changeOrigin: false,
-      },
-      "/uploads": {
-        target: "http://127.0.0.1:4000",
-        changeOrigin: false,
-      },
+      "/api": "http://127.0.0.1:4000",
+      "/uploads": "http://127.0.0.1:4000",
     },
   },
 });
