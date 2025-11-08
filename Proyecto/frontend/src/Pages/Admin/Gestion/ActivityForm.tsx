@@ -311,6 +311,7 @@ export default function ActivityForm({ subjectSlug, onClose }: ActivityFormProps
       if (type === "quiz" && !fieldsJSON.questions) {
         fieldsJSON.questions = [];
       }
+      fieldsJSON.activityType = type;
 
       if (TYPES_WITH_RESOURCE.includes(type)) {
         if (type === "video" && videoMode === "link") {
@@ -376,13 +377,13 @@ export default function ActivityForm({ subjectSlug, onClose }: ActivityFormProps
       }
 
       const activityKind = KIND_BY_TYPE[type] ?? DEFAULT_ACTIVITY_KIND;
-      const config = { ...fieldsJSON };
+      const config = { ...fieldsJSON, activityType: type };
 
       const payload: BackendActivityPayload = {
         title: normalizedTitle,
         type,
         description: normalizedDescription || undefined,
-        status: "draft",
+        status: "published",
         updatedAt: new Date().toISOString(),
         subjectSlug,
         // Campos requeridos por el backend:
@@ -390,7 +391,7 @@ export default function ActivityForm({ subjectSlug, onClose }: ActivityFormProps
         config,
         kind: activityKind,
         xpReward: DEFAULT_XP_REWARD,
-        templateType: "default",
+        templateType: type,
         slug: normalizedTitle
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, "-")

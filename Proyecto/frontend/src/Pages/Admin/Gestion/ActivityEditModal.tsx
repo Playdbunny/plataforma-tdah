@@ -135,6 +135,7 @@ export default function ActivityEditModal({ activity, onClose, onMockDelete, onB
         title,
         fieldsJSON,
         status: publish ? "published" : activity.status,
+        templateType: (activity as any).templateType ?? activity.type,
       });
       onClose();
     } catch (e: unknown) {

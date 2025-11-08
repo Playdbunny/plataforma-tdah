@@ -124,8 +124,19 @@
   background: #2a3360;
   box-shadow: 0 4px 16px #000a;
 }
+.coinValue {
+  font-weight: 700;
+  color: #fdef5c;
+}
 .coinIcon {
   width: 28px;
   height: 28px;
   margin-right: 0.2rem;
+}
+.emptyState {
+  color: #f1f3ff;
+  font-family: 'Press Start 2P', 'VT323', monospace;
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 1rem;
 }

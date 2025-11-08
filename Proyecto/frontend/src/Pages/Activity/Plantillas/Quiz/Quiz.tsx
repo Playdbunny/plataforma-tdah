@@ -1,111 +1,136 @@
-
-import styles from "./Quiz.module.css";
+import { useMemo, useState } from "react";
 import ActivityLayout from "../../../../Layouts/ActivityLayout/ActivityLayout";
-import { useState } from "react";
+import type { ActivityTemplateProps } from "../shared";
+import { extractQuestions } from "../shared";
+import styles from "./Quiz.module.css";
 
-const questions = [
+const FALLBACK_QUESTIONS = [
   {
-    text: "El feudalismo fue el sistema político, económico y social que predominó en:",
+    text: "Selecciona la opción correcta relacionada con la temática.",
     options: [
-      "Grecia clásica",
-      "Revolución industrial",
-      "Europa medieval",
-      "Roma antigua"
+      "Esta opción es correcta.",
+      "Esta opción no aplica.",
+      "Esta opción brinda un ejemplo.",
+      "Esta opción es distractora.",
     ],
-    correct: 2
   },
   {
-    text: "¿Cuál fue la principal actividad económica durante la Edad Media?",
+    text: "Analiza la información presentada y elige la alternativa adecuada.",
     options: [
-      "Comercio marítimo",
-      "Agricultura",
-      "Minería",
-      "Industria textil"
+      "Describe el concepto central.",
+      "Es un detalle complementario.",
+      "Propone una comparación.",
+      "No corresponde al tema.",
     ],
-    correct: 1
   },
-  {
-    text: "¿Qué institución tenía mayor poder en la Europa medieval?",
-    options: [
-      "La Iglesia",
-      "El Parlamento",
-      "Los gremios",
-      "La Monarquía"
-    ],
-    correct: 0
-  }
 ];
 
-const HistoriaQuiz = () => {
+function normalizeQuestions(raw: any[]): typeof FALLBACK_QUESTIONS {
+  if (!Array.isArray(raw) || raw.length === 0) return FALLBACK_QUESTIONS;
+  const normalized = raw
+    .map((entry) => {
+      if (!entry || typeof entry !== "object") return null;
+      const text = typeof entry.text === "string" ? entry.text : entry.question;
+      const rawOptions = (entry as { options?: unknown }).options;
+      const options = Array.isArray(rawOptions)
+        ? rawOptions.filter((opt): opt is string => typeof opt === "string")
+        : null;
+      if (typeof text !== "string" || !options || options.length < 2) return null;
+      return { text, options };
+    })
+    .filter((item): item is typeof FALLBACK_QUESTIONS[number] => Boolean(item));
+  return normalized.length > 0 ? normalized : FALLBACK_QUESTIONS;
+}
+
+export default function QuizTemplate({ activity, backTo }: ActivityTemplateProps) {
+  const questions = useMemo(
+    () => normalizeQuestions(extractQuestions(activity.config)),
+    [activity.config],
+  );
+
   const [page, setPage] = useState(0);
-  const question = questions[page];
+  const [selectedOption, setSelectedOption] = useState<number | null>(null);
+
+  const safePage = Math.min(page, questions.length - 1);
+  const question = questions[safePage];
   const totalPages = questions.length;
 
-  const handlePrev = () => setPage((p) => (p > 0 ? p - 1 : p));
-  const handleNext = () => setPage((p) => (p < totalPages - 1 ? p + 1 : p));
+  const leftOptions = question.options.filter((_, index) => index % 2 === 0);
+  const rightOptions = question.options.filter((_, index) => index % 2 === 1);
+
+  const renderOption = (option: string, actualIndex: number) => (
+    <button
+      key={`option-${actualIndex}`}
+      className={`${styles.optionBtn} ${
+        selectedOption === actualIndex ? styles.optionSelected : ""
+      }`}
+      type="button"
+      onClick={() => setSelectedOption(actualIndex)}
+      aria-pressed={selectedOption === actualIndex}
+    >
+      <img src="/Images/opciones.png" alt="Opción" className={styles.optionFrame} />
+      <span className={styles.optionText}>{option}</span>
+    </button>
+  );
 
   return (
-    <ActivityLayout title={<span className={styles.quizTitle}>El Feudalismo</span>}>
+    <ActivityLayout
+      title={<span className={styles.quizTitle}>{activity.title}</span>}
+      backTo={backTo}
+    >
       <div className={styles.quizBg}>
         <div className={styles.quizContent}>
           <div className={styles.scrollRow}>
             <div className={styles.optionCol}>
-              <button className={styles.optionBtn} type="button" tabIndex={0} aria-label={question.options[0]}>
-                <img src="/Images/opciones.png" alt="opción" className={styles.optionFrame} />
-                <span className={styles.optionText}>{question.options[0]}</span>
-              </button>
-              <button className={styles.optionBtn} type="button" tabIndex={0} aria-label={question.options[2]}>
-                <img src="/Images/opciones.png" alt="opción" className={styles.optionFrame} />
-                <span className={styles.optionText}>{question.options[2]}</span>
-              </button>
+              {leftOptions.map((option, index) =>
+                renderOption(option, index * 2),
+              )}
             </div>
             <div className={styles.scrollContainer}>
               <img src="/Images/Pergamino.png" alt="Pergamino" className={styles.scrollImg} />
               <div className={styles.scrollText}>{question.text}</div>
             </div>
             <div className={styles.optionCol}>
-              <button className={styles.optionBtn} type="button" tabIndex={0} aria-label={question.options[1]}>
-                <img src="/Images/opciones.png" alt="opción" className={styles.optionFrame} />
-                <span className={styles.optionText}>{question.options[1]}</span>
-              </button>
-              <button className={styles.optionBtn} type="button" tabIndex={0} aria-label={question.options[3]}>
-                <img src="/Images/opciones.png" alt="opción" className={styles.optionFrame} />
-                <span className={styles.optionText}>{question.options[3]}</span>
-              </button>
+              {rightOptions.map((option, index) =>
+                renderOption(option, index * 2 + 1),
+              )}
             </div>
           </div>
           <div className={styles.quizFooter}>
             <button
               className={styles.footerNav}
-              onClick={handlePrev}
-              disabled={page === 0}
-              aria-disabled={page === 0 ? "true" : "false"}
+              onClick={() => {
+                setSelectedOption(null);
+                setPage((value) => Math.max(0, value - 1));
+              }}
+              disabled={safePage === 0}
+              aria-disabled={safePage === 0 ? "true" : "false"}
               type="button"
             >
               Anterior
             </button>
-            <span className={styles.footerPage}>Página <b>{page + 1}</b> de {totalPages}</span>
+            <span className={styles.footerPage}>
+              Página <b>{safePage + 1}</b> de {totalPages}
+            </span>
             <button
               className={styles.footerNav}
-              onClick={handleNext}
-              disabled={page === totalPages - 1}
-              aria-disabled={page === totalPages - 1 ? "true" : "false"}
+              onClick={() => {
+                setSelectedOption(null);
+                setPage((value) => Math.min(totalPages - 1, value + 1));
+              }}
+              disabled={safePage >= totalPages - 1}
+              aria-disabled={safePage >= totalPages - 1 ? "true" : "false"}
               type="button"
             >
               Siguiente
             </button>
-            <button
-              className={styles.finishedBtn}
-              type="button"
-              onClick={() => alert('¡Actividad finalizada!')}
-            >
-              Finished <img src="/Images/coin.png" alt="Moneda" className={styles.coinIcon} /> +5
-            </button>
+            <div className={styles.finishedBtn}>
+              <span>Monedas</span>
+              <span className={styles.coinValue}>+{activity.xpReward ?? 0}</span>
+            </div>
           </div>
         </div>
       </div>
     </ActivityLayout>
   );
-};
-
-export default HistoriaQuiz;
+}

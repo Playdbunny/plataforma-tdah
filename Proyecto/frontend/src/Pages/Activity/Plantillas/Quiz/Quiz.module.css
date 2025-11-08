@@ -51,16 +51,22 @@
 	gap: 2.2rem;
 }
 .optionBtn {
-	background: none;
-	border: none;
-	padding: 0;
-	position: relative;
-	cursor: pointer;
-	display: flex;
-	align-items: center;
-	justify-content: flex-start;
-	transition: filter 0.15s, box-shadow 0.15s;
-	outline: none;
+        background: none;
+        border: none;
+        padding: 0;
+        position: relative;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        transition: filter 0.15s, box-shadow 0.15s;
+        outline: none;
+}
+.optionSelected .optionFrame {
+        filter: brightness(1.1) drop-shadow(0 0 12px #fdef5c);
+}
+.optionSelected .optionText {
+        color: #d95cf4;
 }
 
 
@@ -171,26 +177,24 @@
 	margin-right: -390px;
 }
 .finishedBtn {
-	background: #222a44;
-	color: #fff;
-	font-family: 'Press Start 2P', 'VT323', monospace;
-	font-size: 1rem;
-	border-radius: 22px;
-	padding: 0.4rem 1.4rem 0.4rem 1.2rem;
-	box-shadow: 0 2px 8px #0008;
-	border: none;
-	display: flex;
-	align-items: center;
-	gap: 0.7rem;
-	min-width: 140px;
-	min-height: 38px;
-	cursor: pointer;
-	transition: background 0.18s, box-shadow 0.18s;
-	outline: none;
+        background: #222a44;
+        color: #fff;
+        font-family: 'Press Start 2P', 'VT323', monospace;
+        font-size: 1rem;
+        border-radius: 22px;
+        padding: 0.4rem 1.4rem 0.4rem 1.2rem;
+        box-shadow: 0 2px 8px #0008;
+        border: none;
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+        min-width: 140px;
+        min-height: 38px;
+        cursor: default;
 }
-.finishedBtn:hover, .finishedBtn:focus {
-	background: #2a3360;
-	box-shadow: 0 4px 16px #000a;
+.coinValue {
+        color: #fdef5c;
+        font-weight: 700;
 }
 .coinIcon {
 	width: 28px;

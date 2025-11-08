@@ -141,15 +141,26 @@ type ActivityLean = {
   status?: string;
   updatedAt?: Date;
   subjectId?: mongoose.Types.ObjectId;
+  description?: string | null;
+  templateType?: string | null;
+  config?: Record<string, unknown> | null;
 };
 
 function mapActivity(
   activity: ActivityLean,
   subject: SubjectLean | SubjectDocument | null,
+  options?: { includeConfig?: boolean },
 ): Record<string, unknown> {
+  const includeConfig = Boolean(options?.includeConfig);
   const subjectId = (activity as any).subjectId ?? (subject as any)?._id;
   const subjectSlug = (subject as any)?.slug ?? null;
   const id = activity._id.toString();
+  const config = (activity as any).config ?? null;
+  const templateType =
+    (activity as any).templateType ??
+    (typeof config === "object" && config && "activityType" in config
+      ? (config as any).activityType
+      : null);
 
   return {
     id,
@@ -158,6 +169,7 @@ function mapActivity(
     subjectSlug,
     slug: activity.slug ?? null,
     title: activity.title,
+    description: activity.description ?? null,
     bannerUrl: sanitizeBannerUrl(activity.bannerUrl),
     kind: activity.kind ?? null,
     xpReward: activity.xpReward ?? null,
@@ -165,6 +177,8 @@ function mapActivity(
     updatedAt: toISO(activity.updatedAt),
     estimatedMinutes: null,
     material: null,
+    templateType: templateType ?? null,
+    config: includeConfig ? (config as Record<string, unknown> | null) ?? null : undefined,
   };
 }
 
@@ -210,6 +224,7 @@ router.get(
         .lean<SubjectLean[]>();
 
       const mapped = subjects.map(mapSubject);
+      res.set("Cache-Control", "no-store");
       res.json(mapped);
     } catch (err) {
       handleError(res, err, "Error al obtener materias");
@@ -225,6 +240,7 @@ router.get("/subjects/:slug", async (req: Request, res: Response) => {
       return res.status(404).json({ error: "Materia no encontrada" });
     }
 
+    res.set("Cache-Control", "no-store");
     res.json(mapSubject(subject));
   } catch (err) {
     handleError(res, err, "Error al obtener materia");
@@ -245,16 +261,19 @@ router.get("/subjects/:slug/activities", async (req: Request, res: Response) => 
         _id: 1,
         slug: 1,
         title: 1,
+        description: 1,
         bannerUrl: 1,
         kind: 1,
         xpReward: 1,
         status: 1,
         updatedAt: 1,
         subjectId: 1,
+        templateType: 1,
       })
       .lean<ActivityLean[]>();
 
     const mapped = activities.map((activity) => mapActivity(activity, subject));
+    res.set("Cache-Control", "no-store");
     res.json(mapped);
   } catch (err) {
     handleError(res, err, "Error al obtener actividades");
@@ -273,12 +292,15 @@ router.get("/activities/:id", async (req: Request, res: Response) => {
           _id: 1,
           slug: 1,
           title: 1,
+          description: 1,
           bannerUrl: 1,
           kind: 1,
           xpReward: 1,
           status: 1,
           updatedAt: 1,
           subjectId: 1,
+          templateType: 1,
+          config: 1,
         })
         .lean<ActivityLean & { subjectId?: mongoose.Types.ObjectId }>();
     }
@@ -289,12 +311,15 @@ router.get("/activities/:id", async (req: Request, res: Response) => {
           _id: 1,
           slug: 1,
           title: 1,
+          description: 1,
           bannerUrl: 1,
           kind: 1,
           xpReward: 1,
           status: 1,
           updatedAt: 1,
           subjectId: 1,
+          templateType: 1,
+          config: 1,
         })
         .lean<ActivityLean & { subjectId?: mongoose.Types.ObjectId }>();
     }
@@ -310,7 +335,7 @@ router.get("/activities/:id", async (req: Request, res: Response) => {
         .lean<SubjectLean>();
     }
 
-    res.json(mapActivity(activity, subject));
+    res.json(mapActivity(activity, subject, { includeConfig: true }));
   } catch (err) {
     handleError(res, err, "Error al obtener actividad");
   }
