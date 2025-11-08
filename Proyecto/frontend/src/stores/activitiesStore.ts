@@ -7,7 +7,7 @@ import {
   deleteActivity,
   type ActivitySummary,
 } from "../api/activities";
-import { SubjectActivity } from "../Lib/activityMocks";
+import { SubjectActivity, SubjectActivityType } from "../Lib/activityMocks";
 import { getApiBaseUrl } from "../Lib/api";
 import { useSubjectsStore } from "./subjectsStore";
 
@@ -22,6 +22,8 @@ const extractErrorMessage = (err: any, fallback: string) => {
 
 export type PublicActivity = ActivitySummary & {
   subjectSlug?: string | null;
+  templateType?: string | null;
+  config?: Record<string, unknown> | null;
 };
 
 type ActivitiesState = {
@@ -39,6 +41,7 @@ type ActivitiesState = {
     options?: { force?: boolean },
   ) => Promise<PublicActivity[]>;
   invalidateSubject: (slug: string) => void;
+  clearSubject: (slug: string) => void;
   create: (activity: Partial<SubjectActivity>) => Promise<void>;
   update: (id: string, activity: Partial<SubjectActivity>) => Promise<void>;
   remove: (id: string, subjectSlug?: string | null) => Promise<void>;
@@ -62,6 +65,11 @@ function normalizePublicActivity(
   const rawId = activity.id || activity._id || "";
   const bannerUrl = resolveMediaUrl(activity.bannerUrl);
   const materialUrl = resolveMediaUrl(activity.material?.url ?? null);
+  const config = activity.config ?? null;
+  const templateType = activity.templateType ??
+    (typeof config === "object" && config && "activityType" in config
+      ? (config as any).activityType
+      : null);
   return {
     ...activity,
     id: String(rawId),
@@ -69,6 +77,7 @@ function normalizePublicActivity(
     subjectId: activity.subjectId ?? null,
     subjectSlug: activity.subjectSlug ?? fallbackSlug ?? null,
     bannerUrl,
+    description: activity.description ?? null,
     material: materialUrl
       ? { type: activity.material?.type ?? null, url: materialUrl }
       : null,
@@ -77,6 +86,8 @@ function normalizePublicActivity(
     kind: activity.kind ?? null,
     xpReward: activity.xpReward ?? null,
     status: activity.status ?? null,
+    templateType: templateType ?? null,
+    config,
   };
 }
 
@@ -109,7 +120,28 @@ export const useActivitiesStore = create<ActivitiesState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const data = await getAdminActivities();
-      set({ adminItems: data, adminHasLoaded: true, error: null });
+      const normalized = data.map((activity) => {
+        const config = (activity as any).config ?? null;
+        const rawTemplate =
+          activity.templateType ??
+          (typeof config === "object" && config && "activityType" in config
+            ? ((config as Record<string, unknown>).activityType as string | undefined)
+            : undefined);
+        const normalizedTemplate =
+          typeof rawTemplate === "string" && rawTemplate.trim().length > 0
+            ? rawTemplate.trim().toLowerCase()
+            : undefined;
+        const resolvedType: SubjectActivityType =
+          ((activity.type as SubjectActivityType | undefined) ??
+            (normalizedTemplate as SubjectActivityType | undefined) ??
+            "infografia") as SubjectActivityType;
+        return {
+          ...activity,
+          templateType: normalizedTemplate,
+          type: resolvedType,
+        };
+      });
+      set({ adminItems: normalized, adminHasLoaded: true, error: null });
     } catch (e: any) {
       set({ error: extractErrorMessage(e, "Error al cargar actividades"), adminHasLoaded: true });
     } finally {
@@ -148,7 +180,10 @@ export const useActivitiesStore = create<ActivitiesState>((set, get) => ({
     } catch (e: any) {
       const error = extractErrorMessage(e, "Error al cargar actividades");
       set({ error });
-      throw new Error(error);
+      const enrichedError = Object.assign(new Error(error), {
+        status: e?.response?.status ?? null,
+      });
+      throw enrichedError;
     }
   },
 
@@ -163,6 +198,23 @@ export const useActivitiesStore = create<ActivitiesState>((set, get) => ({
         activitiesBySubject: nextActivities,
         loadedVersionBySubject: nextLoaded,
         version: state.version + 1,
+      };
+    });
+  },
+
+  clearSubject: (slug) => {
+    const normalizedSlug = slug.trim().toLowerCase();
+    set((state) => {
+      if (!state.activitiesBySubject[normalizedSlug]) {
+        return {};
+      }
+      const nextActivities = { ...state.activitiesBySubject };
+      const nextLoaded = { ...state.loadedVersionBySubject };
+      delete nextActivities[normalizedSlug];
+      delete nextLoaded[normalizedSlug];
+      return {
+        activitiesBySubject: nextActivities,
+        loadedVersionBySubject: nextLoaded,
       };
     });
   },

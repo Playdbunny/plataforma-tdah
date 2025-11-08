@@ -97,6 +97,17 @@ router.post("/admin/activities", requireAuth, requireRole("admin"), async (req: 
       createdBy,
     };
 
+    const requestedTemplate =
+      typeof req.body?.templateType === "string"
+        ? req.body.templateType
+        : typeof req.body?.type === "string"
+        ? req.body.type
+        : null;
+
+    if (requestedTemplate) {
+      payload.templateType = String(requestedTemplate).trim().toLowerCase();
+    }
+
     if (status) {
       payload.status = status;
     } else {
@@ -150,6 +161,17 @@ router.put("/admin/activities/:id", requireAuth, requireRole("admin"), async (re
       ...req.body,
       subjectId: nextSubjectId,
     };
+
+    const requestedTemplate =
+      typeof req.body?.templateType === "string"
+        ? req.body.templateType
+        : typeof req.body?.type === "string"
+        ? req.body.type
+        : null;
+
+    if (requestedTemplate) {
+      updatable.templateType = String(requestedTemplate).trim().toLowerCase();
+    }
 
     if (status) {
       updatable.status = status;

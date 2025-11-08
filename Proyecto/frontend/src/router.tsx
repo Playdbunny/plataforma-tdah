@@ -17,6 +17,7 @@ import Forgot from "./Pages/Forgot/Forgot";
 import Reset from "./Pages/Reset/Reset";
 import TdahSelect from "./Pages/TDAHSelect/TDAHSelect";
 import SubjectPage from "./Pages/SubjectPage/SubjectPage";
+import ActivityPage from "./Pages/Activity/ActivityPage";
 import GoogleCallback from "./Pages/OAuth/GoogleCallback";
 
 // Páginas autenticadas
@@ -74,6 +75,7 @@ export const router = createBrowserRouter([
   { path: "/tdah", element: <TdahSelect /> },
 
   // Ruta dinámica de materias pública (si la quieres protegida, muévela más abajo)
+  { path: "/subjects/:subjectId/activities/:activitySlug", element: <ActivityPage /> },
   { path: "/subjects/:subjectId", element: <SubjectPage /> },
 
   // ── Autenticadas (requieren login) ─────────────────────────

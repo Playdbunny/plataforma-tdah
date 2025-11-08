@@ -13,18 +13,39 @@ import FancyCourseCard from "../../Components/FancyCourseCard/FancyCourseCard";
 import styles from "./Courses.module.css";
 
 // 👇 Store con las materias creadas/gestionadas en Admin
+import { useContentVersionStore } from "../../stores/contentVersionStore";
 import { useSubjectsStore } from "../../stores/subjectsStore";
 
 export default function Courses() {
   // Leemos materias del store + acción para “listar”
   const items = useSubjectsStore((state) => state.items);
   const fetchSubjects = useSubjectsStore((state) => state.fetchSubjects);
-  const version = useSubjectsStore((state) => state.version);
+  const version = useContentVersionStore((state) => state.version);
 
-  // Si entras con memoria “fría”, pedimos al store rehidratar/listar
+  // Forzamos refetch cuando cambie la versión global de contenido
   useEffect(() => {
-    fetchSubjects().catch(() => {});
+    fetchSubjects({ force: true }).catch(() => {});
   }, [fetchSubjects, version]);
+
+  useEffect(() => {
+    let timeoutId: number | undefined;
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        window.clearTimeout(timeoutId);
+        timeoutId = window.setTimeout(() => {
+          fetchSubjects({ force: true }).catch(() => {});
+        }, 200);
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      if (timeoutId !== undefined) {
+        window.clearTimeout(timeoutId);
+      }
+    };
+  }, [fetchSubjects]);
 
   return (
     <div className={styles.screen}>

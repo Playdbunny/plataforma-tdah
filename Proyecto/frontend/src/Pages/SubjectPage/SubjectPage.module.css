@@ -94,6 +94,12 @@
   gap: 22px;
 }
 
+.cardLink{
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
 .card{
   background: #0f1730;
   border: 1px solid #2d4474;
@@ -105,7 +111,11 @@
   gap: 12px;
   transition: transform .1s ease, filter .15s ease;
 }
-.card:hover{ filter: brightness(1.05); }
+.cardLink:hover .card,
+.cardLink:focus-visible .card{
+  filter: brightness(1.05);
+  transform: translateY(-2px);
+}
 
 .cardThumb{
   width: 100%;

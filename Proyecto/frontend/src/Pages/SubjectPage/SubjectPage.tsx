@@ -4,9 +4,8 @@
 // - Usa el bannerUrl subido desde el Admin; si no hay, cae a tu GIF por defecto.
 // - Muestra actividades "mock" por materia (puedes migrarlas a backend luego).
 
-import { useParams, Navigate } from "react-router-dom";
+import { useParams, Navigate, useNavigate, Link } from "react-router-dom";
 import { useMemo, useEffect, useState } from "react";
-import { useOnceWhen, useBusyFlag } from "@/lib/hooks";
 
 
 // Navbar y estilos existentes
@@ -17,6 +16,8 @@ import styles from "./SubjectPage.module.css";
 // Update the import path if the file is located elsewhere, for example:
 import { useSubjectsStore } from "../../stores/subjectsStore";
 import { useActivitiesStore, type PublicActivity } from "../../stores/activitiesStore";
+import { useContentVersionStore } from "../../stores/contentVersionStore";
+import { getSubject } from "../../api/subjects";
 
 // ✅ Store de app para saber si el usuario es admin
 import { normalizeSubjectSlug } from "../../utils/subjects";
@@ -33,12 +34,12 @@ export default function SubjectPage() {
   // ===============================================
   const subjects = useSubjectsStore((state) => state.items);
   const fetchSubjects = useSubjectsStore((state) => state.fetchSubjects);
-  const subjectsVersion = useSubjectsStore((state) => state.version);
+  const version = useContentVersionStore((state) => state.version);
+  const navigate = useNavigate();
 
-  // En Fase 1 (mock) "list" no pega a un backend, pero deja listo el patrón.
   useEffect(() => {
-    fetchSubjects().catch(() => {});
-  }, [fetchSubjects, subjectsVersion]);
+    fetchSubjects({ force: true }).catch(() => {});
+  }, [fetchSubjects, version]);
 
   // Busca la materia por slug
   const subject = subjects.find((s) => s.slug.toLowerCase() === slug);
@@ -52,14 +53,36 @@ export default function SubjectPage() {
   const list = useActivitiesStore((state) => state.activitiesBySubject[slug]);
   const fetchActivities = useActivitiesStore((state) => state.fetchActivities);
 
-  const busy = useBusyFlag();
-
-  useOnceWhen(Boolean(slug) && list === undefined, () => {
+  useEffect(() => {
     if (!slug) return;
-    if (!busy.isBusy()) {
-      busy.run(fetchActivities(slug)).catch(() => {});
-    }
-  }, [slug, list, fetchActivities]);
+    fetchActivities(slug, { force: true }).catch((error: any) => {
+      if (error?.status === 404) {
+        navigate("/subjects", { replace: true });
+        return;
+      }
+      console.error(error);
+    });
+  }, [slug, version, fetchActivities, navigate]);
+
+  useEffect(() => {
+    if (!slug || subject) return;
+
+    let cancelled = false;
+
+    getSubject(slug)
+      .catch((error: any) => {
+        if (cancelled) return;
+        if (error?.response?.status === 404) {
+          navigate("/subjects", { replace: true });
+          return;
+        }
+        console.error(error);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [slug, subject, version, navigate]);
 
   const activities = (list ?? []) as PublicActivity[];
 
@@ -115,23 +138,27 @@ export default function SubjectPage() {
             <div className={styles.grid} role="list">
               {filteredActivities.map((a) => {
                 const cardBanner = a.bannerUrl ?? defaultActivityBanner;
+                const activitySlug = a.slug ?? a.id;
+                const activityLink = `/subjects/${slug}/activities/${activitySlug}`;
 
                 return (
-                  <article
+                  <Link
                     key={a._id ?? a.id}
-                    className={styles.card}
+                    to={activityLink}
+                    className={styles.cardLink}
                     role="listitem"
-                    tabIndex={0}
-                    title={a.title}
+                    aria-label={`Abrir actividad ${a.title}`}
                   >
-                    <img
-                      className={styles.cardThumb}
-                      src={cardBanner}
-                      alt={`Banner de ${a.title}`}
-                      loading="lazy"
-                    />
-                    <h3 className={styles.cardTitle}>{a.title}</h3>
-                  </article>
+                    <article className={styles.card} title={a.title}>
+                      <img
+                        className={styles.cardThumb}
+                        src={cardBanner}
+                        alt={`Banner de ${a.title}`}
+                        loading="lazy"
+                      />
+                      <h3 className={styles.cardTitle}>{a.title}</h3>
+                    </article>
+                  </Link>
                 );
               })}
             </div>

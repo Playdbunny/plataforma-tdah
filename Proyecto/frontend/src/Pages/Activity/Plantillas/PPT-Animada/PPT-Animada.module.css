@@ -22,13 +22,24 @@
 	filter: invert(0.7);
 }
 .presentationContainer {
-	width: 90%;
-	height: 90%;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	position: relative;
+        width: 90%;
+        height: 90%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
     top:50px;
+}
+.emptyState {
+        color: #f1f3ff;
+        font-family: 'Press Start 2P', 'VT323', monospace;
+        font-size: 1rem;
+        text-align: center;
+        padding: 1.5rem;
+        background: rgba(12, 20, 48, 0.65);
+        border-radius: 16px;
+        width: 100%;
+        margin: 0 2rem;
 }
 .fullscreenBtn {
 	position: absolute;
@@ -196,29 +207,23 @@
 }
 
 .finishedBtn {
-	position: absolute;
-	right: 3.5rem;
-	bottom: 2.5rem;
-	background: #222a44;
-	color: #fff;
-	font-family: 'Press Start 2P', 'VT323', monospace;
-	font-size: 1rem;
-	border-radius: 20px;
-	padding: 0.4rem 1.4rem 0.4rem 1.2rem;
-	box-shadow: 0 2px 8px #0008;
-	border: none;
-	display: flex;
-	align-items: center;
-	gap: 1.1rem;
-	min-width: 140px;
-	min-height: 38px;
-	cursor: pointer;
-	transition: background 0.18s, box-shadow 0.18s;
-	outline: none;
-}
-.finishedBtn:hover, .finishedBtn:focus {
-	background: #2a3360;
-	box-shadow: 0 4px 16px #000a;
+        position: absolute;
+        right: 3.5rem;
+        bottom: 2.5rem;
+        background: #222a44;
+        color: #fff;
+        font-family: 'Press Start 2P', 'VT323', monospace;
+        font-size: 1rem;
+        border-radius: 20px;
+        padding: 0.4rem 1.4rem 0.4rem 1.2rem;
+        box-shadow: 0 2px 8px #0008;
+        border: none;
+        display: flex;
+        align-items: center;
+        gap: 1.1rem;
+        min-width: 140px;
+        min-height: 38px;
+        cursor: default;
 }
 .finishedText {
 	color: #fff;

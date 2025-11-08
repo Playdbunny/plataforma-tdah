@@ -41,6 +41,7 @@ type SubjectsState = {
   fetchSubjects: (options?: { force?: boolean }) => Promise<Subject[]>;
   list: () => Promise<void>;
   invalidateSubjects: () => void;
+  removeFromCacheById: (idOrSlug: string) => void;
   create: (
     p: { name: string; description?: string; slug?: string },
   ) => Promise<Subject>;
@@ -181,6 +182,18 @@ export const useSubjectsStore = create<SubjectsState>()(
           items: [],
           loadedVersion: null,
           version: state.version + 1,
+        }));
+      },
+
+      removeFromCacheById: (idOrSlug) => {
+        const normalized = idOrSlug.trim().toLowerCase();
+        set((state) => ({
+          items: state.items.filter((subject) => {
+            const matchesId =
+              subject._id === idOrSlug || subject.id === idOrSlug;
+            const matchesSlug = subject.slug.toLowerCase() === normalized;
+            return !matchesId && !matchesSlug;
+          }),
         }));
       },
 

@@ -9,6 +9,8 @@ import { useEffect, useMemo, useState } from "react";
 import styles from "./Materias.module.css";
 
 // Store (mock) y tipo Subject
+import { bumpContentVersion } from "../../../stores/contentVersionStore";
+import { useActivitiesStore } from "../../../stores/activitiesStore";
 import { useSubjectsStore, type Subject } from "../../../stores/subjectsStore";
 
 const subjectKey = (subject: Subject) => subject._id ?? subject.id;
@@ -200,7 +202,19 @@ export default function MateriasPage() {
     const s = items.find(x => x._id === id || x.id === id);
     if (!s) return;
     if (!confirm(`¿Eliminar la materia "${s.name}"?`)) return;
-    await remove(id);
+    try {
+      await remove(id);
+      const cacheKey = s._id ?? s.id ?? s.slug;
+      useSubjectsStore.getState().removeFromCacheById(cacheKey);
+      if (cacheKey !== s.slug) {
+        useSubjectsStore.getState().removeFromCacheById(s.slug);
+      }
+      useActivitiesStore.getState().clearSubject(s.slug);
+      bumpContentVersion();
+    } catch (error: any) {
+      console.error(error);
+      alert(error?.message ?? "Error al eliminar la materia");
+    }
   }
 
   // Quitar banner en una fila

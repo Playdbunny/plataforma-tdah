@@ -8,6 +8,7 @@ export type ActivitySummary = {
   subjectSlug?: string | null;
   slug?: string | null;
   title: string;
+  description?: string | null;
   bannerUrl?: string | null;
   kind?: string | null;
   xpReward?: number | null;
@@ -15,6 +16,8 @@ export type ActivitySummary = {
   updatedAt?: string | null;
   estimatedMinutes?: number | null;
   material?: { type: string | null; url: string } | null;
+  templateType?: string | null;
+  config?: Record<string, unknown> | null;
 };
 
 // Obtener todas las actividades

@@ -28,6 +28,13 @@ export interface ActivityAttrs {
   kind: ActivityKind;
   xpReward: number;
   config: Record<string, any>;
+  templateType?:
+    | "infografia"
+    | "quiz"
+    | "ppt-animada"
+    | "video"
+    | "juego"
+    | null;
 
   unitOrder?: number;
   slug?: string;
@@ -76,6 +83,18 @@ const ActivitySchema = new Schema<ActivityDocument, ActivityModel>(
       type: String,
       required: true,
       enum: ["multiple_choice", "true_false", "video_quiz", "ppt_review", "embedded_quiz"],
+    },
+
+    templateType: {
+      type: String,
+      enum: ["infografia", "quiz", "ppt-animada", "video", "juego", null],
+      default: null,
+      set: (value: unknown) => {
+        if (value == null) return null;
+        if (typeof value !== "string") return null;
+        const normalized = value.trim().toLowerCase();
+        return normalized.length ? normalized : null;
+      },
     },
 
     title: { type: String, required: true, trim: true, maxlength: 160 },

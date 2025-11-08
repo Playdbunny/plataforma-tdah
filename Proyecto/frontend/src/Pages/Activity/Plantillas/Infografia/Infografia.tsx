@@ -1,136 +1,136 @@
-import ActivityLayout from "../../../../Layouts/ActivityLayout/ActivityLayoutInfografia";
-import styles from './Infografia.module.css';
-import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useMemo, useState } from "react";
 import ActivityLayoutInfografia from "../../../../Layouts/ActivityLayout/ActivityLayoutInfografia";
+import styles from "./Infografia.module.css";
+import type { ActivityTemplateProps } from "../shared";
+import { extractQuestions, resolveResourceUrl } from "../shared";
 
-
-
-const questions = [
-	{
-		question: 'En 1914, las principales potencias europeas buscaban un pretexto para... ¿Qué?',
-		hint: 'Pista visual: Revisa la parte superior de la infografía.',
-		options: [
-			'A. Medir sus fuerzas y obtener más territorio.',
-			'B. Establecer un nuevo comercio con Asia.',
-			'C. Declarar la paz en Europa.'
-		]
-	},
-	{
-		question: '¿Cuál fue el detonante inmediato de la Primera Guerra Mundial?',
-		hint: 'Pista: Ocurrió en Sarajevo en 1914.',
-		options: [
-			'A. El asesinato del archiduque Francisco Fernando.',
-			'B. La firma del Tratado de Versalles.',
-			'C. La invasión de Polonia.'
-		]
-	},
-	{
-		question: '¿Qué países formaban parte de la Triple Entente?',
-		hint: 'Pista: Incluye a Francia.',
-		options: [
-			'A. Alemania, Austria-Hungría, Italia.',
-			'B. Francia, Reino Unido, Rusia.',
-			'C. Turquía, Bulgaria, Serbia.'
-		]
-	},
-	{
-		question: '¿Cuál fue una consecuencia importante de la Primera Guerra Mundial?',
-		hint: 'Pista: Cambios en el mapa político de Europa.',
-		options: [
-			'A. La creación de la ONU.',
-			'B. La caída de imperios y aparición de nuevos países.',
-			'C. El inicio de la Guerra Fría.'
-		]
-	}
+const FALLBACK_QUESTIONS = [
+  {
+    question: "Explora la infografía y selecciona la afirmación correcta.",
+    hint: "Observa los datos destacados.",
+    options: [
+      "La infografía resume la idea principal.",
+      "La infografía trata sobre un tema distinto.",
+      "La infografía no contiene texto.",
+    ],
+  },
+  {
+    question: "¿Cuál es el concepto principal?",
+    hint: "Busca palabras resaltadas.",
+    options: [
+      "Se explica un proceso histórico.",
+      "Se detalla una receta.",
+      "Se presenta un listado deportivo.",
+    ],
+  },
 ];
 
-const Infografia = () => {
-	const navigate = useNavigate();
-	const [page, setPage] = useState(0);
-	const [selected, setSelected] = useState<number|null>(null);
-	const q = questions[page];
-	return (
-			<ActivityLayoutInfografia title="Primera Guerra Mundial">
-				<div className={styles.flexRow}>
-					<div className={styles.panelAzul1}>
-						<div className={styles.panelTopControls}>
-							<button
-								className={styles.backButton}
-								onClick={() => navigate('/subjects/historia')}
-								aria-label="Volver a Historia"
-							>
-								<span className={styles.arrow}>&larr;</span>
-							</button>
-							<div className={styles.zoomControls}>
-								<button className={styles.zoomBtn} aria-label="Zoom in">+</button>
-								<button className={styles.zoomBtn} aria-label="Zoom out">-</button>
-							</div>
-						</div>
-						<div className={styles.infografiaContainer}>
-							{/* Aquí irá la imagen de la infografía */}
-							<img
-								src=""
-								alt=""
-								className={styles.infografiaImg}
-							/>
-						</div>
-					</div>
-					<div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
-						<div className={styles.activityTitle}>Primera Guerra Mundial</div>
-						<div className={styles.panelAzul2}>
-							
-							<div className={styles.question}>{q.question}</div>
-							<br />
-							<span className={styles.hint}>{q.hint}</span>
-							<div className={styles.containeroptions}>
-								<button className={styles.option1 + (selected === 0 ? ' ' + styles.selected : '')} onClick={() => setSelected(0)}>
-									<span className={styles.optionLetter + ' ' + styles.letterA}>A</span>
-									{q.options[0].replace(/^A\.?\s*/, "")}
-								</button>
-								<button className={styles.option2 + (selected === 1 ? ' ' + styles.selected : '')} onClick={() => setSelected(1)}>
-									<span className={styles.optionLetter + ' ' + styles.letterB}>B</span>
-									{q.options[1].replace(/^B\.?\s*/, "")}
-								</button>
-								<button className={styles.option3 + (selected === 2 ? ' ' + styles.selected : '')} onClick={() => setSelected(2)}>
-									<span className={styles.optionLetter + ' ' + styles.letterC}>C</span>
-									{q.options[2].replace(/^C\.?\s*/, "")}
-								</button>
-							</div>
-							<div className={styles.paginationContainer}>
-								<button
-									className={styles.paginationBtn}
-									onClick={() => setPage((p) => Math.max(0, p - 1))}
-									disabled={page === 0}
-								>Anterior</button>
-								<span className={styles.paginationInfo}>Página {page + 1} de {questions.length}</span>
-								<button
-									className={styles.paginationBtn}
-									onClick={() => setPage((p) => Math.min(questions.length - 1, p + 1))}
-									disabled={page === questions.length - 1}
-								>Siguiente</button>
-								<span className={styles.progressIndicator}>
-                                                                        {questions.map((_, i) => (
-                                                                                <span
-                                                                                        key={`dot-${i}`}
-                                                                                        className={
-                                                                                                styles.progressDot + (i === page ? ' ' + styles.active : '')
-                                                                                        }
-                                                                               ></span>
-                                                                        ))}
-								</span>
-								<button className={styles.finishedBtn}>
-									Finished
-									<span className={styles.coinIcon}>🪙</span>
-									<span className={styles.coinValue}>+5</span>
-								</button>
-							</div>
-						</div>
-					</div>
-				</div>
-	</ActivityLayoutInfografia>
-	);
-};
+function normalizeQuestions(raw: any[]): typeof FALLBACK_QUESTIONS {
+  if (!Array.isArray(raw) || raw.length === 0) return FALLBACK_QUESTIONS;
+  return raw
+    .map((entry) => {
+      if (!entry || typeof entry !== "object") return null;
+      const question = typeof entry.question === "string" ? entry.question : null;
+      const hint = typeof entry.hint === "string" ? entry.hint : null;
+      const rawOptions = (entry as { options?: unknown }).options;
+      const options = Array.isArray(rawOptions)
+        ? rawOptions.filter((opt): opt is string => typeof opt === "string")
+        : null;
+      if (!question || !options || options.length === 0) return null;
+      return {
+        question,
+        hint: hint ?? "Piensa en lo que viste en la infografía.",
+        options,
+      };
+    })
+    .filter((item): item is typeof FALLBACK_QUESTIONS[number] => Boolean(item));
+}
 
-export default Infografia;
+export default function Infografia({ activity, backTo }: ActivityTemplateProps) {
+  const [page, setPage] = useState(0);
+  const [selectedOption, setSelectedOption] = useState<number | null>(null);
 
+  const questions = useMemo(() => normalizeQuestions(extractQuestions(activity.config)), [
+    activity.config,
+  ]);
+
+  const currentQuestion = questions[Math.min(page, questions.length - 1)];
+
+  const imageUrl =
+    resolveResourceUrl(activity.config) ??
+    activity.bannerUrl ??
+    "/Images/infografia-placeholder.png";
+
+  return (
+    <ActivityLayoutInfografia title={activity.title} backTo={backTo}>
+      <div className={styles.flexRow}>
+        <div className={styles.panelAzul1}>
+          <div className={styles.panelTopControls}>
+            <div className={styles.zoomControls}>
+              <span className={styles.zoomInfo}>Revisa cada detalle</span>
+            </div>
+          </div>
+          <div className={styles.infografiaContainer}>
+            <img
+              src={imageUrl}
+              alt={`Infografía de ${activity.title}`}
+              className={styles.infografiaImg}
+            />
+          </div>
+        </div>
+        <div className={styles.panelAzul2}>
+          <div className={styles.activityTitle}>{activity.title}</div>
+          {activity.description ? (
+            <p className={styles.hint}>{activity.description}</p>
+          ) : null}
+          <div className={styles.question}>{currentQuestion.question}</div>
+          {currentQuestion.hint ? (
+            <span className={styles.hint}>{currentQuestion.hint}</span>
+          ) : null}
+          <div className={styles.containeroptions}>
+            {currentQuestion.options.map((option, index) => (
+              <button
+                key={`opt-${index}`}
+                className={`${
+                  styles[`option${index + 1}` as keyof typeof styles] ?? styles.option1
+                }${selectedOption === index ? ` ${styles.selected}` : ""}`}
+                onClick={() => setSelectedOption(index)}
+                type="button"
+              >
+                <span className={styles.optionLetter}>{String.fromCharCode(65 + index)}</span>
+                {option}
+              </button>
+            ))}
+          </div>
+          <div className={styles.paginationContainer}>
+            <button
+              className={styles.paginationBtn}
+              onClick={() => {
+                setSelectedOption(null);
+                setPage((value) => Math.max(0, value - 1));
+              }}
+              disabled={page === 0}
+              type="button"
+            >
+              Anterior
+            </button>
+            <span className={styles.paginationInfo}>
+              Página {Math.min(page, questions.length - 1) + 1} de {questions.length}
+            </span>
+            <button
+              className={styles.paginationBtn}
+              onClick={() => {
+                setSelectedOption(null);
+                setPage((value) => Math.min(questions.length - 1, value + 1));
+              }}
+              disabled={page >= questions.length - 1}
+              type="button"
+            >
+              Siguiente
+            </button>
+          </div>
+        </div>
+      </div>
+    </ActivityLayoutInfografia>
+  );
+}

@@ -16,17 +16,16 @@ interface ActivityLayoutProps {
 
 export default function ActivityLayout({ title, leftPanel, children, pagination, finished, backTo }: ActivityLayoutProps) {
   const navigate = useNavigate();
+  const target = backTo || "/subjects";
   return (
     <div className={styles.bg}>
       <Navbar items={[
         { label: "Materias", to: "/subjects" },
       ]}/>
       <div className={styles.main}>
-        {backTo && (
-          <button className={styles.backButton} onClick={() => navigate(backTo)} aria-label="Volver">
-            ← Volver
-          </button>
-        )}
+        <button className={styles.backButton} onClick={() => navigate(target)} aria-label="Volver">
+          ← Volver
+        </button>
         {leftPanel && (
           <div className={styles.panel}>
             {leftPanel}
