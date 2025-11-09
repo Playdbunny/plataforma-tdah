@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import styles from "./ActivityForm.module.css";
 import { SubjectActivity } from "../../../Lib/activityMocks";
@@ -11,6 +11,68 @@ type Question = {
   correct?: number;
 };
 
+const MIN_ANSWERS = 2;
+const MAX_ANSWERS = 4;
+
+const createEmptyQuestion = (): Question => ({
+  question: "",
+  answers: Array.from({ length: MIN_ANSWERS }, () => ""),
+  correct: 0,
+});
+
+const resolveInitialAttempts = (activity: SubjectActivity): number => {
+  const rawAttempts =
+    (activity.fieldsJSON as Record<string, unknown> | undefined)?.attempts ??
+    (activity.config as Record<string, unknown> | undefined)?.attempts ??
+    null;
+  if (typeof rawAttempts === "number" && Number.isFinite(rawAttempts) && rawAttempts > 0) {
+    return Math.min(Math.max(Math.floor(rawAttempts), 1), 99);
+  }
+  return 1;
+};
+
+const normalizeInitialQuestions = (raw: unknown): Question[] => {
+  if (!Array.isArray(raw)) return [];
+
+  return raw
+    .map((entry) => {
+      if (!entry || typeof entry !== "object") return null;
+
+      const value = entry as Record<string, unknown>;
+      const questionValue = value.question ?? value.text;
+      if (typeof questionValue !== "string") return null;
+
+      const answersValue = value.answers ?? value.options;
+      const rawAnswers = Array.isArray(answersValue)
+        ? answersValue.filter((answer): answer is string => typeof answer === "string")
+        : [];
+
+      const paddedAnswers = [...rawAnswers];
+      while (paddedAnswers.length < MIN_ANSWERS) {
+        paddedAnswers.push("");
+      }
+
+      const trimmedAnswers = paddedAnswers.slice(0, MAX_ANSWERS);
+      const correctValue = value.correct ?? value.correctIndex;
+      let correctIndex =
+        typeof correctValue === "number" && correctValue >= 0 && correctValue < trimmedAnswers.length
+          ? correctValue
+          : 0;
+
+      if (typeof value.correctOption === "string") {
+        const matchIndex = trimmedAnswers.findIndex((answer) => answer === value.correctOption);
+        if (matchIndex >= 0) correctIndex = matchIndex;
+      }
+
+      return {
+        question: questionValue,
+        answers: trimmedAnswers,
+        correct: correctIndex,
+      } satisfies Question;
+    })
+    .filter((question): question is Question => Boolean(question));
+};
+
 interface Props {
   activity: SubjectActivity;
   onClose: () => void;
@@ -20,11 +82,18 @@ interface Props {
 
 export default function ActivityEditModal({ activity, onClose, onMockDelete, onBackendDelete }: Props) {
   const [title, setTitle] = useState(activity.title);
-  const initialQuestions = Array.isArray(activity.fieldsJSON?.questions)
-    ? (activity.fieldsJSON!.questions as Question[])
-    : [];
+  const initialQuestions = useMemo(
+    () =>
+      normalizeInitialQuestions(
+        (activity.fieldsJSON as Record<string, unknown> | undefined)?.questions ??
+          (activity.config as Record<string, unknown> | undefined)?.questions ??
+          [],
+      ),
+    [activity.config, activity.fieldsJSON],
+  );
   const [questions, setQuestions] = useState<Question[]>(initialQuestions);
   const [fileUrl, setFileUrl] = useState<string>(activity.fieldsJSON?.fileUrl ?? "");
+  const [attempts, setAttempts] = useState<number>(() => resolveInitialAttempts(activity));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { update, remove } = useActivitiesStore();
@@ -48,6 +117,14 @@ export default function ActivityEditModal({ activity, onClose, onMockDelete, onB
     };
   }, [onClose]);
 
+  useEffect(() => {
+    setQuestions(initialQuestions.length > 0 ? initialQuestions : []);
+  }, [initialQuestions]);
+
+  useEffect(() => {
+    setAttempts(resolveInitialAttempts(activity));
+  }, [activity]);
+
   // Handlers para preguntas y respuestas
   const handleQuestionChange = (idx: number, value: string) => {
     setQuestions((prev) => prev.map((q, i) => (i === idx ? { ...q, question: value } : q)));
@@ -65,22 +142,31 @@ export default function ActivityEditModal({ activity, onClose, onMockDelete, onB
     );
   };
   const handleAddQuestion = () => {
-    setQuestions((prev) => [...prev, { question: "", answers: [""], correct: 0 }]);
+    setQuestions((prev) => [...prev, createEmptyQuestion()]);
   };
   const handleRemoveQuestion = (idx: number) => {
     setQuestions((prev) => prev.filter((_, i) => i !== idx));
   };
   const handleAddAnswer = (qIdx: number) => {
     setQuestions((prev) =>
+      prev.map((q, i) => {
+        if (i !== qIdx) return q;
+        if (q.answers.length >= MAX_ANSWERS) return q;
+        const nextAnswers = [...q.answers, ""];
+        const correct =
+          typeof q.correct === "number" && q.correct >= 0 ? Math.min(q.correct, nextAnswers.length - 1) : 0;
+        return {
+          ...q,
+          answers: nextAnswers,
+          correct,
+        };
+      }),
+    );
+  };
+  const handleCorrectChange = (qIdx: number, correctIdx: number) => {
+    setQuestions((prev) =>
       prev.map((q, i) =>
-        i === qIdx
-          ? {
-              ...q,
-              answers: [...q.answers, ""],
-              correct:
-                typeof q.correct === "number" ? q.correct : q.answers.length,
-            }
-          : q
+        i === qIdx ? { ...q, correct: correctIdx } : q,
       )
     );
   };
@@ -90,10 +176,15 @@ export default function ActivityEditModal({ activity, onClose, onMockDelete, onB
         i === qIdx
           ? {
               ...q,
-              answers: q.answers.filter((_, j) => j !== aIdx),
+              answers:
+                q.answers.length <= MIN_ANSWERS
+                  ? q.answers
+                  : q.answers.filter((_, j) => j !== aIdx),
               correct:
                 typeof q.correct !== "number"
                   ? undefined
+                  : q.answers.length <= MIN_ANSWERS
+                  ? q.correct
                   : q.correct === aIdx
                   ? 0
                   : q.correct > aIdx
@@ -103,6 +194,16 @@ export default function ActivityEditModal({ activity, onClose, onMockDelete, onB
           : q
       )
     );
+  };
+
+  const handleAttemptsChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const value = Number.parseInt(event.target.value, 10);
+    if (Number.isNaN(value)) {
+      setAttempts(1);
+      return;
+    }
+    const clamped = Math.min(Math.max(value, 1), 99);
+    setAttempts(clamped);
   };
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -124,18 +225,76 @@ export default function ActivityEditModal({ activity, onClose, onMockDelete, onB
     setError(null);
     try {
       const fieldsJSON = { ...(activity.fieldsJSON ?? {}) };
+      let nextConfig: Record<string, unknown> | undefined =
+        activity.config && typeof activity.config === "object"
+          ? { ...(activity.config as Record<string, unknown>) }
+          : undefined;
+
       if (activity.type === "quiz" || activity.type === "infografia") {
-        fieldsJSON.questions = questions;
+        const sanitizedQuestions = questions
+          .map((question) => {
+            const trimmedQuestion = question.question.trim();
+            const normalizedAnswers = question.answers
+              .map((answer) => answer.trim())
+              .filter((answer) => answer.length > 0)
+              .slice(0, MAX_ANSWERS);
+
+            if (!trimmedQuestion || normalizedAnswers.length < MIN_ANSWERS) {
+              return null;
+            }
+
+            const candidateCorrect = question.correct ?? 0;
+            const safeCorrectIndex = Math.max(
+              0,
+              Math.min(candidateCorrect, normalizedAnswers.length - 1),
+            );
+            const correctAnswer = normalizedAnswers[safeCorrectIndex] ?? null;
+
+            return {
+              question: trimmedQuestion,
+              text: trimmedQuestion,
+              answers: normalizedAnswers,
+              options: normalizedAnswers,
+              correct: safeCorrectIndex,
+              correctIndex: safeCorrectIndex,
+              correctAnswer,
+              correctOption: correctAnswer,
+            };
+          })
+          .filter((question): question is Record<string, unknown> => Boolean(question));
+
+        fieldsJSON.questions = sanitizedQuestions;
+        fieldsJSON.attempts = attempts;
+        fieldsJSON.activityType = activity.type;
+        nextConfig = {
+          ...(nextConfig ?? {}),
+          ...fieldsJSON,
+          activityType: activity.type,
+        };
       } else if (activity.type === "ppt-animada" || activity.type === "video") {
         if (fileUrl) {
           fieldsJSON.fileUrl = fileUrl;
         }
+        fieldsJSON.activityType = activity.type;
+        nextConfig = {
+          ...(nextConfig ?? {}),
+          ...fieldsJSON,
+          activityType: activity.type,
+        };
+      } else if (fieldsJSON) {
+        fieldsJSON.activityType = activity.type;
+        nextConfig = {
+          ...(nextConfig ?? {}),
+          ...fieldsJSON,
+          activityType: activity.type,
+        };
       }
       await update(activity.id, {
         title,
         fieldsJSON,
+        config: nextConfig,
         status: publish ? "published" : activity.status,
-        templateType: (activity as any).templateType ?? activity.type,
+        templateType: activity.templateType ?? activity.type,
       });
       onClose();
     } catch (e: unknown) {
@@ -148,12 +307,17 @@ export default function ActivityEditModal({ activity, onClose, onMockDelete, onB
   // Eliminar actividad
   // Intenta primero eliminar actividades reales del backend (MongoDB)
   const isMongoId = (id: string) => /^[a-f\d]{24}$/i.test(id);
-  const handleDelete = async () => {
-    if (!window.confirm("¿Seguro que deseas eliminar esta actividad?")) return;
-    setSaving(true);
-    setError(null);
-    // Identificamos si el id corresponde a un documento real de MongoDB
-    const mongoId = String((activity as any)._id || activity.id || "");
+    const handleDelete = async () => {
+      if (!window.confirm("¿Seguro que deseas eliminar esta actividad?")) return;
+      setSaving(true);
+      setError(null);
+      // Identificamos si el id corresponde a un documento real de MongoDB
+      const rawBackendId = (activity as { _id?: unknown })._id;
+      const normalizedBackendId =
+        typeof rawBackendId === "string" && rawBackendId.trim().length > 0
+          ? rawBackendId
+          : activity.id;
+      const mongoId = String(normalizedBackendId ?? "");
     const shouldDeleteFromBackend = isMongoId(mongoId);
     try {
       if (shouldDeleteFromBackend) {
@@ -198,55 +362,132 @@ export default function ActivityEditModal({ activity, onClose, onMockDelete, onB
           <input
             className={styles.formInput}
             value={title}
-            onChange={e => setTitle(e.target.value)}
+            onChange={(event: ChangeEvent<HTMLInputElement>) => setTitle(event.target.value)}
             required
             placeholder="Ej: Título de la actividad"
           />
         </label>
+        {(activity.type === "quiz" || activity.type === "infografia") && (
+          <label className={styles.formLabel}>
+            Intentos permitidos
+            <input
+              className={styles.formInput}
+              type="number"
+              min={1}
+              max={99}
+              value={attempts}
+              onChange={handleAttemptsChange}
+            />
+          </label>
+        )}
         {/* Quiz/Infografía: Preguntas y respuestas (siempre visible para debug) */}
-        <div className={styles.formLabel} style={{marginBottom: 0}}>
-          <strong>Preguntas y respuestas:</strong>
-        </div>
-        <div>
-          {questions.map((q, qIdx) => (
-            <div key={qIdx} style={{marginBottom: 16, background: '#e0e7ff', borderRadius: 10, padding: 12}}>
-              <input
-                className={styles.formInput}
-                type="text"
-                value={q.question}
-                onChange={e => handleQuestionChange(qIdx, e.target.value)}
-                placeholder={`Pregunta ${qIdx + 1}`}
-                required
-              />
-              <div style={{marginTop: 8}}>
-                {q.answers.map((a: string, aIdx: number) => (
-                  <div key={aIdx} style={{display: 'flex', gap: 8, alignItems: 'center', marginBottom: 6}}>
-                    <input
-                      className={styles.formInput}
-                      type="text"
-                      value={a}
-                      onChange={e => handleAnswerChange(qIdx, aIdx, e.target.value)}
-                      placeholder={`Respuesta ${aIdx + 1}`}
-                      required
-                    />
-                    <button type="button" onClick={() => handleRemoveAnswer(qIdx, aIdx)} className={styles.cancelBtn} style={{padding: '4px 10px', fontSize: 13}}>
-                      –
+        {(activity.type === "quiz" || activity.type === "infografia") && (
+          <div>
+            <div className={styles.formLabel} style={{ marginBottom: 0 }}>
+              <strong>Preguntas y alternativas</strong>
+              <p style={{ fontSize: 12, marginTop: 4 }}>
+                Puedes añadir hasta {MAX_ANSWERS} alternativas por pregunta y marcar cuál es la correcta.
+              </p>
+            </div>
+            {questions.map((q, qIdx) => {
+              const radioName = `${overlayTitleId}-question-${qIdx}`;
+              return (
+                <div
+                  key={qIdx}
+                  style={{
+                    marginBottom: 16,
+                    background: "#e0e7ff",
+                    borderRadius: 10,
+                    padding: 12,
+                  }}
+                >
+                  <input
+                    className={styles.formInput}
+                    type="text"
+                    value={q.question}
+                    onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                      handleQuestionChange(qIdx, event.target.value)
+                    }
+                    placeholder={`Pregunta ${qIdx + 1}`}
+                    required
+                  />
+                  <div style={{ marginTop: 8 }}>
+                    {q.answers.map((a: string, aIdx: number) => {
+                      const disableRemove = q.answers.length <= MIN_ANSWERS;
+                      return (
+                        <div
+                          key={aIdx}
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "auto 1fr auto",
+                            alignItems: "center",
+                            gap: 8,
+                            marginBottom: 6,
+                          }}
+                        >
+                          <input
+                            type="radio"
+                            name={radioName}
+                            checked={q.correct === aIdx}
+                            onChange={() => handleCorrectChange(qIdx, aIdx)}
+                            aria-label={`Marcar respuesta ${aIdx + 1} como correcta`}
+                          />
+                          <input
+                            className={styles.formInput}
+                            type="text"
+                            value={a}
+                            onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                              handleAnswerChange(qIdx, aIdx, event.target.value)
+                            }
+                            placeholder={`Respuesta ${aIdx + 1}`}
+                            required
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveAnswer(qIdx, aIdx)}
+                            className={styles.cancelBtn}
+                            style={{ padding: "4px 10px", fontSize: 13 }}
+                            disabled={disableRemove}
+                            aria-disabled={disableRemove}
+                            title={disableRemove ? "Cada pregunta debe tener al menos dos alternativas" : "Eliminar respuesta"}
+                          >
+                            –
+                          </button>
+                        </div>
+                      );
+                    })}
+                    <button
+                      type="button"
+                      onClick={() => handleAddAnswer(qIdx)}
+                      className={styles.submitBtn}
+                      style={{ padding: "4px 12px", fontSize: 13, marginTop: 2 }}
+                      disabled={q.answers.length >= MAX_ANSWERS}
+                      aria-disabled={q.answers.length >= MAX_ANSWERS}
+                    >
+                      + Añadir respuesta
                     </button>
                   </div>
-                ))}
-                <button type="button" onClick={() => handleAddAnswer(qIdx)} className={styles.submitBtn} style={{padding: '4px 12px', fontSize: 13, marginTop: 2}}>
-                  + Añadir respuesta
-                </button>
-              </div>
-              <button type="button" onClick={() => handleRemoveQuestion(qIdx)} className={styles.cancelBtn} style={{padding: '4px 12px', fontSize: 13, marginTop: 8}}>
-                Eliminar pregunta
-              </button>
-            </div>
-          ))}
-          <button type="button" onClick={handleAddQuestion} className={styles.submitBtn} style={{padding: '6px 16px', fontSize: 14}}>
-            + Añadir pregunta
-          </button>
-        </div>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveQuestion(qIdx)}
+                    className={styles.cancelBtn}
+                    style={{ padding: "4px 12px", fontSize: 13, marginTop: 8 }}
+                  >
+                    Eliminar pregunta
+                  </button>
+                </div>
+              );
+            })}
+            <button
+              type="button"
+              onClick={handleAddQuestion}
+              className={styles.submitBtn}
+              style={{ padding: "6px 16px", fontSize: 14 }}
+            >
+              + Añadir pregunta
+            </button>
+          </div>
+        )}
 
         {/* PPT/Video: Subir archivo (siempre visible para debug) */}
         <div className={styles.formLabel} style={{marginBottom: 0}}>

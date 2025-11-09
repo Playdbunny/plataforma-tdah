@@ -1,8 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import ActivityLayoutInfografia from "../../../../Layouts/ActivityLayout/ActivityLayoutInfografia";
 import styles from "./Infografia.module.css";
 import type { ActivityTemplateProps } from "../shared";
 import { extractQuestions, resolveResourceUrl } from "../shared";
+import { useActivityCompletion } from "../useActivityCompletion";
 
 const FALLBACK_QUESTIONS = [
   {
@@ -13,6 +14,7 @@ const FALLBACK_QUESTIONS = [
       "La infografía trata sobre un tema distinto.",
       "La infografía no contiene texto.",
     ],
+    correctIndex: 0,
   },
   {
     question: "¿Cuál es el concepto principal?",
@@ -22,12 +24,37 @@ const FALLBACK_QUESTIONS = [
       "Se detalla una receta.",
       "Se presenta un listado deportivo.",
     ],
+    correctIndex: 0,
   },
 ];
 
-function normalizeQuestions(raw: any[]): typeof FALLBACK_QUESTIONS {
+type NormalizedQuestion = typeof FALLBACK_QUESTIONS[number];
+
+function resolveCorrectIndex(entry: Record<string, unknown>, options: string[]): number {
+  const numericKeys = ["correctIndex", "correct", "answerIndex", "correctAnswer"] as const;
+  for (const key of numericKeys) {
+    const value = entry[key];
+    if (typeof value === "number" && Number.isFinite(value)) {
+      const bounded = Math.max(0, Math.min(Math.trunc(value), options.length - 1));
+      return bounded;
+    }
+  }
+
+  const stringKeys = ["correctOption", "answer"] as const;
+  for (const key of stringKeys) {
+    const value = entry[key];
+    if (typeof value === "string") {
+      const normalized = options.findIndex((option) => option === value);
+      if (normalized >= 0) return normalized;
+    }
+  }
+
+  return 0;
+}
+
+function normalizeQuestions(raw: any[]): NormalizedQuestion[] {
   if (!Array.isArray(raw) || raw.length === 0) return FALLBACK_QUESTIONS;
-  return raw
+  const normalized = raw
     .map((entry) => {
       if (!entry || typeof entry !== "object") return null;
       const question = typeof entry.question === "string" ? entry.question : null;
@@ -37,27 +64,39 @@ function normalizeQuestions(raw: any[]): typeof FALLBACK_QUESTIONS {
         ? rawOptions.filter((opt): opt is string => typeof opt === "string")
         : null;
       if (!question || !options || options.length === 0) return null;
+      const correctIndex = resolveCorrectIndex(entry as Record<string, unknown>, options);
       return {
         question,
         hint: hint ?? "Piensa en lo que viste en la infografía.",
         options,
+        correctIndex,
       };
     })
-    .filter((item): item is typeof FALLBACK_QUESTIONS[number] => Boolean(item));
+    .filter((item): item is NormalizedQuestion => Boolean(item));
+
+  return normalized.length > 0 ? normalized : FALLBACK_QUESTIONS;
 }
 
 export default function Infografia({ activity, backTo }: ActivityTemplateProps) {
-  const [page, setPage] = useState(0);
-  const [selectedOption, setSelectedOption] = useState<number | null>(null);
-
   const questions = useMemo(() => normalizeQuestions(extractQuestions(activity.config)), [
     activity.config,
   ]);
+
+  const [page, setPage] = useState(0);
+  const [answers, setAnswers] = useState<number[]>(() => questions.map(() => -1));
+  const { finishActivity, finished, xpReward, coinsReward, awardedXp, awardedCoins } =
+    useActivityCompletion(activity);
+
+  useEffect(() => {
+    setPage(0);
+    setAnswers(questions.map(() => -1));
+  }, [questions]);
 
   const totalQuestions = questions.length;
   const safeIndex = Math.min(page, totalQuestions - 1);
   const currentQuestion = questions[safeIndex];
   const progressPercent = ((safeIndex + 1) / totalQuestions) * 100;
+  const selectedOption = answers[safeIndex] ?? -1;
 
   const imageUrl =
     resolveResourceUrl(activity.config) ??
@@ -70,13 +109,30 @@ export default function Infografia({ activity, backTo }: ActivityTemplateProps) 
   };
 
   const handlePrevious = () => {
-    setSelectedOption(null);
     setPage((value) => Math.max(0, value - 1));
   };
 
   const handleNext = () => {
-    setSelectedOption(null);
     setPage((value) => Math.min(totalQuestions - 1, value + 1));
+  };
+
+  const handleSelect = (optionIndex: number) => {
+    setAnswers((prev) => {
+      const next = [...prev];
+      next[safeIndex] = optionIndex;
+      return next;
+    });
+  };
+
+  const handleFinish = () => {
+    const correctCount = questions.reduce((acc, question, index) => {
+      return acc + (answers[index] === question.correctIndex ? 1 : 0);
+    }, 0);
+    finishActivity({
+      correctCount,
+      totalCount: questions.length,
+      redirectTo: backTo,
+    });
   };
 
   return (
@@ -140,7 +196,7 @@ export default function Infografia({ activity, backTo }: ActivityTemplateProps) 
                   key={`option-${index}`}
                   className={styles.optionButton}
                   data-selected={selectedOption === index}
-                  onClick={() => setSelectedOption(index)}
+                  onClick={() => handleSelect(index)}
                   type="button"
                   aria-pressed={selectedOption === index}
                 >
@@ -172,11 +228,32 @@ export default function Infografia({ activity, backTo }: ActivityTemplateProps) 
             >
               Siguiente
             </button>
-            <div className={styles.rewardBadge}>
-              <span className={styles.rewardLabel}>Monedas</span>
-              <span className={styles.rewardValue}>+{activity.xpReward ?? 0}</span>
-            </div>
           </footer>
+          <div className={styles.completionRow}>
+            <button
+              className={styles.finishButton}
+              onClick={handleFinish}
+              type="button"
+              disabled={finished}
+            >
+              {finished ? "Actividad finalizada" : "Finalizar actividad"}
+            </button>
+            <div className={styles.rewardsRow}>
+              <div className={`${styles.rewardBadge} ${styles.xpBadge}`}>
+                <span className={styles.rewardLabel}>XP</span>
+                <span className={styles.rewardValue}>+{xpReward}</span>
+              </div>
+              <div className={`${styles.rewardBadge} ${styles.coinsBadge}`}>
+                <span className={styles.rewardLabel}>Monedas</span>
+                <span className={styles.rewardValue}>+{coinsReward}</span>
+              </div>
+            </div>
+          </div>
+          {finished ? (
+            <p className={styles.completionMessage}>
+              ¡Ganaste <strong>+{awardedXp} XP</strong> y <strong>+{awardedCoins} monedas</strong>!
+            </p>
+          ) : null}
         </section>
       </div>
     </ActivityLayoutInfografia>

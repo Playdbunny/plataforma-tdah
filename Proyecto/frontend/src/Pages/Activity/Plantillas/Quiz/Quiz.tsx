@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import ActivityLayout from "../../../../Layouts/ActivityLayout/ActivityLayout";
 import type { ActivityTemplateProps } from "../shared";
 import { extractQuestions } from "../shared";
+import { useActivityCompletion } from "../useActivityCompletion";
 import styles from "./Quiz.module.css";
 
 const FALLBACK_QUESTIONS = [
@@ -13,6 +14,7 @@ const FALLBACK_QUESTIONS = [
       "Esta opción brinda un ejemplo.",
       "Esta opción es distractora.",
     ],
+    correctIndex: 0,
   },
   {
     text: "Analiza la información presentada y elige la alternativa adecuada.",
@@ -22,10 +24,35 @@ const FALLBACK_QUESTIONS = [
       "Propone una comparación.",
       "No corresponde al tema.",
     ],
+    correctIndex: 0,
   },
 ];
 
-function normalizeQuestions(raw: any[]): typeof FALLBACK_QUESTIONS {
+type NormalizedQuestion = typeof FALLBACK_QUESTIONS[number];
+
+function resolveCorrectIndex(entry: Record<string, unknown>, options: string[]): number {
+  const numericKeys = ["correctIndex", "correct", "answerIndex", "correctAnswer"] as const;
+  for (const key of numericKeys) {
+    const value = entry[key];
+    if (typeof value === "number" && Number.isFinite(value)) {
+      const bounded = Math.max(0, Math.min(Math.trunc(value), options.length - 1));
+      return bounded;
+    }
+  }
+
+  const stringKeys = ["correctOption", "answer"] as const;
+  for (const key of stringKeys) {
+    const value = entry[key];
+    if (typeof value === "string") {
+      const normalized = options.findIndex((option) => option === value);
+      if (normalized >= 0) return normalized;
+    }
+  }
+
+  return 0;
+}
+
+function normalizeQuestions(raw: any[]): NormalizedQuestion[] {
   if (!Array.isArray(raw) || raw.length === 0) return FALLBACK_QUESTIONS;
   const normalized = raw
     .map((entry) => {
@@ -36,9 +63,10 @@ function normalizeQuestions(raw: any[]): typeof FALLBACK_QUESTIONS {
         ? rawOptions.filter((opt): opt is string => typeof opt === "string")
         : null;
       if (typeof text !== "string" || !options || options.length < 2) return null;
-      return { text, options };
+      const correctIndex = resolveCorrectIndex(entry as Record<string, unknown>, options);
+      return { text, options, correctIndex };
     })
-    .filter((item): item is typeof FALLBACK_QUESTIONS[number] => Boolean(item));
+    .filter((item): item is NormalizedQuestion => Boolean(item));
   return normalized.length > 0 ? normalized : FALLBACK_QUESTIONS;
 }
 
@@ -49,21 +77,46 @@ export default function QuizTemplate({ activity, backTo }: ActivityTemplateProps
   );
 
   const [page, setPage] = useState(0);
-  const [selectedOption, setSelectedOption] = useState<number | null>(null);
+  const [answers, setAnswers] = useState<number[]>(() => questions.map(() => -1));
+  const { finishActivity, finished, xpReward, coinsReward, awardedXp, awardedCoins } =
+    useActivityCompletion(activity);
+
+  useEffect(() => {
+    setPage(0);
+    setAnswers(questions.map(() => -1));
+  }, [questions]);
 
   const totalPages = questions.length;
   const safePage = Math.min(page, totalPages - 1);
   const question = questions[safePage];
   const progressPercent = ((safePage + 1) / totalPages) * 100;
+  const selectedOption = answers[safePage] ?? -1;
 
   const handlePrevious = () => {
-    setSelectedOption(null);
     setPage((value) => Math.max(0, value - 1));
   };
 
   const handleNext = () => {
-    setSelectedOption(null);
     setPage((value) => Math.min(totalPages - 1, value + 1));
+  };
+
+  const handleSelect = (optionIndex: number) => {
+    setAnswers((prev) => {
+      const next = [...prev];
+      next[safePage] = optionIndex;
+      return next;
+    });
+  };
+
+  const handleFinish = () => {
+    const correctCount = questions.reduce((acc, item, index) => {
+      return acc + (answers[index] === item.correctIndex ? 1 : 0);
+    }, 0);
+    finishActivity({
+      correctCount,
+      totalCount: questions.length,
+      redirectTo: backTo,
+    });
   };
 
   return (
@@ -93,7 +146,7 @@ export default function QuizTemplate({ activity, backTo }: ActivityTemplateProps
               key={`option-${index}`}
               className={styles.optionButton}
               data-selected={selectedOption === index}
-              onClick={() => setSelectedOption(index)}
+              onClick={() => handleSelect(index)}
               type="button"
               aria-pressed={selectedOption === index}
             >
@@ -119,11 +172,32 @@ export default function QuizTemplate({ activity, backTo }: ActivityTemplateProps
           >
             Siguiente
           </button>
-          <div className={styles.rewardBadge}>
-            <span className={styles.rewardLabel}>Monedas</span>
-            <span className={styles.rewardValue}>+{activity.xpReward ?? 0}</span>
-          </div>
         </footer>
+        <div className={styles.completionRow}>
+          <button
+            className={styles.finishButton}
+            onClick={handleFinish}
+            type="button"
+            disabled={finished}
+          >
+            {finished ? "Actividad finalizada" : "Finalizar actividad"}
+          </button>
+          <div className={styles.rewardsRow}>
+            <div className={`${styles.rewardBadge} ${styles.xpBadge}`}>
+              <span className={styles.rewardLabel}>XP</span>
+              <span className={styles.rewardValue}>+{xpReward}</span>
+            </div>
+            <div className={`${styles.rewardBadge} ${styles.coinsBadge}`}>
+              <span className={styles.rewardLabel}>Monedas</span>
+              <span className={styles.rewardValue}>+{coinsReward}</span>
+            </div>
+          </div>
+        </div>
+        {finished ? (
+          <p className={styles.completionMessage}>
+            ¡Ganaste <strong>+{awardedXp} XP</strong> y <strong>+{awardedCoins} monedas</strong>!
+          </p>
+        ) : null}
       </div>
     </ActivityLayout>
   );

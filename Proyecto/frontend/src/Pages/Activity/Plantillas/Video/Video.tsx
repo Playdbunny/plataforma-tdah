@@ -3,6 +3,7 @@ import ActivityLayout from "../../../../Layouts/ActivityLayout/ActivityLayout";
 import styles from "./Video.module.css";
 import type { ActivityTemplateProps } from "../shared";
 import { resolveResourceUrl } from "../shared";
+import { useActivityCompletion } from "../useActivityCompletion";
 
 function buildEmbedUrl(url: string): string | null {
   try {
@@ -32,6 +33,8 @@ export default function VideoTemplate({ activity, backTo }: ActivityTemplateProp
   const embedUrl = useMemo(() => (resourceUrl ? buildEmbedUrl(resourceUrl) : null), [
     resourceUrl,
   ]);
+  const { finishActivity, finished, xpReward, coinsReward, awardedXp, awardedCoins } =
+    useActivityCompletion(activity);
 
   const backMessage =
     activity.description ??
@@ -111,9 +114,34 @@ export default function VideoTemplate({ activity, backTo }: ActivityTemplateProp
             </p>
           </div>
           <div className={styles.rewardCard}>
-            <span className={styles.rewardLabel}>Monedas</span>
-            <span className={styles.rewardValue}>+{activity.xpReward ?? 0}</span>
+            <div className={styles.rewardBadges}>
+              <div className={`${styles.rewardBadge} ${styles.xpBadge}`}>
+                <span className={styles.rewardLabel}>XP</span>
+                <span className={styles.rewardValue}>+{xpReward}</span>
+              </div>
+              <div className={`${styles.rewardBadge} ${styles.coinsBadge}`}>
+                <span className={styles.rewardLabel}>Monedas</span>
+                <span className={styles.rewardValue}>+{coinsReward}</span>
+              </div>
+            </div>
+            <button
+              className={styles.finishButton}
+              onClick={() =>
+                finishActivity({
+                  redirectTo: backTo,
+                })
+              }
+              type="button"
+              disabled={finished}
+            >
+              {finished ? "Actividad finalizada" : "Finalizar actividad"}
+            </button>
           </div>
+          {finished ? (
+            <p className={styles.completionMessage}>
+              ¡Ganaste <strong>+{awardedXp} XP</strong> y <strong>+{awardedCoins} monedas</strong>!
+            </p>
+          ) : null}
         </aside>
       </div>
     </ActivityLayout>
