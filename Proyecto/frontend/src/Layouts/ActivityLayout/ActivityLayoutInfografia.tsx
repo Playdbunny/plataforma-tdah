@@ -1,7 +1,6 @@
 import React from "react";
-import Navbar from "../../Components/Navbar/Navbar"; // Ajusta la ruta si es necesario
+import Navbar from "../../Components/Navbar/Navbar";
 import styles from "./ActivityLayoutInfografia.module.css";
-
 
 import { useNavigate } from "react-router-dom";
 
@@ -11,29 +10,60 @@ interface ActivityLayoutProps {
   children?: React.ReactNode;
   pagination?: React.ReactNode;
   finished?: React.ReactNode;
-  backTo?: string; // Nueva prop para la ruta de regreso
+  backTo?: string;
 }
 
-export default function ActivityLayout({ title, leftPanel, children, pagination, finished, backTo }: ActivityLayoutProps) {
+export default function ActivityLayout({
+  title,
+  leftPanel,
+  children,
+  pagination,
+  finished,
+  backTo,
+}: ActivityLayoutProps) {
   const navigate = useNavigate();
   const target = backTo || "/subjects";
+  const hasLeftPanel = Boolean(leftPanel);
+
   return (
     <div className={styles.bg}>
-      <Navbar items={[
-        { label: "Materias", to: "/subjects" },
-      ]}/>
-      <div className={styles.main}>
-        <button className={styles.backButton} onClick={() => navigate(target)} aria-label="Volver">
-          ← Volver
-        </button>
-        {leftPanel && (
-          <div className={styles.panel}>
-            {leftPanel}
+      <Navbar items={[{ label: "Materias", to: "/subjects" }]} />
+      <div className={styles.container}>
+        <div className={styles.toolbar}>
+          <button
+            className={styles.backButton}
+            onClick={() => navigate(target)}
+            aria-label="Volver"
+            type="button"
+          >
+            <svg
+              className={styles.pixelArrow}
+              width="32"
+              height="32"
+              viewBox="0 0 32 32"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <rect x="2" y="14" width="20" height="4" fill="#fff" />
+              <rect x="2" y="14" width="10" height="4" fill="#d1d1d1" />
+              <rect x="2" y="10" width="8" height="12" fill="#fff" />
+              <rect x="2" y="10" width="4" height="12" fill="#d1d1d1" />
+            </svg>
+            <span className={styles.backLabel}>Volver</span>
+          </button>
+          <div className={styles.title}>{title}</div>
+        </div>
+        <div className={styles.divider} />
+        <div className={styles.contentArea} data-has-left={hasLeftPanel}>
+          {hasLeftPanel ? <aside className={styles.sidePanel}>{leftPanel}</aside> : null}
+          <main className={styles.mainContent}>{children}</main>
+        </div>
+        {pagination || finished ? (
+          <div className={styles.footerRow}>
+            {pagination ? <div className={styles.pagination}>{pagination}</div> : null}
+            {finished ? <div className={styles.finished}>{finished}</div> : null}
           </div>
-        )}
-        {children}
-        {pagination && <div className={styles.pagination}>{pagination}</div>}
-        {finished && <div className={styles.finished}>{finished}</div>}
+        ) : null}
       </div>
     </div>
   );

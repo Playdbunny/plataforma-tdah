@@ -51,85 +51,79 @@ export default function QuizTemplate({ activity, backTo }: ActivityTemplateProps
   const [page, setPage] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
 
-  const safePage = Math.min(page, questions.length - 1);
-  const question = questions[safePage];
   const totalPages = questions.length;
+  const safePage = Math.min(page, totalPages - 1);
+  const question = questions[safePage];
+  const progressPercent = ((safePage + 1) / totalPages) * 100;
 
-  const leftOptions = question.options.filter((_, index) => index % 2 === 0);
-  const rightOptions = question.options.filter((_, index) => index % 2 === 1);
+  const handlePrevious = () => {
+    setSelectedOption(null);
+    setPage((value) => Math.max(0, value - 1));
+  };
 
-  const renderOption = (option: string, actualIndex: number) => (
-    <button
-      key={`option-${actualIndex}`}
-      className={`${styles.optionBtn} ${
-        selectedOption === actualIndex ? styles.optionSelected : ""
-      }`}
-      type="button"
-      onClick={() => setSelectedOption(actualIndex)}
-      aria-pressed={selectedOption === actualIndex}
-    >
-      <img src="/Images/opciones.png" alt="Opción" className={styles.optionFrame} />
-      <span className={styles.optionText}>{option}</span>
-    </button>
-  );
+  const handleNext = () => {
+    setSelectedOption(null);
+    setPage((value) => Math.min(totalPages - 1, value + 1));
+  };
 
   return (
     <ActivityLayout
       title={<span className={styles.quizTitle}>{activity.title}</span>}
       backTo={backTo}
     >
-      <div className={styles.quizBg}>
-        <div className={styles.quizContent}>
-          <div className={styles.scrollRow}>
-            <div className={styles.optionCol}>
-              {leftOptions.map((option, index) =>
-                renderOption(option, index * 2),
-              )}
-            </div>
-            <div className={styles.scrollContainer}>
-              <img src="/Images/Pergamino.png" alt="Pergamino" className={styles.scrollImg} />
-              <div className={styles.scrollText}>{question.text}</div>
-            </div>
-            <div className={styles.optionCol}>
-              {rightOptions.map((option, index) =>
-                renderOption(option, index * 2 + 1),
-              )}
-            </div>
+      <div className={styles.quizWrapper}>
+        <header className={styles.quizHeader}>
+          <span className={styles.quizCounter}>
+            Pregunta {safePage + 1} de {totalPages}
+          </span>
+          <div className={styles.progressTrack}>
+            <div
+              className={styles.progressValue}
+              style={{ width: `${progressPercent}%` }}
+            />
           </div>
-          <div className={styles.quizFooter}>
+          <p className={styles.questionText}>{question.text}</p>
+          {activity.description ? (
+            <p className={styles.quizHint}>{activity.description}</p>
+          ) : null}
+        </header>
+        <div className={styles.optionsGrid}>
+          {question.options.map((option, index) => (
             <button
-              className={styles.footerNav}
-              onClick={() => {
-                setSelectedOption(null);
-                setPage((value) => Math.max(0, value - 1));
-              }}
-              disabled={safePage === 0}
-              aria-disabled={safePage === 0 ? "true" : "false"}
+              key={`option-${index}`}
+              className={styles.optionButton}
+              data-selected={selectedOption === index}
+              onClick={() => setSelectedOption(index)}
               type="button"
+              aria-pressed={selectedOption === index}
             >
-              Anterior
+              <span className={styles.optionIndex}>{String.fromCharCode(65 + index)}</span>
+              <span className={styles.optionCopy}>{option}</span>
             </button>
-            <span className={styles.footerPage}>
-              Página <b>{safePage + 1}</b> de {totalPages}
-            </span>
-            <button
-              className={styles.footerNav}
-              onClick={() => {
-                setSelectedOption(null);
-                setPage((value) => Math.min(totalPages - 1, value + 1));
-              }}
-              disabled={safePage >= totalPages - 1}
-              aria-disabled={safePage >= totalPages - 1 ? "true" : "false"}
-              type="button"
-            >
-              Siguiente
-            </button>
-            <div className={styles.finishedBtn}>
-              <span>Monedas</span>
-              <span className={styles.coinValue}>+{activity.xpReward ?? 0}</span>
-            </div>
-          </div>
+          ))}
         </div>
+        <footer className={styles.quizFooter}>
+          <button
+            className={styles.primaryButton}
+            onClick={handlePrevious}
+            disabled={safePage === 0}
+            type="button"
+          >
+            Anterior
+          </button>
+          <button
+            className={styles.primaryButton}
+            onClick={handleNext}
+            disabled={safePage >= totalPages - 1}
+            type="button"
+          >
+            Siguiente
+          </button>
+          <div className={styles.rewardBadge}>
+            <span className={styles.rewardLabel}>Monedas</span>
+            <span className={styles.rewardValue}>+{activity.xpReward ?? 0}</span>
+          </div>
+        </footer>
       </div>
     </ActivityLayout>
   );

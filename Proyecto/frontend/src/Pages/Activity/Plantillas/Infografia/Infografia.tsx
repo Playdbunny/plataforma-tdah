@@ -54,82 +54,130 @@ export default function Infografia({ activity, backTo }: ActivityTemplateProps) 
     activity.config,
   ]);
 
-  const currentQuestion = questions[Math.min(page, questions.length - 1)];
+  const totalQuestions = questions.length;
+  const safeIndex = Math.min(page, totalQuestions - 1);
+  const currentQuestion = questions[safeIndex];
+  const progressPercent = ((safeIndex + 1) / totalQuestions) * 100;
 
   const imageUrl =
     resolveResourceUrl(activity.config) ??
     activity.bannerUrl ??
     "/Images/infografia-placeholder.png";
 
+  const openImage = () => {
+    if (!imageUrl) return;
+    window.open(imageUrl, "_blank", "noopener,noreferrer");
+  };
+
+  const handlePrevious = () => {
+    setSelectedOption(null);
+    setPage((value) => Math.max(0, value - 1));
+  };
+
+  const handleNext = () => {
+    setSelectedOption(null);
+    setPage((value) => Math.min(totalQuestions - 1, value + 1));
+  };
+
   return (
     <ActivityLayoutInfografia title={activity.title} backTo={backTo}>
-      <div className={styles.flexRow}>
-        <div className={styles.panelAzul1}>
-          <div className={styles.panelTopControls}>
-            <div className={styles.zoomControls}>
-              <span className={styles.zoomInfo}>Revisa cada detalle</span>
+      <div className={styles.layout}>
+        <section className={styles.imagePanel}>
+          <header className={styles.imageHeader}>
+            <h2 className={styles.panelTitle}>Infografía</h2>
+            <div className={styles.imageActions}>
+              <button
+                className={styles.secondaryButton}
+                onClick={openImage}
+                type="button"
+              >
+                Abrir en pestaña nueva
+              </button>
+              <a className={styles.secondaryButton} href={imageUrl} download>
+                Descargar imagen
+              </a>
             </div>
-          </div>
-          <div className={styles.infografiaContainer}>
+          </header>
+          <div className={styles.imageWrapper}>
             <img
               src={imageUrl}
               alt={`Infografía de ${activity.title}`}
               className={styles.infografiaImg}
+              loading="lazy"
             />
           </div>
-        </div>
-        <div className={styles.panelAzul2}>
-          <div className={styles.activityTitle}>{activity.title}</div>
-          {activity.description ? (
-            <p className={styles.hint}>{activity.description}</p>
-          ) : null}
-          <div className={styles.question}>{currentQuestion.question}</div>
-          {currentQuestion.hint ? (
-            <span className={styles.hint}>{currentQuestion.hint}</span>
-          ) : null}
-          <div className={styles.containeroptions}>
-            {currentQuestion.options.map((option, index) => (
-              <button
-                key={`opt-${index}`}
-                className={`${
-                  styles[`option${index + 1}` as keyof typeof styles] ?? styles.option1
-                }${selectedOption === index ? ` ${styles.selected}` : ""}`}
-                onClick={() => setSelectedOption(index)}
-                type="button"
-              >
-                <span className={styles.optionLetter}>{String.fromCharCode(65 + index)}</span>
-                {option}
-              </button>
-            ))}
+          <p className={styles.imageHint}>
+            Sugerencia: amplía la imagen con el zoom de tu navegador para observar
+            los detalles.
+          </p>
+        </section>
+        <section className={styles.questionPanel}>
+          <header className={styles.questionHeader}>
+            <h1 className={styles.activityTitle}>{activity.title}</h1>
+            {activity.description ? (
+              <p className={styles.description}>{activity.description}</p>
+            ) : null}
+            <div className={styles.progress}>
+              <span className={styles.progressLabel}>
+                Pregunta {safeIndex + 1} de {totalQuestions}
+              </span>
+              <div className={styles.progressTrack}>
+                <div
+                  className={styles.progressValue}
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+            </div>
+          </header>
+          <div className={styles.questionBody}>
+            <p className={styles.questionText}>{currentQuestion.question}</p>
+            {currentQuestion.hint ? (
+              <p className={styles.hint}>{currentQuestion.hint}</p>
+            ) : null}
+            <div className={styles.optionsGrid}>
+              {currentQuestion.options.map((option, index) => (
+                <button
+                  key={`option-${index}`}
+                  className={styles.optionButton}
+                  data-selected={selectedOption === index}
+                  onClick={() => setSelectedOption(index)}
+                  type="button"
+                  aria-pressed={selectedOption === index}
+                >
+                  <span className={styles.optionBadge}>
+                    {String.fromCharCode(65 + index)}
+                  </span>
+                  <span className={styles.optionCopy}>{option}</span>
+                </button>
+              ))}
+            </div>
           </div>
-          <div className={styles.paginationContainer}>
+          <footer className={styles.controls}>
             <button
-              className={styles.paginationBtn}
-              onClick={() => {
-                setSelectedOption(null);
-                setPage((value) => Math.max(0, value - 1));
-              }}
-              disabled={page === 0}
+              className={styles.primaryButton}
+              onClick={handlePrevious}
+              disabled={safeIndex === 0}
               type="button"
             >
               Anterior
             </button>
             <span className={styles.paginationInfo}>
-              Página {Math.min(page, questions.length - 1) + 1} de {questions.length}
+              Página {safeIndex + 1} de {totalQuestions}
             </span>
             <button
-              className={styles.paginationBtn}
-              onClick={() => {
-                setSelectedOption(null);
-                setPage((value) => Math.min(questions.length - 1, value + 1));
-              }}
-              disabled={page >= questions.length - 1}
+              className={styles.primaryButton}
+              onClick={handleNext}
+              disabled={safeIndex >= totalQuestions - 1}
               type="button"
             >
               Siguiente
             </button>
-          </div>
-        </div>
+            <div className={styles.rewardBadge}>
+              <span className={styles.rewardLabel}>Monedas</span>
+              <span className={styles.rewardValue}>+{activity.xpReward ?? 0}</span>
+            </div>
+          </footer>
+        </section>
       </div>
     </ActivityLayoutInfografia>
   );

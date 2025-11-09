@@ -1,203 +1,199 @@
-/* Estilos básicos para el Quiz */
-/* Fondo y layout principal */
-.quizBg {
-	width: 100vw;
-	min-height: 100vh;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	background: transparent;
-}
-.quizContent {
-
-	background: rgba(255, 255, 255, 0);
-	border-radius: 18px;
-	box-shadow: 0 2px 16px rgba(253, 251, 251, 0);
-	padding: 2.5rem 2.5rem 1.5rem 2.5rem;
-	min-width: 900px;
-	min-height: 600px;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	position: relative;
-}
-
 .quizTitle {
-	font-family: 'Press Start 2P', 'VT323', monospace;
-	font-size: 2.1rem;
-	color: #fdef5c;
-	text-shadow: 2px 2px 0 #23244a, 4px 4px 0 #fff, 6px 6px 0 #23244a;
-	margin-bottom: 2.5rem;
-	text-align: relative;
-	display: block;
-	margin-left: 690px;;
-	animation: floatPergamino 3.5s ease-in-out infinite;
-	margin-top:50px;
-}
-
-
-.scrollRow {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	justify-content: center;
-	gap: 2.5rem;
-	width: 100%;
-	margin-bottom: 2.2rem;
-}
-.optionCol {
-	display: flex;
-	flex-direction: column;
-	gap: 2.2rem;
-}
-.optionBtn {
-        background: none;
-        border: none;
-        padding: 0;
-        position: relative;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: flex-start;
-        transition: filter 0.15s, box-shadow 0.15s;
-        outline: none;
-}
-.optionSelected .optionFrame {
-        filter: brightness(1.1) drop-shadow(0 0 12px #fdef5c);
-}
-.optionSelected .optionText {
-        color: #d95cf4;
-}
-
-
-
-.optionBtn:focus .optionFrame,
-.optionBtn:hover .optionFrame {
-	filter: brightness(1.1) drop-shadow(0 0 8px #fdef5c88);
-}
-
-.optionFrame {
-	width: 600px;
-	height: 300px;
-	image-rendering: pixelated;
-	margin-right: -30px;
-	z-index: 1;
-	transition: filter 0.15s, box-shadow 0.15s;
-}
-.optionText {
-	font-family: 'Press Start 2P', 'VT323', monospace;
-	font-size: 0.6rem;
-	color: #23244a;
-	margin-left: -280px;
-	z-index: 2;
-	width: 150px;
-	text-align: center;
-	pointer-events: none;
-}
-.starIcon {
-	width: 32px;
-	height: 32px;
-	position: absolute;
-	right: -38px;
-	top: 12px;
-	image-rendering: pixelated;
-}
-.scrollContainer {
-	position: relative;
-	width: 560px;
-	height: 220px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	animation: floatPergamino 3.5s ease-in-out infinite;
-}
-.scrollImg {
-	width: 800px;
-	height: 700px;
-	image-rendering: pixelated;
-	z-index: 1;
-	margin-right: -490px;
-	margin-top: 250px;
-}
-.scrollText {
-	position: absolute;
-	top: 110%;
-	margin-right: -690px;
-	transform: translate(-50%, -50%);
-	width: 180px;
-	font-family: 'VT323', 'Press Start 2P', monospace;
-	font-size: 0.8rem;
-	color: #23244a;
-	text-align: center;
-	z-index: 2;
-	background: none;
-	animation: floatPergamino 3.5s ease-in-out infinite;
+  font-family: "Press Start 2P", "VT323", monospace;
+  font-size: clamp(1.6rem, 2.3vw, 2.3rem);
+  color: #fdef5c;
+  letter-spacing: 0.08em;
+  text-shadow: 0 8px 28px rgba(253, 239, 92, 0.35);
+  display: block;
+  text-align: center;
+  margin-top: 0.45rem;
+  animation: floatPergamino 3.5s ease-in-out infinite;
 }
 
 @keyframes floatPergamino {
-	0% { transform: translate(-50%, -50%) translateY(0); }
-	50% { transform: translate(-50%, -50%) translateY(-18px); }
-	100% { transform: translate(-50%, -50%) translateY(0); }
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+  100% {
+    transform: translateY(0);
+  }
 }
+
+.quizWrapper {
+  width: 100%;
+  background: linear-gradient(160deg, rgba(35, 36, 74, 0.95) 0%, rgba(13, 15, 36, 0.95) 100%);
+  border-radius: 28px;
+  border: 4px solid #101224;
+  box-shadow: 0 18px 40px rgba(10, 12, 32, 0.45);
+  padding: clamp(1.2rem, 2.4vw, 2.1rem) clamp(1.05rem, 2.4vw, 2.2rem);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: clamp(1.1rem, 2vh, 1.65rem);
+  flex: 1;
+  min-height: clamp(520px, 68vh, 620px);
+}
+
+.quizHeader {
+  display: grid;
+  gap: clamp(0.75rem, 1.6vh, 1.15rem);
+  align-content: start;
+}
+
+.quizCounter {
+  font-family: "Press Start 2P", "VT323", monospace;
+  font-size: 0.8rem;
+  color: #cfd7ff;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.progressTrack {
+  width: 100%;
+  height: 0.6rem;
+  border-radius: 999px;
+  background: rgba(8, 10, 30, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  overflow: hidden;
+}
+
+.progressValue {
+  height: 100%;
+  background: linear-gradient(90deg, #4cc3ff 0%, #ffe066 100%);
+  box-shadow: 0 0 12px rgba(255, 224, 102, 0.45);
+}
+
+.questionText {
+  font-family: "Press Start 2P", "VT323", monospace;
+  font-size: clamp(0.95rem, 1.8vw, 1.2rem);
+  color: #ffffff;
+  line-height: 1.35;
+}
+
+.quizHint {
+  font-family: "VT323", "Press Start 2P", monospace;
+  font-size: 0.95rem;
+  color: #ffe066;
+  background: rgba(255, 224, 102, 0.12);
+  border: 1px solid rgba(255, 224, 102, 0.35);
+  border-radius: 14px;
+  padding: 0.65rem 0.9rem;
+  line-height: 1.3;
+}
+
+.optionsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  align-content: start;
+  min-height: 0;
+}
+
+.optionButton {
+  background: rgba(191, 200, 255, 0.12);
+  border: 2px solid rgba(191, 200, 255, 0.35);
+  border-radius: 20px;
+  padding: 0.85rem 1.1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  color: #ffffff;
+}
+
+.optionButton:hover,
+.optionButton:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(76, 195, 255, 0.25);
+  border-color: rgba(76, 195, 255, 0.8);
+}
+
+.optionButton[data-selected="true"] {
+  background: rgba(255, 224, 102, 0.25);
+  border-color: rgba(255, 224, 102, 0.9);
+  box-shadow: 0 16px 34px rgba(255, 224, 102, 0.25);
+}
+
+.optionIndex {
+  font-family: "Press Start 2P", "VT323", monospace;
+  font-size: 0.72rem;
+  color: #101224;
+  background: #ffe066;
+  border-radius: 999px;
+  padding: 0.45rem 0.6rem;
+  box-shadow: 0 4px 10px rgba(255, 224, 102, 0.35);
+}
+
+.optionCopy {
+  font-family: "VT323", "Press Start 2P", monospace;
+  font-size: 1rem;
+  line-height: 1.3;
+  color: inherit;
+}
+
 .quizFooter {
-	width: 100%;
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	margin-top: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.9rem;
 }
-.footerNav {
-	font-family: 'Press Start 2P', 'VT323', monospace;
-	align-items: center;
-	justify-content: center;
-	font-size: 1rem;
-	cursor: pointer;
-	background: none;
-	color: #fff;
-	border: none;
-	box-shadow: none;
-	filter: none;
-	opacity: 1;
-	transition: opacity 0.15s;
-	margin-top:-190px;
-	margin-left: 360px;
-	color: #fff;
-	z-index: 10;
-	pointer-events: auto;
-	position: relative;
+
+.primaryButton {
+  background: linear-gradient(135deg, #4cc3ff 0%, #3a7cff 100%);
+  color: #101224;
+  font-family: "Press Start 2P", "VT323", monospace;
+  font-size: 0.8rem;
+  border: none;
+  border-radius: 999px;
+  padding: 0.65rem 1.5rem;
+  cursor: pointer;
+  box-shadow: 0 12px 22px rgba(58, 124, 255, 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
 }
-.footerNav:hover {
-	opacity: 1;
+
+.primaryButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  box-shadow: none;
 }
-.footerPage {
-	font-family: 'Press Start 2P', 'VT323', monospace;
-	color: #f9f9f9;
-	font-size: 1rem;
-	margin-top:-190px;
-	margin-right: -390px;
+
+.rewardBadge {
+  background: rgba(34, 42, 68, 0.85);
+  border-radius: 18px;
+  padding: 0.5rem 1.05rem;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  border: 1px solid rgba(255, 224, 102, 0.35);
+  margin-left: auto;
 }
-.finishedBtn {
-        background: #222a44;
-        color: #fff;
-        font-family: 'Press Start 2P', 'VT323', monospace;
-        font-size: 1rem;
-        border-radius: 22px;
-        padding: 0.4rem 1.4rem 0.4rem 1.2rem;
-        box-shadow: 0 2px 8px #0008;
-        border: none;
-        display: flex;
-        align-items: center;
-        gap: 0.7rem;
-        min-width: 140px;
-        min-height: 38px;
-        cursor: default;
+
+.rewardLabel {
+  font-family: "Press Start 2P", "VT323", monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  color: #cfd7ff;
+  text-transform: uppercase;
 }
-.coinValue {
-        color: #fdef5c;
-        font-weight: 700;
+
+.rewardValue {
+  font-family: "Press Start 2P", "VT323", monospace;
+  font-size: 0.95rem;
+  color: #ffe066;
 }
-.coinIcon {
-	width: 28px;
-	height: 28px;
-	margin-right: 0.2rem;
+
+@media (max-width: 720px) {
+  .quizWrapper {
+    padding: 1.6rem;
+    gap: 1.35rem;
+  }
+
+  .quizFooter {
+    flex-direction: column;
+    align-items: center;
+  }
 }
