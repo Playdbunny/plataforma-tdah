@@ -7,34 +7,57 @@ import styles from "./PPT-Animada.module.css";
 export default function PPTAnimada({ activity, backTo }: ActivityTemplateProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const resourceUrl = resolveResourceUrl(activity.config);
+  const description =
+    activity.description ??
+    "Toma un cuaderno o tu tablet para registrar los puntos clave de la presentación.";
+
+  const requestFullscreen = () => {
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+    const method =
+      iframe.requestFullscreen ||
+      (iframe as any).webkitRequestFullscreen ||
+      (iframe as any).mozRequestFullScreen ||
+      (iframe as any).msRequestFullscreen;
+    if (method) {
+      method.call(iframe);
+    }
+  };
+
+  const openInNewTab = () => {
+    if (!resourceUrl) return;
+    window.open(resourceUrl, "_blank", "noopener,noreferrer");
+  };
 
   return (
     <ActivityLayout
       title={<div className={styles.activityTitle}>{activity.title}</div>}
       backTo={backTo}
     >
-      <div className={styles.containerRow}>
-        <div className={styles.panelAzul}>
-          <div className={styles.presentationContainer}>
-            <button
-              className={styles.fullscreenBtn}
-              onClick={() => {
-                const iframe = iframeRef.current;
-                if (!iframe) return;
-                const requestFullscreen =
-                  iframe.requestFullscreen ||
-                  (iframe as any).webkitRequestFullscreen ||
-                  (iframe as any).mozRequestFullScreen ||
-                  (iframe as any).msRequestFullscreen;
-                if (requestFullscreen) {
-                  requestFullscreen.call(iframe);
-                }
-              }}
-              title="Pantalla completa"
-              type="button"
-            >
-              <img src="/Images/fullscreen.png" alt="Pantalla completa" />
-            </button>
+      <div className={styles.layout}>
+        <section className={styles.viewerColumn}>
+          <header className={styles.viewerHeader}>
+            <h2 className={styles.sectionTitle}>Presentación interactiva</h2>
+            {resourceUrl ? (
+              <div className={styles.viewerActions}>
+                <button
+                  className={styles.secondaryButton}
+                  onClick={requestFullscreen}
+                  type="button"
+                >
+                  Pantalla completa
+                </button>
+                <button
+                  className={styles.secondaryButton}
+                  onClick={openInNewTab}
+                  type="button"
+                >
+                  Abrir en pestaña nueva
+                </button>
+              </div>
+            ) : null}
+          </header>
+          <div className={styles.iframeWrapper}>
             {resourceUrl ? (
               <iframe
                 ref={iframeRef}
@@ -50,28 +73,34 @@ export default function PPTAnimada({ activity, backTo }: ActivityTemplateProps) 
               </div>
             )}
           </div>
-        </div>
-        <div className={styles.panelPixel}>
-          <span className={`${styles.corner} ${styles.tl}`} aria-hidden />
-          <span className={`${styles.corner} ${styles.tr}`} aria-hidden />
-          <span className={`${styles.corner} ${styles.bl}`} aria-hidden />
-          <span className={`${styles.corner} ${styles.br}`} aria-hidden />
-          <div className={styles.pixelContent}>
+        </section>
+        <aside className={styles.infoColumn}>
+          <div className={styles.tipCard}>
             <img
               src="/Gifs/Pixel Owl Gif.gif"
-              alt="Pixel Owl"
-              className={styles.owlGif}
+              alt="Sugerencia"
+              className={styles.tipIcon}
+              loading="lazy"
             />
-            <div className={styles.pixelText}>
-              {activity.description ??
-                "Toma un cuaderno o tu tablet para registrar los puntos clave."}
-            </div>
+            <p className={styles.tipText}>{description}</p>
           </div>
-        </div>
-      </div>
-      <div className={styles.finishedBtn}>
-        <span className={styles.finishedText}>¡Actividad completada!</span>
-        <span className={styles.finishedReward}>+{activity.xpReward ?? 0}</span>
+          <div className={styles.tipCard}>
+            <img
+              src="/Gifs/Fuegito.gif"
+              alt="Consejo"
+              className={styles.tipIcon}
+              loading="lazy"
+            />
+            <p className={styles.tipText}>
+              Usa las flechas del teclado para avanzar rápidamente y no olvides pausar para
+              tomar apuntes.
+            </p>
+          </div>
+          <div className={styles.rewardCard}>
+            <span className={styles.rewardLabel}>Monedas</span>
+            <span className={styles.rewardValue}>+{activity.xpReward ?? 0}</span>
+          </div>
+        </aside>
       </div>
     </ActivityLayout>
   );

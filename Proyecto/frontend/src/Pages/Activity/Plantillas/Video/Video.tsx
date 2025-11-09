@@ -33,28 +33,34 @@ export default function VideoTemplate({ activity, backTo }: ActivityTemplateProp
     resourceUrl,
   ]);
 
-  const backMessage = activity.description ??
-    "Disfruta del video y toma apuntes importantes para tu aprendizaje.";
+  const backMessage =
+    activity.description ??
+    "Disfruta del video, toma apuntes importantes y pausa cuando lo necesites.";
+
+  const openInNewTab = () => {
+    if (!resourceUrl) return;
+    const target = embedUrl ?? resourceUrl;
+    window.open(target, "_blank", "noopener,noreferrer");
+  };
+
+  const hasVideo = Boolean(embedUrl || resourceUrl);
 
   return (
-    <ActivityLayout title={<span className={styles.videoTitle}>{activity.title}</span>} backTo={backTo}>
-      <div className={styles.videoBg}>
-        <div className={styles.videoContent}>
-          <div className={styles.sidePanelGroup}>
-            <div className={`${styles.sidePanel} ${styles.topPanel}`}>
-              <img src="/Gifs/Fuegito.gif" alt="Decoración" className={styles.panelIcon} />
-              <span className={styles.panelText}>{backMessage}</span>
-            </div>
-          <div className={`${styles.sidePanel} ${styles.bottomPanel}`}>
-            <img src="/Gifs/Pixel Owl Gif.gif" alt="Consejo" className={styles.panelIcon} />
-            <span className={styles.panelText}>
-              Recuerda tomar notas
-              <br />
-              y pausa el video si lo necesitas.
-            </span>
-          </div>
-          </div>
-          <div className={styles.videoMain}>
+    <ActivityLayout
+      title={<span className={styles.videoTitle}>{activity.title}</span>}
+      backTo={backTo}
+    >
+      <div className={styles.videoWrapper}>
+        <section className={styles.playerColumn}>
+          <header className={styles.playerHeader}>
+            <h2 className={styles.sectionTitle}>Reproductor</h2>
+            {hasVideo ? (
+              <button className={styles.secondaryButton} onClick={openInNewTab} type="button">
+                Abrir en pestaña nueva
+              </button>
+            ) : null}
+          </header>
+          <div className={styles.playerSurface}>
             {embedUrl ? (
               <iframe
                 className={styles.videoPlayer}
@@ -78,11 +84,37 @@ export default function VideoTemplate({ activity, backTo }: ActivityTemplateProp
               </div>
             )}
           </div>
-          <div className={styles.finishedBtn}>
-            <span>¡Buen trabajo!</span>
-            <span className={styles.coinValue}>+{activity.xpReward ?? 0}</span>
+          <p className={styles.playerHint}>
+            Consejo: utiliza la barra espaciadora para pausar o reanudar rápidamente el
+            contenido.
+          </p>
+        </section>
+        <aside className={styles.sideColumn}>
+          <div className={styles.infoCard}>
+            <img
+              src="/Gifs/Fuegito.gif"
+              alt="Decoración"
+              className={styles.cardIcon}
+              loading="lazy"
+            />
+            <p className={styles.cardText}>{backMessage}</p>
           </div>
-        </div>
+          <div className={styles.infoCard}>
+            <img
+              src="/Gifs/Pixel Owl Gif.gif"
+              alt="Consejo"
+              className={styles.cardIcon}
+              loading="lazy"
+            />
+            <p className={styles.cardText}>
+              Comparte tus apuntes con tu docente o compañeros para reforzar el aprendizaje.
+            </p>
+          </div>
+          <div className={styles.rewardCard}>
+            <span className={styles.rewardLabel}>Monedas</span>
+            <span className={styles.rewardValue}>+{activity.xpReward ?? 0}</span>
+          </div>
+        </aside>
       </div>
     </ActivityLayout>
   );
