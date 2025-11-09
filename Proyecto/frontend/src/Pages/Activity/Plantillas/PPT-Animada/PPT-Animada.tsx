@@ -2,11 +2,14 @@ import { useRef } from "react";
 import ActivityLayout from "../../../../Layouts/ActivityLayout/ActivityLayout";
 import type { ActivityTemplateProps } from "../shared";
 import { resolveResourceUrl } from "../shared";
+import { useActivityCompletion } from "../useActivityCompletion";
 import styles from "./PPT-Animada.module.css";
 
 export default function PPTAnimada({ activity, backTo }: ActivityTemplateProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const resourceUrl = resolveResourceUrl(activity.config);
+  const { finishActivity, finished, xpReward, coinsReward, awardedXp, awardedCoins } =
+    useActivityCompletion(activity);
   const description =
     activity.description ??
     "Toma un cuaderno o tu tablet para registrar los puntos clave de la presentación.";
@@ -97,9 +100,34 @@ export default function PPTAnimada({ activity, backTo }: ActivityTemplateProps) 
             </p>
           </div>
           <div className={styles.rewardCard}>
-            <span className={styles.rewardLabel}>Monedas</span>
-            <span className={styles.rewardValue}>+{activity.xpReward ?? 0}</span>
+            <div className={styles.rewardBadges}>
+              <div className={`${styles.rewardBadge} ${styles.xpBadge}`}>
+                <span className={styles.rewardLabel}>XP</span>
+                <span className={styles.rewardValue}>+{xpReward}</span>
+              </div>
+              <div className={`${styles.rewardBadge} ${styles.coinsBadge}`}>
+                <span className={styles.rewardLabel}>Monedas</span>
+                <span className={styles.rewardValue}>+{coinsReward}</span>
+              </div>
+            </div>
+            <button
+              className={styles.finishButton}
+              onClick={() =>
+                finishActivity({
+                  redirectTo: backTo,
+                })
+              }
+              type="button"
+              disabled={finished}
+            >
+              {finished ? "Actividad finalizada" : "Finalizar actividad"}
+            </button>
           </div>
+          {finished ? (
+            <p className={styles.completionMessage}>
+              ¡Ganaste <strong>+{awardedXp} XP</strong> y <strong>+{awardedCoins} monedas</strong>!
+            </p>
+          ) : null}
         </aside>
       </div>
     </ActivityLayout>

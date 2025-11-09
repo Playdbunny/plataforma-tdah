@@ -169,7 +169,6 @@
   align-items: center;
   gap: 0.65rem;
   border: 1px solid rgba(255, 224, 102, 0.35);
-  margin-left: auto;
 }
 
 .rewardLabel {
@@ -186,6 +185,73 @@
   color: #ffe066;
 }
 
+.completionRow {
+  margin-top: 0.9rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.9rem;
+}
+
+.finishButton {
+  background: linear-gradient(135deg, #ffe066 0%, #ffb347 100%);
+  color: #101224;
+  font-family: "Press Start 2P", "VT323", monospace;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  border: none;
+  border-radius: 999px;
+  padding: 0.6rem 1.6rem;
+  cursor: pointer;
+  box-shadow: 0 12px 28px rgba(255, 179, 71, 0.35);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.finishButton:hover,
+.finishButton:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 34px rgba(255, 179, 71, 0.45);
+}
+
+.finishButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+  box-shadow: none;
+  transform: none;
+}
+
+.rewardsRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.xpBadge {
+  border-color: rgba(108, 216, 255, 0.5);
+}
+
+.xpBadge .rewardValue {
+  color: #6cd8ff;
+}
+
+.coinsBadge {
+  border-color: rgba(255, 224, 102, 0.45);
+}
+
+.completionMessage {
+  margin-top: 0.6rem;
+  font-family: "VT323", "Press Start 2P", monospace;
+  font-size: 0.95rem;
+  color: #fefefe;
+  text-align: center;
+}
+
+.completionMessage strong {
+  color: #ffe066;
+}
+
 @media (max-width: 720px) {
   .quizWrapper {
     padding: 1.6rem;
@@ -195,5 +261,10 @@
   .quizFooter {
     flex-direction: column;
     align-items: center;
+  }
+
+  .completionRow {
+    justify-content: center;
+    text-align: center;
   }
 }

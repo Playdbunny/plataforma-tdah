@@ -155,27 +155,97 @@
   align-self: end;
   background: linear-gradient(145deg, rgba(68, 52, 140, 0.95) 0%, rgba(255, 224, 102, 0.95) 100%);
   border-radius: 22px;
-  padding: 0.9rem 1.2rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.85rem;
+  padding: 1.05rem 1.2rem;
+  display: grid;
+  gap: 0.9rem;
   border: 2px solid rgba(16, 18, 36, 0.35);
   box-shadow: 0 16px 30px rgba(68, 52, 140, 0.35);
 }
 
+.rewardBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.rewardBadge {
+  background: rgba(16, 18, 36, 0.15);
+  border-radius: 18px;
+  padding: 0.45rem 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid rgba(16, 18, 36, 0.3);
+}
+
 .rewardLabel {
   font-family: "Press Start 2P", "VT323", monospace;
-  font-size: 0.8rem;
-  letter-spacing: 0.06em;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
   color: #1d1a2e;
   text-transform: uppercase;
 }
 
 .rewardValue {
   font-family: "Press Start 2P", "VT323", monospace;
-  font-size: 1.15rem;
+  font-size: 0.95rem;
   color: #1d1a2e;
+}
+
+.xpBadge {
+  background: rgba(108, 216, 255, 0.22);
+  border-color: rgba(108, 216, 255, 0.55);
+}
+
+.xpBadge .rewardValue {
+  color: #155879;
+}
+
+.coinsBadge {
+  background: rgba(255, 224, 102, 0.22);
+  border-color: rgba(255, 224, 102, 0.55);
+}
+
+.finishButton {
+  background: linear-gradient(135deg, #ffe066 0%, #ffb347 100%);
+  color: #1d1a2e;
+  font-family: "Press Start 2P", "VT323", monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  border: none;
+  border-radius: 999px;
+  padding: 0.6rem 1.4rem;
+  cursor: pointer;
+  box-shadow: 0 12px 28px rgba(255, 179, 71, 0.35);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.finishButton:hover,
+.finishButton:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 34px rgba(255, 179, 71, 0.45);
+}
+
+.finishButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+  box-shadow: none;
+  transform: none;
+}
+
+.completionMessage {
+  font-family: "VT323", "Press Start 2P", monospace;
+  font-size: 0.95rem;
+  color: #ffffff;
+  text-align: center;
+  background: rgba(35, 36, 74, 0.65);
+  border: 1px solid rgba(255, 224, 102, 0.25);
+  border-radius: 16px;
+  padding: 0.65rem 0.9rem;
+}
+
+.completionMessage strong {
+  color: #ffe066;
 }
 
 @media (max-width: 1200px) {
