@@ -15,6 +15,7 @@ import googleRouter from "./routes/google.routes";
 import adminActivitiesRouter from "./routes/adminActivities.routes";
 import adminSubjectsRouter from "./routes/adminSubjects.routes";
 import adminStudentsRouter from "./routes/adminStudents.routes";
+import studentActivitiesRouter from "./routes/studentActivities.routes";
 import Subject from "./models/Subject";
 import Activity from "./models/Activity";
 
@@ -62,6 +63,7 @@ apiRouter.use("/admin", adminRouter);
 apiRouter.use("/admin", adminStudentsRouter);
 apiRouter.use(adminActivitiesRouter);
 apiRouter.use(adminSubjectsRouter);
+apiRouter.use(studentActivitiesRouter);
 
 // Ruta protegida genérica
 apiRouter.get("/me", requireAuth, (req: any, res) => {

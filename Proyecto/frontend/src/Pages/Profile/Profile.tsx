@@ -21,7 +21,7 @@ import XPBar from "../../Components/XPBar/XPBar";
 import PetEvolution from "../../Components/PetEvolution/PetEvolution";
 
 // Helper de niveles/XP acumulada (ya creado en /Lib/Levels)
-import { currentTotalXP } from "../../Lib/Levels";
+import { currentTotalXP, xpForLevel } from "../../Lib/Levels";
 
 type Stat = {
   label: string;
@@ -47,7 +47,7 @@ export default function Profile() {
   // Derivados con defaults seguros para la UI
   const level    = user?.level    ?? 1;
   const xp       = user?.xp       ?? 0;
-  const nextXp   = user?.nextXp   ?? 1000;
+  const nextXp   = user?.nextXp   ?? xpForLevel(level);
   const name     = user?.name     ?? "Player";
   const tdah     = user?.tdahType ?? "Hiperactivo"; // si no existe, fallback visual
   const sprite   = user?.character?.sprite ?? DEFAULT_CHARACTER.sprite;
@@ -59,12 +59,27 @@ export default function Profile() {
   // Stats (por ahora 3 de ellas son mock=0; TOTAL XP sí es real)
   const stats: Stat[] = useMemo(
     () => [
-      { label: "EXERCISES",     value: 0,        icon: "💠", accent: "blue"   },
-      { label: "TOTAL  XP",     value: totalXP,  icon: "🔥", accent: "orange" },
-      { label: "COURSE BADGES", value: 0,        icon: "🟢", accent: "green"  },
-      { label: "DAILY  STREAK", value: 0,        icon: "✨", accent: "pink"   },
+      {
+        label: "ACTIVITIES",
+        value: user?.activitiesCompleted ?? 0,
+        icon: "💠",
+        accent: "blue",
+      },
+      { label: "TOTAL  XP", value: totalXP, icon: "🔥", accent: "orange" },
+      {
+        label: "COURSE BADGES",
+        value: user?.courseBadges ?? 0,
+        icon: "🟢",
+        accent: "green",
+      },
+      {
+        label: "DAILY  STREAK",
+        value: user?.streak?.count ?? 0,
+        icon: "✨",
+        accent: "pink",
+      },
     ],
-    [totalXP]
+    [totalXP, user?.activitiesCompleted, user?.courseBadges, user?.streak?.count]
   );
 
   return (

@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { xpForLevel } from "../../../Lib/Levels";
+import { submitActivityCompletion } from "../../../api/activities";
 import { useAppStore } from "../../../stores/appStore";
+import { useAuthStore } from "../../../stores/authStore";
 import type { ActivityDetail } from "./shared";
 import { extractQuestions } from "./shared";
 
@@ -86,6 +88,8 @@ export function useActivityCompletion(activity: ActivityDetail) {
 
   const addCoins = useAppStore((state) => state.addCoins);
   const updateUser = useAppStore((state) => state.updateUser);
+  const setAppUser = useAppStore((state) => state.setUser);
+  const patchAuthUser = useAuthStore((state) => state.setUser);
 
   const [finished, setFinished] = useState(false);
   const [awardedXp, setAwardedXp] = useState(0);
@@ -167,6 +171,46 @@ export function useActivityCompletion(activity: ActivityDetail) {
         updateUser({ level, xp, nextXp });
       }
 
+      void submitActivityCompletion(activity.id, {
+        xpAwarded: grantedXp,
+        coinsAwarded: grantedCoins,
+        correctCount: options.correctCount,
+        totalCount: options.totalCount,
+        durationSec: elapsedSeconds,
+        estimatedDurationSec: estimatedDurationSec ?? null,
+      })
+        .then((response) => {
+          const nextXp = xpForLevel(response.user.level ?? 1);
+          const normalizedUser = { ...response.user, nextXp } as typeof response.user & {
+            nextXp: number;
+          };
+
+          try {
+            setAppUser(normalizedUser as any);
+          } catch (err) {
+            console.error("No se pudo sincronizar el usuario en appStore", err);
+          }
+
+          try {
+            patchAuthUser(response.user);
+          } catch (err) {
+            console.error("No se pudo sincronizar el usuario en authStore", err);
+          }
+
+          updateUser({
+            xp: normalizedUser.xp,
+            level: normalizedUser.level,
+            nextXp,
+            coins: normalizedUser.coins,
+            streak: normalizedUser.streak,
+            activitiesCompleted: normalizedUser.activitiesCompleted,
+            courseBadges: normalizedUser.courseBadges,
+          });
+        })
+        .catch((err) => {
+          console.error("No se pudo persistir la finalización de la actividad", err);
+        });
+
       const redirectTarget = options.redirectTo ?? "/subjects";
       if (redirectTarget) {
         navigate(redirectTarget);
@@ -188,6 +232,9 @@ export function useActivityCompletion(activity: ActivityDetail) {
       updateUser,
       xpReward,
       estimatedDurationSec,
+      activity.id,
+      setAppUser,
+      patchAuthUser,
     ],
   );
 

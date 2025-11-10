@@ -45,6 +45,8 @@ export type User = {
   // 🪙 Economía/tienda
   coins?: number;
   ownedCharacters?: string[];
+  activitiesCompleted?: number;
+  courseBadges?: number;
   streak?: { count: number; lastCheck?: Date | null };
   createdAt?: Date;
   updatedAt?: Date;

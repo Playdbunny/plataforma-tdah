@@ -19,6 +19,8 @@ export type AdminStudentSummary = {
   xp: number;
   coins: number;
   level: number;
+  activitiesCompleted: number;
+  courseBadges: number;
   avatarUrl: string | null;
   character: {
     id: string;

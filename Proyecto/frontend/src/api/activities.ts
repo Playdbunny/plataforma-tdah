@@ -1,5 +1,7 @@
 import { api, getAdminApiBaseUrl, getApiBaseUrl } from "../Lib/api";
 import { SubjectActivity } from "../Lib/activityMocks";
+import { IUserSafe } from "../types/user";
+import { reviveUserDates } from "../utils/user_serializers";
 
 export type ActivitySummary = {
   id: string;
@@ -122,3 +124,61 @@ export const deleteActivity = async (id: string) => {
     baseURL: getAdminApiBaseUrl(),
   });
 };
+
+export type ActivityCompletionPayload = {
+  xpAwarded: number;
+  coinsAwarded: number;
+  correctCount?: number;
+  totalCount?: number;
+  durationSec?: number;
+  estimatedDurationSec?: number | null;
+};
+
+export type ActivityCompletionResponse = {
+  xpAwarded: number;
+  coinsAwarded: number;
+  durationSec: number;
+  estimatedDurationSec: number | null;
+  score: number;
+  streak: { count: number; lastCheck: string | null };
+  user: IUserSafe;
+  attempt: {
+    id: string;
+    activityId: string;
+    subjectId: string;
+    xpAwarded: number;
+    score: number;
+    correctCount?: number;
+    totalCount?: number;
+    durationSec?: number;
+    createdAt?: string;
+  };
+};
+
+export async function submitActivityCompletion(
+  activityId: string,
+  payload: ActivityCompletionPayload,
+): Promise<ActivityCompletionResponse> {
+  const { data } = await api.post<ActivityCompletionResponse>(
+    `/activities/${activityId}/complete`,
+    payload,
+    { baseURL: getApiBaseUrl() },
+  );
+
+  return {
+    ...data,
+    user: reviveUserDates(data.user),
+    streak: {
+      count: data.streak?.count ?? data.user?.streak?.count ?? 0,
+      lastCheck:
+        data.streak?.lastCheck != null
+          ? new Date(data.streak.lastCheck).toISOString()
+          : null,
+    },
+    attempt: {
+      ...data.attempt,
+      correctCount: data.attempt?.correctCount,
+      totalCount: data.attempt?.totalCount,
+    },
+  };
+}
