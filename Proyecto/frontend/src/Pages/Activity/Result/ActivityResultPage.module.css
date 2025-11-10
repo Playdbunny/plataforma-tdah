@@ -1,0 +1,243 @@
+.wrapper {
+  display: grid;
+  gap: 32px;
+  padding: 48px 24px 64px;
+  color: #f1f5ff;
+  font-family: "Press Start 2P", system-ui, sans-serif;
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.pageTitle {
+  font-size: 1rem;
+  letter-spacing: 0.04em;
+}
+
+.summaryCard {
+  background: linear-gradient(135deg, #1b2140, #13192f);
+  border: 2px solid rgba(241, 245, 255, 0.12);
+  border-radius: 16px;
+  padding: 32px;
+  display: grid;
+  gap: 20px;
+  text-align: center;
+  box-shadow: 0 16px 32px rgba(8, 12, 24, 0.45);
+}
+
+.activityTitle {
+  margin: 0;
+  font-size: 1.3rem;
+  line-height: 1.3;
+}
+
+.starsRow {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  font-size: 2.2rem;
+}
+
+.star {
+  color: rgba(253, 239, 92, 0.35);
+  text-shadow: 0 4px 12px rgba(253, 239, 92, 0.2);
+}
+
+.star[data-active] {
+  color: #fdef5c;
+  text-shadow: 0 6px 16px rgba(253, 239, 92, 0.55);
+}
+
+.feedbackCopy {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: rgba(241, 245, 255, 0.85);
+}
+
+.scoreRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.scoreBadge {
+  background: rgba(9, 12, 26, 0.55);
+  border: 1px solid rgba(241, 245, 255, 0.2);
+  border-radius: 12px;
+  padding: 16px;
+  display: grid;
+  gap: 8px;
+}
+
+.scoreLabel {
+  font-size: 0.75rem;
+  color: rgba(241, 245, 255, 0.7);
+}
+
+.scoreValue {
+  font-size: 1.2rem;
+}
+
+.reviewSection {
+  background: rgba(11, 17, 33, 0.78);
+  border: 1px solid rgba(241, 245, 255, 0.14);
+  border-radius: 16px;
+  padding: 28px;
+  display: grid;
+  gap: 24px;
+}
+
+.reviewHeader h2 {
+  margin: 0 0 12px;
+  font-size: 1.1rem;
+}
+
+.reviewHeader p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: rgba(241, 245, 255, 0.7);
+  line-height: 1.5;
+}
+
+.reviewList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 20px;
+}
+
+.reviewItem {
+  border: 1px solid rgba(241, 245, 255, 0.18);
+  border-radius: 12px;
+  padding: 20px;
+  background: rgba(8, 13, 26, 0.6);
+  display: grid;
+  gap: 16px;
+}
+
+.reviewItem[data-correct] {
+  border-color: rgba(88, 228, 164, 0.75);
+  box-shadow: 0 0 0 2px rgba(88, 228, 164, 0.2);
+}
+
+.reviewPrompt {
+  display: grid;
+  gap: 8px;
+}
+
+.reviewIndex {
+  font-size: 0.75rem;
+  color: rgba(241, 245, 255, 0.6);
+}
+
+.reviewPrompt p {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.missedNote {
+  margin: 0;
+  font-size: 0.75rem;
+  color: rgba(253, 134, 111, 0.9);
+}
+
+.optionsList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.optionItem {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(241, 245, 255, 0.14);
+  background: rgba(14, 20, 37, 0.55);
+}
+
+.optionItem[data-correct] {
+  border-color: rgba(88, 228, 164, 0.8);
+  background: rgba(30, 62, 47, 0.6);
+}
+
+.optionItem[data-selected]:not([data-correct]) {
+  border-color: rgba(255, 138, 101, 0.75);
+  background: rgba(56, 26, 26, 0.6);
+}
+
+.optionBadge {
+  font-size: 0.9rem;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: rgba(241, 245, 255, 0.12);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.optionCopy {
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.optionStatus {
+  font-size: 0.7rem;
+  color: rgba(241, 245, 255, 0.65);
+}
+
+.actions {
+  display: flex;
+  justify-content: center;
+}
+
+.finishButton {
+  font-family: inherit;
+  font-size: 0.9rem;
+  padding: 14px 32px;
+  border-radius: 999px;
+  background: #fdef5c;
+  color: #1b2140;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 12px 24px rgba(253, 239, 92, 0.35);
+}
+
+.finishButton:hover,
+.finishButton:focus {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 32px rgba(253, 239, 92, 0.45);
+}
+
+@media (max-width: 768px) {
+  .wrapper {
+    padding: 32px 16px 48px;
+  }
+
+  .summaryCard {
+    padding: 24px;
+  }
+
+  .reviewSection {
+    padding: 20px;
+  }
+
+  .optionItem {
+    grid-template-columns: auto 1fr;
+    gap: 10px;
+  }
+
+  .optionStatus {
+    justify-self: end;
+  }
+}

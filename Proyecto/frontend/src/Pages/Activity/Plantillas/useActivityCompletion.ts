@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { xpForLevel } from "../../../Lib/Levels";
-import { submitActivityCompletion } from "../../../api/activities";
+import {
+  submitActivityCompletion,
+  type ActivityCompletionResponse,
+} from "../../../api/activities";
 import { useAppStore } from "../../../stores/appStore";
 import { useAuthStore } from "../../../stores/authStore";
 import type { ActivityDetail } from "./shared";
@@ -11,9 +13,12 @@ const MIN_ESTIMATED_DURATION_SEC = 180;
 const BASE_TIME_PER_QUESTION_SEC = 60;
 const FAST_THRESHOLD_RATIO = 0.6;
 const MEDIUM_THRESHOLD_RATIO = 0.8;
+const MAX_COMPLETION_ATTEMPTS = 3;
+const RETRY_BASE_DELAY_MS = 1000;
+const RETRY_MAX_DELAY_MS = 8000;
 
-function computeEstimatedDuration(activity: ActivityDetail): number | null {
-  const questions = extractQuestions(activity.config);
+function computeEstimatedDuration(config: ActivityDetail["config"]): number | null {
+  const questions = extractQuestions(config);
   if (!Array.isArray(questions) || questions.length === 0) {
     return null;
   }
@@ -60,18 +65,18 @@ function extractCoinsReward(activity: ActivityDetail, fallback: number): number 
 interface FinishOptions {
   correctCount?: number;
   totalCount?: number;
-  redirectTo?: string | null;
 }
 
-interface FinishResult {
+export interface FinishResult {
   xpAwarded: number;
   coinsAwarded: number;
   durationSec: number;
   estimatedDurationSec: number | null;
+  correctCount?: number;
+  totalCount?: number;
 }
 
 export function useActivityCompletion(activity: ActivityDetail) {
-  const navigate = useNavigate();
   const xpReward = useMemo(() => normalizeReward(activity.xpReward ?? null), [
     activity.xpReward,
   ]);
@@ -82,11 +87,10 @@ export function useActivityCompletion(activity: ActivityDetail) {
   );
 
   const estimatedDurationSec = useMemo(
-    () => computeEstimatedDuration(activity),
-    [activity.config, activity.id],
+    () => computeEstimatedDuration(activity.config),
+    [activity.config],
   );
 
-  const addCoins = useAppStore((state) => state.addCoins);
   const updateUser = useAppStore((state) => state.updateUser);
   const setAppUser = useAppStore((state) => state.setUser);
   const patchAuthUser = useAuthStore((state) => state.setUser);
@@ -99,87 +103,23 @@ export function useActivityCompletion(activity: ActivityDetail) {
   const durationRef = useRef(0);
   const estimatedRef = useRef<number | null>(estimatedDurationSec);
 
-  useEffect(() => {
-    startTimeRef.current = Date.now();
-    durationRef.current = 0;
-    claimedRef.current = false;
-    setFinished(false);
-    setAwardedXp(0);
-    setAwardedCoins(0);
-  }, [activity.id]);
+  const persistCompletion = useCallback(
+    async (
+      submission: {
+        xpAwarded: number;
+        coinsAwarded: number;
+        correctCount?: number;
+        totalCount?: number;
+        durationSec: number;
+        estimatedDurationSec: number | null;
+      },
+    ): Promise<ActivityCompletionResponse> => {
+      let attempt = 0;
+      let lastError: unknown = null;
 
-  useEffect(() => {
-    estimatedRef.current = estimatedDurationSec;
-  }, [estimatedDurationSec]);
-
-  const finishActivity = useCallback(
-    (options: FinishOptions = {}): FinishResult => {
-      if (claimedRef.current) {
-        const redirectTarget = options.redirectTo ?? "/subjects";
-        if (options.redirectTo !== undefined) {
-          navigate(redirectTarget);
-        }
-        return {
-          xpAwarded: awardedXp,
-          coinsAwarded: awardedCoins,
-          durationSec: durationRef.current,
-          estimatedDurationSec: estimatedRef.current,
-        };
-      }
-
-      claimedRef.current = true;
-
-      const totalCount = Math.max(0, options.totalCount ?? 0);
-      const boundedCorrect = Math.max(
-        0,
-        Math.min(options.correctCount ?? 0, totalCount),
-      );
-      const ratio = totalCount > 0 ? boundedCorrect / totalCount : 1;
-      const elapsedMs = Date.now() - startTimeRef.current;
-      const elapsedSeconds = Math.max(0, Math.round(elapsedMs / 1000));
-      durationRef.current = elapsedSeconds;
-      const timeMultiplier = resolveTimeMultiplier(
-        elapsedSeconds,
-        estimatedDurationSec,
-      );
-      const grantedXp = Math.round(ratio * xpReward * timeMultiplier);
-      const grantedCoins = Math.round(ratio * coinsReward * timeMultiplier);
-      estimatedRef.current = estimatedDurationSec;
-
-      setFinished(true);
-      setAwardedXp(grantedXp);
-      setAwardedCoins(grantedCoins);
-
-      if (grantedCoins > 0) {
-        addCoins(grantedCoins);
-      }
-
-      if (grantedXp > 0) {
-        const currentUser = useAppStore.getState().user;
-        let level = currentUser?.level ?? 1;
-        let xp = currentUser?.xp ?? 0;
-        let nextXp = currentUser?.nextXp ?? xpForLevel(level);
-
-        xp += grantedXp;
-
-        while (xp >= nextXp) {
-          xp -= nextXp;
-          level += 1;
-          nextXp = xpForLevel(level);
-        }
-
-        updateUser({ level, xp, nextXp });
-      }
-
-      void submitActivityCompletion(activity.id, {
-        xpAwarded: grantedXp,
-        coinsAwarded: grantedCoins,
-        correctCount: options.correctCount,
-        totalCount: options.totalCount,
-        durationSec: elapsedSeconds,
-        estimatedDurationSec: estimatedDurationSec ?? null,
-      })
-        .then((response) => {
+      while (attempt < MAX_COMPLETION_ATTEMPTS) {
+        try {
+          const response = await submitActivityCompletion(activity.id, submission);
           const nextXp = xpForLevel(response.user.level ?? 1);
           const normalizedUser = { ...response.user, nextXp } as typeof response.user & {
             nextXp: number;
@@ -206,35 +146,128 @@ export function useActivityCompletion(activity: ActivityDetail) {
             activitiesCompleted: normalizedUser.activitiesCompleted,
             courseBadges: normalizedUser.courseBadges,
           });
-        })
-        .catch((err) => {
-          console.error("No se pudo persistir la finalización de la actividad", err);
-        });
 
-      const redirectTarget = options.redirectTo ?? "/subjects";
-      if (redirectTarget) {
-        navigate(redirectTarget);
+          return response;
+        } catch (err) {
+          lastError = err;
+          attempt += 1;
+          if (attempt >= MAX_COMPLETION_ATTEMPTS) {
+            break;
+          }
+          const backoffDelay = Math.min(
+            RETRY_MAX_DELAY_MS,
+            RETRY_BASE_DELAY_MS * 2 ** (attempt - 1),
+          );
+          await new Promise((resolve) => setTimeout(resolve, backoffDelay));
+        }
       }
 
-      return {
-        xpAwarded: grantedXp,
-        coinsAwarded: grantedCoins,
-        durationSec: elapsedSeconds,
-        estimatedDurationSec,
-      };
+      console.error("No se pudo persistir la finalización de la actividad", lastError);
+      alert(
+        "No se pudo guardar tu progreso. Revisa tu conexión y vuelve a intentarlo.",
+      );
+
+      claimedRef.current = false;
+      setFinished(false);
+      setAwardedXp(0);
+      setAwardedCoins(0);
+      startTimeRef.current = Date.now();
+      durationRef.current = 0;
+      estimatedRef.current = estimatedDurationSec ?? null;
+
+      throw lastError instanceof Error
+        ? lastError
+        : new Error("No se pudo persistir la finalización de la actividad");
     },
     [
-      addCoins,
-      coinsReward,
-      navigate,
-      awardedCoins,
-      awardedXp,
+      activity.id,
+      patchAuthUser,
+      setAppUser,
       updateUser,
+    ],
+  );
+
+  useEffect(() => {
+    startTimeRef.current = Date.now();
+    durationRef.current = 0;
+    claimedRef.current = false;
+    setFinished(false);
+    setAwardedXp(0);
+    setAwardedCoins(0);
+  }, [activity.id]);
+
+  useEffect(() => {
+    estimatedRef.current = estimatedDurationSec;
+  }, [estimatedDurationSec]);
+
+  const lastResultRef = useRef<FinishResult | null>(null);
+
+  const finishActivity = useCallback(
+    async (options: FinishOptions = {}): Promise<FinishResult> => {
+      if (claimedRef.current && lastResultRef.current) {
+        return lastResultRef.current;
+      }
+
+      claimedRef.current = true;
+
+      const totalCount = Math.max(0, options.totalCount ?? 0);
+      const boundedCorrect = Math.max(
+        0,
+        Math.min(options.correctCount ?? 0, totalCount),
+      );
+      const ratio = totalCount > 0 ? boundedCorrect / totalCount : 1;
+      const elapsedMs = Date.now() - startTimeRef.current;
+      const elapsedSeconds = Math.max(0, Math.round(elapsedMs / 1000));
+      durationRef.current = elapsedSeconds;
+      const timeMultiplier = resolveTimeMultiplier(elapsedSeconds, estimatedDurationSec);
+      const grantedXp = Math.round(ratio * xpReward * timeMultiplier);
+      const grantedCoins = Math.round(ratio * coinsReward * timeMultiplier);
+      estimatedRef.current = estimatedDurationSec;
+
+      setAwardedXp(grantedXp);
+      setAwardedCoins(grantedCoins);
+
+      let response: ActivityCompletionResponse | null = null;
+
+      try {
+        response = await persistCompletion({
+          xpAwarded: grantedXp,
+          coinsAwarded: grantedCoins,
+          correctCount: options.correctCount,
+          totalCount: options.totalCount,
+          durationSec: elapsedSeconds,
+          estimatedDurationSec: estimatedDurationSec ?? null,
+        });
+      } catch (err) {
+        lastResultRef.current = null;
+        throw err;
+      }
+
+      const result: FinishResult = {
+        xpAwarded: normalizeReward(response?.xpAwarded ?? grantedXp),
+        coinsAwarded: normalizeReward(response?.coinsAwarded ?? grantedCoins),
+        durationSec: response?.durationSec ?? elapsedSeconds,
+        estimatedDurationSec:
+          response?.estimatedDurationSec ?? estimatedDurationSec ?? null,
+        correctCount:
+          response?.attempt?.correctCount ?? options.correctCount ?? undefined,
+        totalCount: response?.attempt?.totalCount ?? options.totalCount ?? undefined,
+      };
+
+      lastResultRef.current = result;
+      durationRef.current = result.durationSec;
+      estimatedRef.current = result.estimatedDurationSec ?? null;
+      setAwardedXp(result.xpAwarded);
+      setAwardedCoins(result.coinsAwarded);
+      setFinished(true);
+
+      return result;
+    },
+    [
+      coinsReward,
       xpReward,
       estimatedDurationSec,
-      activity.id,
-      setAppUser,
-      patchAuthUser,
+      persistCompletion,
     ],
   );
 

@@ -1,4 +1,5 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import ActivityLayout from "../../../../Layouts/ActivityLayout/ActivityLayout";
 import type { ActivityTemplateProps } from "../shared";
 import { resolveResourceUrl } from "../shared";
@@ -10,6 +11,8 @@ export default function PPTAnimada({ activity, backTo }: ActivityTemplateProps) 
   const resourceUrl = resolveResourceUrl(activity.config);
   const { finishActivity, finished, xpReward, coinsReward, awardedXp, awardedCoins } =
     useActivityCompletion(activity);
+  const [submitting, setSubmitting] = useState(false);
+  const navigate = useNavigate();
   const description =
     activity.description ??
     "Toma un cuaderno o tu tablet para registrar los puntos clave de la presentación.";
@@ -30,6 +33,17 @@ export default function PPTAnimada({ activity, backTo }: ActivityTemplateProps) 
   const openInNewTab = () => {
     if (!resourceUrl) return;
     window.open(resourceUrl, "_blank", "noopener,noreferrer");
+  };
+
+  const handleFinish = async () => {
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      await finishActivity({});
+      navigate(backTo);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -112,15 +126,11 @@ export default function PPTAnimada({ activity, backTo }: ActivityTemplateProps) 
             </div>
             <button
               className={styles.finishButton}
-              onClick={() =>
-                finishActivity({
-                  redirectTo: backTo,
-                })
-              }
+              onClick={handleFinish}
               type="button"
-              disabled={finished}
+              disabled={finished || submitting}
             >
-              {finished ? "Actividad finalizada" : "Finalizar actividad"}
+              {finished ? "Actividad finalizada" : submitting ? "Guardando…" : "Finalizar actividad"}
             </button>
           </div>
           {finished ? (
