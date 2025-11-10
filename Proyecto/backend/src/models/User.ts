@@ -27,6 +27,8 @@ export interface IUserSafe {
   xp: number;
   coins: number;
   level: number;
+  activitiesCompleted: number;
+  courseBadges: number;
   streak: { count: number; lastCheck?: Date | null };
   createdAt: Date;
   updatedAt: Date;
@@ -71,6 +73,8 @@ export interface IUserDoc extends Document {
   xp: number;
   coins: number;
   level: number;
+  activitiesCompleted: number;
+  courseBadges: number;
   streak: { count: number; lastCheck?: Date | null };
   character?: IUserCharacter | null;
   ownedCharacters: string[];
@@ -150,7 +154,9 @@ const UserSchema = new Schema<IUserDoc>(
     // Estadísticas de gamificación
     xp: { type: Number, default: 0, index: true },
     coins: { type: Number, default: 0 },
-    level: { type: Number, default: 0 },
+    level: { type: Number, default: 1 },
+    activitiesCompleted: { type: Number, default: 0 },
+    courseBadges: { type: Number, default: 0 },
 
     // Racha diaria
     streak: { type: StreakSchema, default: () => ({}) },

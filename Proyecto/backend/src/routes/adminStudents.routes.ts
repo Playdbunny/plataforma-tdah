@@ -41,6 +41,8 @@ type StudentSummaryDto = {
   xp: number;
   coins: number;
   level: number;
+  activitiesCompleted: number;
+  courseBadges: number;
   avatarUrl: string | null;
   character: IUserCharacter | null;
   streakCount: number;
@@ -74,6 +76,8 @@ type UserLean = {
   xp?: number;
   coins?: number;
   level?: number;
+  activitiesCompleted?: number;
+  courseBadges?: number;
   avatarUrl?: string | null;
   character?: IUserCharacter | null;
   streak?: { count: number; lastCheck?: Date | null } | null;
@@ -90,7 +94,7 @@ router.get(
     try {
       const users = await User.find({ role: "student" })
         .select(
-          "name email tdahType xp coins level avatarUrl character streak lastLogin createdAt updatedAt"
+          "name email tdahType xp coins level activitiesCompleted courseBadges avatarUrl character streak lastLogin createdAt updatedAt"
         )
         .lean<UserLean[]>();
 
@@ -203,6 +207,8 @@ router.get(
           xp: user.xp ?? 0,
           coins: user.coins ?? 0,
           level: user.level ?? 0,
+          activitiesCompleted: user.activitiesCompleted ?? 0,
+          courseBadges: user.courseBadges ?? 0,
           avatarUrl: user.avatarUrl ?? null,
           character: user.character ?? null,
           streakCount: user.streak?.count ?? 0,
@@ -236,7 +242,7 @@ router.get(
 
       const user = await User.findOne({ _id: id, role: "student" })
         .select(
-          "name email tdahType xp coins level avatarUrl character streak lastLogin createdAt updatedAt"
+          "name email tdahType xp coins level activitiesCompleted courseBadges avatarUrl character streak lastLogin createdAt updatedAt"
         )
         .lean<UserLean | null>();
 
@@ -387,6 +393,8 @@ router.get(
         xp: user.xp ?? 0,
         coins: user.coins ?? 0,
         level: user.level ?? 0,
+        activitiesCompleted: user.activitiesCompleted ?? 0,
+        courseBadges: user.courseBadges ?? 0,
         avatarUrl: user.avatarUrl ?? null,
         character: user.character ?? null,
         streakCount: user.streak?.count ?? 0,

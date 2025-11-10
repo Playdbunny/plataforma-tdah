@@ -20,6 +20,8 @@ export interface IUserSafe {
   xp: number;
   coins: number;
   level: number;
+  activitiesCompleted: number;
+  courseBadges: number;
   streak: { count: number; lastCheck?: Date | null };
   createdAt: Date;
   updatedAt: Date;
