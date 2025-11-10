@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import ActivityLayoutInfografia from "../../../../Layouts/ActivityLayout/ActivityLayoutInfografia";
 import styles from "./Infografia.module.css";
 import type { ActivityTemplateProps } from "../shared";
 import { extractQuestions, resolveResourceUrl } from "../shared";
 import { useActivityCompletion } from "../useActivityCompletion";
+import type { ActivityResultState } from "../../Result/types";
 
 const FALLBACK_QUESTIONS = [
   {
@@ -84,8 +86,14 @@ export default function Infografia({ activity, backTo }: ActivityTemplateProps) 
 
   const [page, setPage] = useState(0);
   const [answers, setAnswers] = useState<number[]>(() => questions.map(() => -1));
+  const [submitting, setSubmitting] = useState(false);
   const { finishActivity, finished, xpReward, coinsReward, awardedXp, awardedCoins } =
     useActivityCompletion(activity);
+  const navigate = useNavigate();
+  const { subjectId, activitySlug } = useParams<{
+    subjectId: string;
+    activitySlug: string;
+  }>();
 
   useEffect(() => {
     setPage(0);
@@ -124,15 +132,53 @@ export default function Infografia({ activity, backTo }: ActivityTemplateProps) 
     });
   };
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
+    if (submitting) return;
     const correctCount = questions.reduce((acc, question, index) => {
       return acc + (answers[index] === question.correctIndex ? 1 : 0);
     }, 0);
-    finishActivity({
-      correctCount,
-      totalCount: questions.length,
-      redirectTo: backTo,
-    });
+    const activitySlugValue = activity.slug ?? activitySlug ?? activity.id;
+    const subjectPath = activity.subjectSlug
+      ? `/subjects/${activity.subjectSlug}`
+      : subjectId
+      ? `/subjects/${subjectId}`
+      : backTo;
+
+    if (!activitySlugValue || !subjectPath?.startsWith("/subjects/")) {
+      await finishActivity({
+        correctCount,
+        totalCount: questions.length,
+      });
+      navigate(backTo);
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const summary = await finishActivity({
+        correctCount,
+        totalCount: questions.length,
+      });
+
+      const reviewState: ActivityResultState = {
+        activityId: activity.id,
+        activityTitle: activity.title,
+        backTo,
+        subjectSlug: activity.subjectSlug ?? subjectId,
+        summary,
+        answers: questions.map((question, index) => ({
+          prompt: question.question,
+          options: question.options,
+          correctIndex: question.correctIndex,
+          selectedIndex: answers[index] ?? -1,
+        })),
+      };
+
+      const resultPath = `${subjectPath}/activities/${activitySlugValue}/result`;
+      navigate(resultPath, { state: reviewState });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -234,9 +280,9 @@ export default function Infografia({ activity, backTo }: ActivityTemplateProps) 
               className={styles.finishButton}
               onClick={handleFinish}
               type="button"
-              disabled={finished}
+              disabled={finished || submitting}
             >
-              {finished ? "Actividad finalizada" : "Finalizar actividad"}
+              {finished ? "Respuestas enviadas" : submitting ? "Enviando…" : "Enviar respuestas"}
             </button>
             <div className={styles.rewardsRow}>
               <div className={`${styles.rewardBadge} ${styles.xpBadge}`}>

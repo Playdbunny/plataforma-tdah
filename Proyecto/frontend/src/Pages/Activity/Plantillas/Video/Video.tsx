@@ -1,4 +1,5 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import ActivityLayout from "../../../../Layouts/ActivityLayout/ActivityLayout";
 import styles from "./Video.module.css";
 import type { ActivityTemplateProps } from "../shared";
@@ -35,6 +36,8 @@ export default function VideoTemplate({ activity, backTo }: ActivityTemplateProp
   ]);
   const { finishActivity, finished, xpReward, coinsReward, awardedXp, awardedCoins } =
     useActivityCompletion(activity);
+  const [submitting, setSubmitting] = useState(false);
+  const navigate = useNavigate();
 
   const backMessage =
     activity.description ??
@@ -47,6 +50,17 @@ export default function VideoTemplate({ activity, backTo }: ActivityTemplateProp
   };
 
   const hasVideo = Boolean(embedUrl || resourceUrl);
+
+  const handleFinish = async () => {
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      await finishActivity({});
+      navigate(backTo);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <ActivityLayout
@@ -126,15 +140,11 @@ export default function VideoTemplate({ activity, backTo }: ActivityTemplateProp
             </div>
             <button
               className={styles.finishButton}
-              onClick={() =>
-                finishActivity({
-                  redirectTo: backTo,
-                })
-              }
+              onClick={handleFinish}
               type="button"
-              disabled={finished}
+              disabled={finished || submitting}
             >
-              {finished ? "Actividad finalizada" : "Finalizar actividad"}
+              {finished ? "Actividad finalizada" : submitting ? "Guardando…" : "Finalizar actividad"}
             </button>
           </div>
           {finished ? (
