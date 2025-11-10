@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { z } from "zod";
 import argon2 from "argon2";
 import { User } from "../models/User";
 import Activity from "../models/Activity";
@@ -10,12 +11,21 @@ const router = Router();
  * POST /admin/create
  * Solo un usuario con rol "admin" puede crear otros admins
  */
-router.post("/create", requireAuth, requireRole("admin"), async (req, res) => {
-  const { name, email, password } = req.body;
+const createAdminSchema = z
+  .object({
+    name: z.string().trim().min(2, "El nombre es obligatorio"),
+    email: z.string().trim().email("Email inválido"),
+    password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
+  })
+  .strict();
 
-  if (!name || !email || !password) {
-    return res.status(400).json({ error: "Faltan campos obligatorios" });
+router.post("/create", requireAuth, requireRole("admin"), async (req, res) => {
+  const parsed = createAdminSchema.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.flatten() });
   }
+
+const { name, email, password } = parsed.data;
 
   const exists = await User.findOne({ email });
   if (exists) return res.status(409).json({ error: "Email ya registrado" });
@@ -26,7 +36,7 @@ router.post("/create", requireAuth, requireRole("admin"), async (req, res) => {
     name,
     email,
     passwordHash,
-    role: "admin",  // ← este sí se crea como admin
+    role: "admin", // ← este sí se crea como admin
   });
 
   return res.status(201).json({ message: "Admin creado", user: user.toJSON() });

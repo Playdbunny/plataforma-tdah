@@ -2,6 +2,7 @@ import { Router, type Request, type Response } from "express";
 import mongoose from "mongoose";
 import path from "path";
 import fsPromises from "fs/promises";
+import { z } from "zod";
 import Subject, { type SubjectDocument } from "../models/Subject";
 import Activity from "../models/Activity";
 import { requireAuth, requireRole } from "../middleware/requireAuth";
@@ -58,6 +59,35 @@ async function extractBannerFromRequest(req: Request): Promise<ParsedFile | null
 }
 
 const router = Router();
+
+const slugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/i;
+
+const createSubjectSchema = z
+  .object({
+    name: z.string().trim().min(1, "El nombre es obligatorio").max(128),
+    slug: z
+      .string()
+      .trim()
+      .min(1, "El slug es obligatorio")
+      .max(128)
+      .regex(slugRegex, "Formato de slug inválido"),
+    description: z.union([z.string().trim().max(500), z.literal(null)]).optional(),
+  })
+  .passthrough();
+
+const updateSubjectSchema = z
+  .object({
+    name: z.string().trim().min(1).max(128).optional(),
+    slug: z
+      .string()
+      .trim()
+      .min(1)
+      .max(128)
+      .regex(slugRegex, "Formato de slug inválido")
+      .optional(),
+    description: z.union([z.string().trim().max(500), z.literal(null)]).optional(),
+  })
+  .passthrough();
 
 function handleError(res: Response, err: any, fallback: string) {
   const message =
@@ -372,13 +402,12 @@ router.post(
   requireRole("admin"),
   async (req: Request, res: Response) => {
     try {
-      const { name, slug, description } = req.body ?? {};
-
-      if (!name || !slug) {
-        return res
-          .status(400)
-          .json({ error: "Faltan campos obligatorios: name y slug" });
+      const parsed = createSubjectSchema.safeParse(req.body ?? {});
+      if (!parsed.success) {
+        return res.status(400).json({ error: parsed.error.flatten() });
       }
+      
+      const { name, slug, description } = parsed.data;
 
       const exists = await Subject.findOne({ slug });
       if (exists) {
@@ -390,7 +419,10 @@ router.post(
       const subject = await Subject.create({
         name: String(name).trim(),
         slug: String(slug).trim(),
-        description: description ? String(description).trim() : undefined,
+        description:
+          typeof description === "string" && description.trim().length
+            ? description.trim()
+            : undefined,
       });
 
       res.status(201).json(subject);
@@ -411,7 +443,12 @@ router.put(
       const subject = await findSubjectOr404(id, res);
       if (!subject) return;
 
-      const { name, slug, description } = req.body ?? {};
+      const parsed = updateSubjectSchema.safeParse(req.body ?? {});
+      if (!parsed.success) {
+        return res.status(400).json({ error: parsed.error.flatten() });
+      }
+
+      const { name, slug, description } = parsed.data;
 
       if (slug) {
         const exists = await Subject.findOne({ slug, _id: { $ne: subject._id } });
@@ -432,8 +469,12 @@ router.put(
       }
 
       if (description !== undefined) {
-        const trimmed = String(description).trim();
-        subject.description = trimmed.length ? trimmed : undefined;
+        if (description === null) {
+          subject.description = undefined;
+        } else {
+          const trimmed = description.trim();
+          subject.description = trimmed.length ? trimmed : undefined;
+        }
       }
 
       await subject.save();

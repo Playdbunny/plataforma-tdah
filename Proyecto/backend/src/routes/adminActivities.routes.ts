@@ -3,7 +3,12 @@ import type { NextFunction, Request, Response } from "express";
 import fsPromises from "fs/promises";
 import mongoose from "mongoose";
 import path from "path";
-import Activity, { type ActivityAttrs } from "../models/Activity";
+import { z, ZodIssueCode } from "zod";
+import Activity, { 
+  type ActivityAttrs,
+  type ActivityKind,
+  type OrientedAt, 
+} from "../models/Activity";
 import Subject, { type SubjectDocument } from "../models/Subject";
 import { requireAuth, requireRole, type AuthPayload } from "../middleware/requireAuth";
 import { normalizeBannerUrl } from "../lib/normalizeBannerUrl";
@@ -218,6 +223,214 @@ declare global {
 const router = Router();
 
 const VALID_STATUSES = new Set(["draft", "published"]);
+const SLUG_REGEX = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const BANNER_URL_REGEX = /^(https?:\/\/|\/uploads\/)/i;
+const ACTIVITY_TEMPLATE_TYPES = [
+  "infografia",
+  "quiz",
+  "ppt-animada",
+  "video",
+  "juego",
+] as const;
+const ACTIVITY_KINDS: ActivityKind[] = [
+  "multiple_choice",
+  "true_false",
+  "video_quiz",
+  "ppt_review",
+  "embedded_quiz",
+];
+const ORIENTED_AT_VALUES: OrientedAt[] = ["inatento", "hiperactivo", "combinado"];
+
+function createSlugSchema(field: "slug" | "subjectSlug") {
+  return z
+    .string()
+    .trim()
+    .min(1, `${field} es obligatorio`)
+    .max(128, `${field} no puede superar 128 caracteres`)
+    .transform((value) => value.toLowerCase())
+    .refine((value) => SLUG_REGEX.test(value), {
+      message: `${field} tiene un formato inválido`,
+    });
+}
+
+function optionalNumberField(
+  field: "xpReward" | "unitOrder",
+  opts: { min?: number; max?: number; integer?: boolean } = {},
+) {
+  let schema = z
+    .number()
+    .refine((val) => Number.isFinite(val), {
+      message: `${field} debe ser numérico`,
+    });
+
+  if (typeof opts.min === "number") {
+    schema = schema.min(opts.min, `${field} no puede ser menor a ${opts.min}`);
+  }
+  if (typeof opts.max === "number") {
+    schema = schema.max(opts.max, `${field} no puede ser mayor a ${opts.max}`);
+  }
+  if (opts.integer) {
+    schema = schema.refine((val) => Number.isInteger(val), {
+      message: `${field} debe ser un entero`,
+    });
+  }
+
+  return z
+    .preprocess((value) => {
+      if (value === undefined || value === null) return undefined;
+      if (typeof value === "number") return value;
+      if (typeof value === "string") {
+        const trimmed = value.trim();
+        if (!trimmed) return undefined;
+        const parsed = Number(trimmed);
+        return Number.isFinite(parsed) ? parsed : Number.NaN;
+      }
+      return Number.NaN;
+    }, schema)
+    .optional();
+}
+
+const subjectSlugSchema = createSlugSchema("subjectSlug").optional();
+const slugSchema = createSlugSchema("slug").optional();
+
+const templateTypeValueSchema = z
+  .string()
+  .trim()
+  .min(1, "templateType no puede estar vacío")
+  .max(64, "templateType no puede superar 64 caracteres")
+  .transform((value) => value.toLowerCase())
+  .refine((value) => ACTIVITY_TEMPLATE_TYPES.includes(value as (typeof ACTIVITY_TEMPLATE_TYPES)[number]), {
+    message: `templateType debe ser uno de: ${ACTIVITY_TEMPLATE_TYPES.join(", ")}`,
+  });
+
+const kindSchema = z
+  .string()
+  .trim()
+  .min(1, "kind no puede estar vacío")
+  .transform((value) => value.toLowerCase())
+  .refine((value) => ACTIVITY_KINDS.includes(value as ActivityKind), {
+    message: `kind debe ser uno de: ${ACTIVITY_KINDS.join(", ")}`,
+  });
+
+const orientedAtSchema = z
+  .union([
+    z
+      .string()
+      .trim()
+      .min(1, "orientedAt no puede estar vacío")
+      .transform((value) => value.toLowerCase())
+      .refine((value) => ORIENTED_AT_VALUES.includes(value as OrientedAt), {
+        message: `orientedAt debe ser uno de: ${ORIENTED_AT_VALUES.join(", ")}`,
+      }),
+    z.literal(null),
+  ])
+  .optional();
+
+const statusSchema = z
+  .string()
+  .trim()
+  .min(1, "status no puede estar vacío")
+  .transform((value) => value.toLowerCase())
+  .refine((value) => VALID_STATUSES.has(value as "draft" | "published"), {
+    message: "status debe ser draft o published",
+  })
+  .optional();
+
+const bannerUrlSchema = z
+  .union([
+    z
+      .string()
+      .trim()
+      .max(512, "bannerUrl no puede superar 512 caracteres")
+      .refine((value) => BANNER_URL_REGEX.test(value), {
+        message: "bannerUrl debe iniciar con http(s):// o /uploads/",
+      }),
+    z.literal(null),
+  ])
+  .optional();
+
+const activityBaseSchema = z
+  .object({
+    subjectId: z
+      .string()
+      .trim()
+      .min(1, "subjectId no puede estar vacío")
+      .refine((value) => mongoose.Types.ObjectId.isValid(value), {
+        message: "subjectId debe ser un ObjectId válido",
+      })
+      .optional(),
+    subjectSlug: subjectSlugSchema,
+    status: statusSchema,
+    isPublished: z.union([z.boolean(), z.string().trim()]).optional(),
+    templateType: z.union([templateTypeValueSchema, z.literal(null)]).optional(),
+    type: z.union([templateTypeValueSchema, z.literal(null)]).optional(),
+    bannerUrl: bannerUrlSchema,
+    fieldsJSON: z.union([z.string(), z.record(z.string(), z.any())]).optional(),
+    config: z.union([z.string(), z.record(z.string(), z.any())]).optional(),
+    xpReward: optionalNumberField("xpReward", { min: 0, max: 10000 }),
+    unitOrder: optionalNumberField("unitOrder", { min: 0, integer: true }),
+    kind: kindSchema.optional(),
+    orientedAt: orientedAtSchema,
+    title: z
+      .string()
+      .trim()
+      .min(1, "title no puede estar vacío")
+      .max(160, "title no puede superar 160 caracteres")
+      .optional(),
+    description: z
+      .string()
+      .trim()
+      .max(1000, "description no puede superar 1000 caracteres")
+      .optional(),
+    slug: slugSchema,
+  })
+  .passthrough();
+
+type ActivityRequestBody = z.infer<typeof activityBaseSchema>;
+
+const createActivitySchema = activityBaseSchema.superRefine((data, ctx) => {
+  if (!data.subjectId && !data.subjectSlug) {
+    ctx.addIssue({
+      code: ZodIssueCode.custom,
+      message: "Debes enviar subjectId o subjectSlug",
+      path: ["subjectId"],
+    });
+  }
+
+  if (!data.title) {
+    ctx.addIssue({
+      code: ZodIssueCode.custom,
+      message: "El título es obligatorio",
+      path: ["title"],
+    });
+  }
+
+  if (!data.kind) {
+    ctx.addIssue({
+      code: ZodIssueCode.custom,
+      message: "El tipo de actividad (kind) es obligatorio",
+      path: ["kind"],
+    });
+  }
+
+  if (typeof data.xpReward !== "number") {
+    ctx.addIssue({
+      code: ZodIssueCode.custom,
+      message: "xpReward es obligatorio",
+      path: ["xpReward"],
+    });
+  }
+
+  if (data.config === undefined) {
+    ctx.addIssue({
+      code: ZodIssueCode.custom,
+      message: "config es obligatorio",
+      path: ["config"],
+    });
+  }
+});
+
+const updateActivitySchema = activityBaseSchema;
 
 function normalizeStatus(status: unknown) {
   if (typeof status !== "string") return undefined;
@@ -279,7 +492,15 @@ router.post(
   bannerUploadMiddleware,
   async (req: Request, res: Response) => {
   try {
-    const rawBody = (req.body ?? {}) as Record<string, unknown>;
+    const parsed = createActivitySchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      if (req.file?.path) {
+        await removeStoredBanner(req.file.path);
+      }
+      return res.status(400).json({ error: parsed.error.flatten() });
+    }
+
+    const rawBody = parsed.data as ActivityRequestBody;
     const { subjectId, subjectSlug } = rawBody;
 
     const subject = await resolveSubject(subjectId, subjectSlug);
@@ -379,7 +600,15 @@ router.put(
       return res.status(404).json({ error: "Actividad no encontrada." });
     }
 
-    const rawBody = (req.body ?? {}) as Record<string, unknown>;
+    const parsed = updateActivitySchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      if (req.file?.path) {
+        await removeStoredBanner(req.file.path);
+      }
+      return res.status(400).json({ error: parsed.error.flatten() });
+    }
+
+    const rawBody = parsed.data as ActivityRequestBody;
     let nextSubjectId = existing.subjectId;
     if (rawBody?.subjectId || rawBody?.subjectSlug) {
       const subject = await resolveSubject(rawBody?.subjectId, rawBody?.subjectSlug);

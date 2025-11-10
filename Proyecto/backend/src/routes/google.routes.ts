@@ -1,5 +1,6 @@
 import { Router } from "express";
 import passport from "passport";
+import { z } from "zod";
 import { signToken } from "./helpers/jwt-sign";
 import { issueSession } from "./helpers/session";
 import { setRefreshTokenCookie } from "./helpers/authCookies";
@@ -35,11 +36,30 @@ function buildErrorRedirectUrl(message: string) {
   return buildFrontendUrl("/login", { oauth: "error", payload });
 }
 
+const googleVerifySchema = z
+  .object({
+    id_token: z.string().min(1, "El id_token es obligatorio").optional(),
+    idToken: z.string().min(1, "El id_token es obligatorio").optional(),
+  })
+  .passthrough()
+  .refine((data) => data.id_token || data.idToken, {
+    message: "El id_token es obligatorio",
+    path: ["id_token"],
+  });
+
+const googleAuthQuerySchema = z
+  .object({
+    tdahType: z.enum(["inatento", "hiperactivo", "combinado"]).optional(),
+  })
+  .passthrough();
+
 router.post("/google/verify", async (req, res) => {
-  const idToken: string | undefined = req.body?.id_token || req.body?.idToken;
-  if (!idToken) {
-    return res.status(400).json({ error: "El id_token es obligatorio" });
+  const parsed = googleVerifySchema.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.flatten() });
   }
+
+  const idToken = (parsed.data.id_token ?? parsed.data.idToken) as string;
 
   try {
     const payload = await verifyGoogleIdToken(idToken);
@@ -51,10 +71,8 @@ router.post("/google/verify", async (req, res) => {
 });
 // /auth/google?tdahType=inatento|hiperactivo|combinado
 router.get("/google", (req, res, next) => {
-  const tdahType = (req.query.tdahType as string) || null;
-  // Validación simple (opcional)
-  const valid = ["inatento", "hiperactivo", "combinado"];
-  const finalTdah = valid.includes(String(tdahType)) ? tdahType : null;
+  const parsed = googleAuthQuerySchema.safeParse(req.query ?? {});
+  const finalTdah = parsed.success ? parsed.data.tdahType ?? null : null;
   // Serializamos un pequeño JSON como `state`. Passport lo enviará a Google y
   // luego lo recibiremos intacto en el callback para no perder contexto.
   const state = JSON.stringify({ tdahType: finalTdah });
