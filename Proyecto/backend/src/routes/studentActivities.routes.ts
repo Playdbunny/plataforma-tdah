@@ -79,6 +79,13 @@ router.post("/activities/:id/complete", requireAuth, async (req: any, res) => {
     return res.status(404).json({ error: "Usuario no encontrado" });
   }
 
+  const activityObjectId = new Types.ObjectId(id);
+  const hasCompletedActivity = await ActivityAttempt.exists({
+    userId: user._id,
+    activityId: activityObjectId,
+  });
+  const alreadyCompleted = !!hasCompletedActivity;
+
   const payload = parsed.data;
   const baseXp = Math.max(0, Math.round(activity.xpReward ?? 0));
   const requestedXp = payload.xpAwarded ?? baseXp;
@@ -114,7 +121,9 @@ router.post("/activities/:id/complete", requireAuth, async (req: any, res) => {
     user.coins = Math.max(0, Math.round(user.coins ?? 0) + coinsAwarded);
   }
 
-  user.activitiesCompleted = Math.max(0, Math.round(user.activitiesCompleted ?? 0) + 1);
+  if (!alreadyCompleted) {
+    user.activitiesCompleted = Math.max(0, Math.round(user.activitiesCompleted ?? 0) + 1);
+  }
 
   if (xpAwarded > 0) {
     const lastCheck = user.streak?.lastCheck ? new Date(user.streak.lastCheck) : null;
@@ -141,7 +150,7 @@ router.post("/activities/:id/complete", requireAuth, async (req: any, res) => {
 
   const attempt = await ActivityAttempt.create({
     userId: user._id,
-    activityId: new Types.ObjectId(id),
+    activityId: activityObjectId,
     subjectId,
     score,
     xpAwarded,
