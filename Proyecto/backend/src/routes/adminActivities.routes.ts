@@ -14,10 +14,22 @@ import {
 } from "./helpers/multipart";
 
 const BANNERS_DIR = path.join(process.cwd(), "uploads", "banners");
+const VIDEOS_DIR = path.join(process.cwd(), "uploads", "videos");
 const MAX_BANNER_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_VIDEO_SIZE = 20 * 1024 * 1024; // 20MB
+const FORM_BUFFER_LIMIT = MAX_BANNER_SIZE + MAX_VIDEO_SIZE + 2 * 1024 * 1024;
 const BANNER_MIME_REGEX = /image\/(png|jpeg|jpg|webp|gif)/i;
+const VIDEO_MIME_REGEX = /^video\//i;
 
 type UploadedBannerFile = {
+  filename: string;
+  originalname: string;
+  mimetype: string;
+  size: number;
+  path: string;
+};
+
+type UploadedVideoFile = {
   filename: string;
   originalname: string;
   mimetype: string;
@@ -31,6 +43,18 @@ function getExtensionFromMime(mimeType: string) {
   if (normalized === "image/jpeg" || normalized === "image/jpg") return ".jpg";
   if (normalized === "image/webp") return ".webp";
   if (normalized === "image/gif") return ".gif";
+  return "";
+}
+
+function getVideoExtensionFromMime(mimeType: string) {
+  const normalized = mimeType.toLowerCase();
+  if (normalized === "video/mp4" || normalized === "video/mpeg" || normalized === "video/x-m4v") {
+    return ".mp4";
+  }
+  if (normalized === "video/quicktime") return ".mov";
+  if (normalized === "video/webm") return ".webm";
+  if (normalized === "video/x-matroska") return ".mkv";
+  if (normalized === "video/ogg") return ".ogv";
   return "";
 }
 async function saveBannerFile(file: ParsedFile): Promise<UploadedBannerFile> {
@@ -58,9 +82,35 @@ async function saveBannerFile(file: ParsedFile): Promise<UploadedBannerFile> {
   };
 }
 
+async function saveVideoFile(file: ParsedFile): Promise<UploadedVideoFile> {
+  if (!VIDEO_MIME_REGEX.test(file.mimeType)) {
+    throw new HttpError(415, "Formato de video no soportado. Sube un archivo de video válido.");
+  }
+  if (file.buffer.length > MAX_VIDEO_SIZE) {
+    throw new HttpError(413, "El video excede el tamaño permitido (20MB).");
+  }
+
+  await fsPromises.mkdir(VIDEOS_DIR, { recursive: true });
+  const originalExt = path.extname(file.filename).toLowerCase();
+  const inferredExt = getVideoExtensionFromMime(file.mimeType);
+  const extension = originalExt || inferredExt || ".mp4";
+  const uniqueName = `${Date.now()}-${Math.random().toString(36).slice(2)}${extension}`;
+  const destination = path.join(VIDEOS_DIR, uniqueName);
+  await fsPromises.writeFile(destination, file.buffer);
+
+  return {
+    filename: uniqueName,
+    originalname: file.filename,
+    mimetype: file.mimeType,
+    size: file.buffer.length,
+    path: `/uploads/videos/${uniqueName}`,
+  };
+}
+
 async function parseMultipartForm(req: Request): Promise<{
   fields: Record<string, string>;
-  file?: ParsedFile;
+  banner?: ParsedFile;
+  video?: ParsedFile;
 }> {
   const contentType = req.headers["content-type"];
   if (typeof contentType !== "string" || !/multipart\/form-data/i.test(contentType)) {
@@ -75,14 +125,15 @@ async function parseMultipartForm(req: Request): Promise<{
   const boundary = boundaryMatch[1];
   const bodyBuffer = await readRequestBuffer(
     req,
-    MAX_BANNER_SIZE + 2 * 1024 * 1024,
-    "El banner excede el tamaño permitido (10MB)",
+    FORM_BUFFER_LIMIT,
+    "El archivo enviado excede el tamaño permitido (20MB)",
   );
   const boundaryMarker = `--${boundary}`;
   const parts = bodyBuffer.toString("binary").split(boundaryMarker);
 
   const fields: Record<string, string> = {};
-  let file: ParsedFile | undefined;
+  let banner: ParsedFile | undefined;
+  let video: ParsedFile | undefined;
 
   for (const rawPart of parts) {
     if (!rawPart || rawPart === "--" || rawPart === "--\r\n") continue;
@@ -120,7 +171,13 @@ async function parseMultipartForm(req: Request): Promise<{
       const bufferData = Buffer.from(bodySection, "binary");
 
       if (fieldName === "banner" && bufferData.length > 0) {
-        file = {
+        banner = {
+          filename,
+          mimeType,
+          buffer: bufferData,
+        };
+      } else if (fieldName === "video" && bufferData.length > 0) {
+        video = {
           filename,
           mimeType,
           buffer: bufferData,
@@ -132,7 +189,7 @@ async function parseMultipartForm(req: Request): Promise<{
     }
   }
 
-  return { fields, file };
+  return { fields, banner, video };
 }
 
 function bannerUploadMiddleware(req: Request, res: Response, next: NextFunction) {
@@ -141,24 +198,40 @@ function bannerUploadMiddleware(req: Request, res: Response, next: NextFunction)
     return next();
   }
 
-  parseMultipartForm(req)
-    .then(async ({ fields, file }) => {
-      req.body = fields;
-      if (file) {
-        const stored = await saveBannerFile(file);
-        req.file = stored;
-      } else {
-        req.file = null;
+  (async () => {
+    const { fields, banner, video } = await parseMultipartForm(req);
+    req.body = fields;
+
+    let storedBanner: UploadedBannerFile | null = null;
+    let storedVideo: UploadedVideoFile | null = null;
+
+    try {
+      if (banner) {
+        storedBanner = await saveBannerFile(banner);
       }
+      if (video) {
+        storedVideo = await saveVideoFile(video);
+      }
+
+      req.file = storedBanner ?? null;
+      (req as Request & { videoFile?: UploadedVideoFile | null }).videoFile = storedVideo ?? null;
       next();
-    })
-    .catch((err) => {
-      if (err instanceof HttpError) {
-        return res.status(err.status).json({ error: err.message });
+    } catch (error) {
+      if (storedBanner) {
+        await removeStoredBanner(storedBanner.path);
       }
-      const message = err instanceof Error ? err.message : "No se pudo procesar el banner.";
-      return res.status(400).json({ error: message });
-    });
+      if (storedVideo) {
+        await removeStoredVideo(storedVideo.path);
+      }
+      throw error;
+    }
+  })().catch((err) => {
+    if (err instanceof HttpError) {
+      return res.status(err.status).json({ error: err.message });
+    }
+    const message = err instanceof Error ? err.message : "No se pudo procesar el archivo adjunto.";
+    return res.status(400).json({ error: message });
+  });
 }
 
 async function removeStoredBanner(url: string | null | undefined) {
@@ -174,8 +247,95 @@ async function removeStoredBanner(url: string | null | undefined) {
   }
 }
 
+async function removeStoredVideo(url: string | null | undefined) {
+  if (!url || typeof url !== "string" || !url.startsWith("/uploads/videos/")) return;
+  const filename = path.basename(url);
+  const absolute = path.join(VIDEOS_DIR, filename);
+  try {
+    await fsPromises.unlink(absolute);
+  } catch (err: any) {
+    if (err?.code !== "ENOENT") {
+      console.warn(`No se pudo eliminar el recurso anterior: ${absolute}`, err);
+    }
+  }
+}
+
 function isLocalBanner(url: string | null | undefined) {
   return typeof url === "string" && url.startsWith("/uploads/banners/");
+}
+
+function stripDataUrlFields(target: Record<string, any> | null | undefined) {
+  if (!target || typeof target !== "object") return;
+  if (typeof target.fileUrl === "string" && /^data:/i.test(target.fileUrl)) {
+    target.fileUrl = null;
+  }
+
+  const asset = target.asset;
+  if (asset && typeof asset === "object") {
+    if (typeof asset.url === "string" && /^data:/i.test(asset.url)) {
+      asset.url = null;
+    }
+    if (typeof asset.fileUrl === "string" && /^data:/i.test(asset.fileUrl)) {
+      asset.fileUrl = null;
+    }
+    if (typeof asset.dataUrl === "string") {
+      delete asset.dataUrl;
+    }
+  }
+}
+
+function applyUploadedResource(
+  target: Record<string, any> | null | undefined,
+  resourcePath: string,
+): Record<string, any> {
+  const base = target && typeof target === "object" ? target : {};
+  base.fileUrl = resourcePath;
+
+  const asset =
+    base.asset && typeof base.asset === "object"
+      ? (base.asset as Record<string, any>)
+      : {};
+
+  asset.url = resourcePath;
+  asset.source = typeof asset.source === "string" ? asset.source : "upload";
+  if (typeof asset.type !== "string" || !asset.type) {
+    asset.type = "video";
+  }
+  delete asset.dataUrl;
+  delete asset.fileUrl;
+
+  base.asset = asset;
+
+  return base;
+}
+
+function resolveLocalResourcePath(value: unknown): string | null {
+  if (!value || typeof value !== "object") return null;
+  const source = value as Record<string, any>;
+
+  const candidates: unknown[] = [];
+  if (typeof source.fileUrl === "string") {
+    candidates.push(source.fileUrl);
+  }
+
+  const asset = source.asset;
+  if (asset && typeof asset === "object") {
+    const assetRecord = asset as Record<string, any>;
+    if (typeof assetRecord.url === "string") {
+      candidates.push(assetRecord.url);
+    }
+    if (typeof assetRecord.fileUrl === "string") {
+      candidates.push(assetRecord.fileUrl);
+    }
+  }
+
+  for (const candidate of candidates) {
+    if (typeof candidate === "string" && candidate.startsWith("/uploads/videos/")) {
+      return candidate;
+    }
+  }
+
+  return null;
 }
 
 function parseActivityJson(
@@ -211,6 +371,7 @@ declare global {
       user?: User;
       auth?: AuthPayload;
       file?: UploadedBannerFile | null;
+      videoFile?: UploadedVideoFile | null;
     }
   }
 }
@@ -338,9 +499,20 @@ router.post(
     }
 
     const parsedFields = parseActivityJson(rawBody.fieldsJSON, "fieldsJSON");
-    payload.fieldsJSON = parsedFields ?? {};
+    const fieldsJSON = (parsedFields ?? {}) as Record<string, any>;
+    stripDataUrlFields(fieldsJSON);
     const parsedConfig = parseActivityJson(rawBody.config, "config");
-    payload.config = parsedConfig ?? {};
+    const config = (parsedConfig ?? {}) as Record<string, any>;
+    stripDataUrlFields(config);
+
+    if (req.videoFile) {
+      const videoPath = req.videoFile.path;
+      payload.fieldsJSON = applyUploadedResource(fieldsJSON, videoPath);
+      payload.config = applyUploadedResource(config, videoPath);
+    } else {
+      payload.fieldsJSON = fieldsJSON;
+      payload.config = config;
+    }
 
     const activity = new Activity(payload as Partial<ActivityAttrs>);
     await activity.save();
@@ -349,6 +521,9 @@ router.post(
   } catch (err) {
     if (req.file?.path) {
       await removeStoredBanner(req.file.path);
+    }
+    if (req.videoFile?.path) {
+      await removeStoredVideo(req.videoFile.path);
     }
     handleError(res, err);
   }
@@ -421,6 +596,9 @@ router.put(
 
     let bannerToRemove: string | null = null;
     const previousBanner = existing.bannerUrl ?? null;
+    const previousVideo = resolveLocalResourcePath(existing.config);
+    let videoToRemove: string | null = null;
+
     delete updatable.bannerUrl;
     if (req.file) {
       updatable.bannerUrl = req.file.path;
@@ -443,18 +621,69 @@ router.put(
       }
     }
 
+    let nextFields: Record<string, any> | undefined;
     if (Object.prototype.hasOwnProperty.call(rawBody, "fieldsJSON")) {
       const parsedFields = parseActivityJson(rawBody.fieldsJSON, "fieldsJSON");
-      updatable.fieldsJSON = parsedFields ?? {};
+      nextFields = (parsedFields ?? {}) as Record<string, any>;
+      stripDataUrlFields(nextFields);
+    } else if (req.videoFile) {
+      const currentFields = (existing as any).fieldsJSON;
+      if (currentFields && typeof currentFields === "object") {
+        nextFields = { ...(currentFields as Record<string, any>) };
+      } else {
+        nextFields = {};
+      }
+      stripDataUrlFields(nextFields);
     } else {
       delete updatable.fieldsJSON;
     }
 
+    let nextConfig: Record<string, any> | undefined;
     if (Object.prototype.hasOwnProperty.call(rawBody, "config")) {
       const parsedConfig = parseActivityJson(rawBody.config, "config");
-      updatable.config = parsedConfig ?? {};
+      nextConfig = (parsedConfig ?? {}) as Record<string, any>;
+      stripDataUrlFields(nextConfig);
+    } else if (req.videoFile) {
+      const currentConfig = existing.config;
+      if (currentConfig && typeof currentConfig === "object") {
+        nextConfig = { ...(currentConfig as Record<string, any>) };
+      } else {
+        nextConfig = {};
+      }
+      stripDataUrlFields(nextConfig);
     } else {
       delete updatable.config;
+    }
+
+    if (req.videoFile) {
+      const videoPath = req.videoFile.path;
+      nextFields = applyUploadedResource(nextFields ?? {}, videoPath);
+      nextConfig = applyUploadedResource(nextConfig ?? {}, videoPath);
+      updatable.fieldsJSON = nextFields;
+      updatable.config = nextConfig;
+      if (previousVideo && previousVideo !== videoPath) {
+        videoToRemove = previousVideo;
+      }
+    } else {
+      if (nextFields) {
+        updatable.fieldsJSON = nextFields;
+      }
+      if (nextConfig) {
+        updatable.config = nextConfig;
+        const nextResourcePath = resolveLocalResourcePath(nextConfig);
+        if (!nextResourcePath && previousVideo) {
+          videoToRemove = previousVideo;
+        } else if (
+          nextResourcePath &&
+          previousVideo &&
+          previousVideo !== nextResourcePath &&
+          previousVideo.startsWith("/uploads/videos/")
+        ) {
+          videoToRemove = previousVideo;
+        }
+      } else if (previousVideo && Object.prototype.hasOwnProperty.call(rawBody, "config")) {
+        videoToRemove = previousVideo;
+      }
     }
 
     existing.set(updatable as Partial<ActivityAttrs>);
@@ -463,10 +692,16 @@ router.put(
     if (bannerToRemove) {
       await removeStoredBanner(bannerToRemove);
     }
+    if (videoToRemove) {
+      await removeStoredVideo(videoToRemove);
+    }
     res.json(updated);
   } catch (err) {
     if (req.file?.path) {
       await removeStoredBanner(req.file.path);
+    }
+    if (req.videoFile?.path) {
+      await removeStoredVideo(req.videoFile.path);
     }
     handleError(res, err);
   }
