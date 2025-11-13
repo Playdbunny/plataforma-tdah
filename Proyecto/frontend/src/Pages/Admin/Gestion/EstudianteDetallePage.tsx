@@ -15,6 +15,7 @@ import {
   type AdminStudentDetail,
 } from "../../../api/adminStudents";
 import { timeAgo } from "../../../utils/timeAgo";
+import { useBackendReady } from "@/hooks/useBackendReady";
 
 function formatActivity(ev: AdminStudentActivity) {
   const amount = ev.amount >= 0 ? `+${ev.amount}` : `${ev.amount}`;
@@ -34,8 +35,10 @@ export default function EstudianteDetallePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const ready = useBackendReady();
 
   useEffect(() => {
+    if (!ready) return;
     if (!id) {
       setNotFound(true);
       return;
@@ -57,7 +60,7 @@ export default function EstudianteDetallePage() {
         }
         setLoading(false);
       });
-  }, [id]);
+  }, [id, ready]);
 
   const nf = useMemo(() => new Intl.NumberFormat("es-CL"), []);
 
@@ -80,6 +83,14 @@ export default function EstudianteDetallePage() {
       .join(" ");
     return { width, height, pad, d, x, y, maxV, data };
   }, [student?.weeklyXp]);
+
+  if (!ready) {
+    return (
+      <div style={{ display: "grid", placeItems: "center", minHeight: "100vh" }}>
+        <p style={{ opacity: 0.8 }}>Conectando al servidor…</p>
+      </div>
+    );
+  }
 
   if (notFound) return <Navigate to="/admin/estudiantes" replace />;
 

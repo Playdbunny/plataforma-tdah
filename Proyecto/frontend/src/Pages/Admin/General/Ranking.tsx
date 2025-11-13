@@ -6,6 +6,7 @@
 // - Estilos accesibles y responsivos
 
 import { useEffect, useMemo, useState } from "react";
+import { useBackendReady } from "@/hooks/useBackendReady";
 import styles from "./Ranking.module.css";
 import { useStudentsStore } from "../../../stores/studentsStore";
 import { timeAgo } from "../../../utils/timeAgo";
@@ -20,6 +21,7 @@ type SortDir = "asc" | "desc";
 const nf = new Intl.NumberFormat("es-CL");
 
 export default function AdminRanking() {
+  const ready = useBackendReady();
   // Estado global de estudiantes
   const { items, list, loading, error } = useStudentsStore();
 
@@ -33,10 +35,11 @@ export default function AdminRanking() {
   const [sortDir, setSortDir] = useState<SortDir>("desc"); // dirección de orden
 
   useEffect(() => {
+    if (!ready) return;
     if (!items.length) {
       void list();
     }
-  }, [items.length, list]);
+  }, [items.length, list, ready]);
 
   type DerivedStudent = {
     id: string;
@@ -128,6 +131,14 @@ export default function AdminRanking() {
 
   const medal = (position: number) =>
     position === 1 ? "🥇" : position === 2 ? "🥈" : position === 3 ? "🥉" : "";
+
+  if (!ready) {
+    return (
+      <div style={{ display: "grid", placeItems: "center", minHeight: "100vh" }}>
+        <p style={{ opacity: 0.8 }}>Conectando al servidor…</p>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.screen}>

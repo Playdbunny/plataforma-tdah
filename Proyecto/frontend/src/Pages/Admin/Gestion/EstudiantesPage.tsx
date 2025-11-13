@@ -10,18 +10,21 @@ import { useNavigate } from "react-router-dom";
 import styles from "./Estudiantes.module.css";
 import { useStudentsStore } from "../../../stores/studentsStore";
 import { timeAgo } from "../../../utils/timeAgo";
+import { useBackendReady } from "@/hooks/useBackendReady";
 
 export default function EstudiantesPage() {
+  const ready = useBackendReady();
   const { items, list, loading, error } = useStudentsStore();
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
   const pageSize = 10; // filas por página (ajústalo)
 
   useEffect(() => {
+    if (!ready) return;
     if (!items || items.length === 0) {
       void list();
     }
-  }, [items, list]);
+  }, [items, list, ready]);
 
   // Filtrado en memoria por nombre/email
   const filtered = useMemo(() => {
@@ -48,6 +51,14 @@ export default function EstudiantesPage() {
   }, [q]);
 
   const navigate = useNavigate();
+
+  if (!ready) {
+    return (
+      <div style={{ display: "grid", placeItems: "center", minHeight: "100vh" }}>
+        <p style={{ opacity: 0.8 }}>Conectando al servidor…</p>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.screen}>

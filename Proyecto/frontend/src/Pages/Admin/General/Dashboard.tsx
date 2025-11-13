@@ -6,6 +6,7 @@
 
 import styles from "./Dashboard.module.css";
 import { useEffect, useMemo, useState } from "react";
+import { useBackendReady } from "@/hooks/useBackendReady";
 import { getAdminDashboardOverview, type AdminDashboardOverview } from "../../../api/admin";
 
 // Helper: formateo de números según ES
@@ -13,6 +14,7 @@ const formatNumber = (n: number) =>
   new Intl.NumberFormat("es-CL").format(n);
 
 export default function AdminDashboard() {
+  const ready = useBackendReady();
   const [overview, setOverview] = useState<AdminDashboardOverview | null>(null);
 
   // Rangos (para cuando conectes al backend puedes pedir 7/30/90 días)
@@ -35,6 +37,8 @@ export default function AdminDashboard() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!ready) return;
+
     let active = true;
 
     async function loadOverview() {
@@ -60,7 +64,7 @@ export default function AdminDashboard() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [ready]);
 
   // ───────────── Helpers para gráfico (coordenadas SVG) ─────────────
   const chart = useMemo(() => {
@@ -102,6 +106,14 @@ export default function AdminDashboard() {
   }, [serie]);
 
   // ───────────── Render ─────────────
+  if (!ready) {
+    return (
+      <div style={{ display: "grid", placeItems: "center", minHeight: "100vh" }}>
+        <p style={{ opacity: 0.8 }}>Conectando al servidor…</p>
+      </div>
+    );
+  }
+
   if (error) {
     return (
       <div role="alert" className={styles.error}>
