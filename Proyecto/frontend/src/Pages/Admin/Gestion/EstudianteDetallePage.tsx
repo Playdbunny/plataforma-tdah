@@ -16,6 +16,7 @@ import {
 } from "../../../api/adminStudents";
 import { timeAgo } from "../../../utils/timeAgo";
 import { useBackendReady } from "@/hooks/useBackendReady";
+import { currentTotalXP } from "../../../Lib/Levels";
 
 function formatActivity(ev: AdminStudentActivity) {
   const amount = ev.amount >= 0 ? `+${ev.amount}` : `${ev.amount}`;
@@ -84,6 +85,14 @@ export default function EstudianteDetallePage() {
     return { width, height, pad, d, x, y, maxV, data };
   }, [student?.weeklyXp]);
 
+  const totalXp = useMemo(() => {
+    if (!student) return 0;
+    if (typeof student.totalXp === "number" && Number.isFinite(student.totalXp)) {
+      return Math.max(0, Math.round(student.totalXp));
+    }
+    return currentTotalXP(student.level ?? 1, student.xp ?? 0);
+  }, [student]);
+
   if (!ready) {
     return (
       <div style={{ display: "grid", placeItems: "center", minHeight: "100vh" }}>
@@ -129,7 +138,7 @@ export default function EstudianteDetallePage() {
 
             {/* Badges a la derecha */}
             <div className={styles.badges}>
-              <span className={styles.badge}>⭐ {nf.format(student.xp)} XP</span>
+              <span className={styles.badge}>⭐ {nf.format(totalXp)} XP</span>
               <span className={styles.badge}>🔥 RACHA {student.streakCount ?? 0} DÍAS</span>
             </div>
           </div>

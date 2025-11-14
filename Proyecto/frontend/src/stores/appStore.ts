@@ -5,7 +5,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { normalizeAvatarUrl } from "../utils/avatar";
-import { xpForLevel } from "../Lib/Levels";
+import { currentTotalXP, xpForLevel } from "../Lib/Levels";
 
 /* ======================
    Tipos base del dominio
@@ -36,6 +36,7 @@ export type User = {
   tdahType?: TDAHType;
   level?: number;
   xp?: number;
+  totalXp?: number;
   
   nextXp?: number;
   // location?: string;
@@ -75,11 +76,19 @@ function normalizeLevelProgression(user: NonNullable<User>): NonNullable<User> {
     requiredXPForLevel = xpForLevel(level);
   }
 
+  const normalizeTotalXP = (value: unknown): number => {
+    if (typeof value !== "number" || !Number.isFinite(value)) return currentTotalXP(level, xp);
+    return Math.max(0, Math.floor(value));
+  };
+
+  const totalXp = normalizeTotalXP(user.totalXp);
+
   return {
     ...user,
     level,
     xp,
     nextXp: requiredXPForLevel,
+    totalXp,
   };
 }
 

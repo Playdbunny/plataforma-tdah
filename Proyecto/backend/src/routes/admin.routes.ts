@@ -2,7 +2,9 @@ import { Router } from "express";
 import argon2 from "argon2";
 import { User } from "../models/User";
 import Activity from "../models/Activity";
+import UserProgress from "../models/UserProgress";
 import { requireAuth, requireRole } from "../middleware/requireAuth";
+import { currentTotalXp } from "../lib/levels";
 
 const router = Router();
 
@@ -44,22 +46,34 @@ router.get(
     try {
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
 
-      const [connectedStudents, topStudentDoc, totalActivities] = await Promise.all([
-        User.countDocuments({
+      const [recentLoginIds, recentActivityIds, topStudentDoc, totalActivities] = await Promise.all([
+        User.distinct("_id", {
           role: "student",
           lastLogin: { $gte: fiveMinutesAgo },
         }),
+        UserProgress.distinct("userId", {
+          lastActivityAt: { $gte: fiveMinutesAgo },
+        }),
         User.findOne({ role: "student" })
-          .sort({ xp: -1, createdAt: 1 })
-          .select({ _id: 1, name: 1, xp: 1, lastLogin: 1 }),
+          .sort({ level: -1, xp: -1, createdAt: 1 })
+          .select({ _id: 1, name: 1, xp: 1, level: 1, lastLogin: 1 }),
         Activity.countDocuments(),
       ]);
+
+      const connectedStudents = new Set(
+        [...recentLoginIds, ...recentActivityIds].map((id) => id.toString())
+      ).size;
+
+      const xpInLevel = typeof topStudentDoc?.xp === "number" ? Math.max(0, topStudentDoc.xp) : 0;
+      const level = topStudentDoc?.level ?? 1;
 
       const topStudent = topStudentDoc
         ? {
             id: topStudentDoc._id.toString(),
             name: topStudentDoc.name,
-            xp: topStudentDoc.xp ?? 0,
+            xp: xpInLevel,
+            totalXp: currentTotalXp(level, xpInLevel),
+            level,
             lastLogin: topStudentDoc.lastLogin ?? null,
           }
         : null;

@@ -6,6 +6,7 @@ import UserProgress from "../models/UserProgress";
 import Subject from "../models/Subject";
 import Activity from "../models/Activity";
 import XpEvent from "../models/XpEvent";
+import { currentTotalXp } from "../lib/levels";
 
 const router = Router();
 
@@ -39,6 +40,7 @@ type StudentSummaryDto = {
   email: string;
   tdahType: TDAHType;
   xp: number;
+  totalXp: number;
   coins: number;
   level: number;
   activitiesCompleted: number;
@@ -199,12 +201,19 @@ router.get(
           null
         );
 
+        const xpInLevel =
+          typeof user.xp === "number" && Number.isFinite(user.xp)
+            ? Math.max(0, Math.floor(user.xp))
+            : 0;
+        const totalXp = currentTotalXp(user.level ?? 1, xpInLevel);
+
         return {
           id: userId,
           name: user.name,
           email: user.email,
           tdahType: user.tdahType,
-          xp: user.xp ?? 0,
+          xp: xpInLevel,
+          totalXp,
           coins: user.coins ?? 0,
           level: user.level ?? 0,
           activitiesCompleted: user.activitiesCompleted ?? 0,
@@ -219,7 +228,7 @@ router.get(
         } satisfies StudentSummaryDto;
       });
 
-      summaries.sort((a, b) => b.xp - a.xp);
+      summaries.sort((a, b) => b.totalXp - a.totalXp);
 
       return res.json({ items: summaries });
     } catch (err) {
@@ -385,12 +394,19 @@ router.get(
         null
       );
 
+      const xpInLevel =
+        typeof user.xp === "number" && Number.isFinite(user.xp)
+          ? Math.max(0, Math.floor(user.xp))
+          : 0;
+      const totalXp = currentTotalXp(user.level ?? 1, xpInLevel);
+
       const detail: StudentDetailDto = {
         id: user._id.toString(),
         name: user.name,
         email: user.email,
         tdahType: user.tdahType,
-        xp: user.xp ?? 0,
+        xp: xpInLevel,
+        totalXp,
         coins: user.coins ?? 0,
         level: user.level ?? 0,
         activitiesCompleted: user.activitiesCompleted ?? 0,

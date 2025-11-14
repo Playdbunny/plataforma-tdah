@@ -54,7 +54,13 @@ export default function Profile() {
   const charName = user?.character?.name  ?? DEFAULT_CHARACTER.name;
 
   // ✅ TOTAL XP acumulado = suma niveles previos + xp actual de nivel en curso
-  const totalXP = useMemo(() => currentTotalXP(level, xp), [level, xp]);
+  const totalXP = useMemo(() => {
+    const provided = typeof user?.totalXp === "number" ? user.totalXp : null;
+    if (typeof provided === "number" && Number.isFinite(provided)) {
+      return Math.max(0, Math.round(provided));
+    }
+    return currentTotalXP(level, xp);
+  }, [user?.totalXp, level, xp]);
 
   // Stats (por ahora 3 de ellas son mock=0; TOTAL XP sí es real)
   const stats: Stat[] = useMemo(

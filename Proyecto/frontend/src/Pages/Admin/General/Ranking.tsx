@@ -10,6 +10,7 @@ import { useBackendReady } from "@/hooks/useBackendReady";
 import styles from "./Ranking.module.css";
 import { useStudentsStore } from "../../../stores/studentsStore";
 import { timeAgo } from "../../../utils/timeAgo";
+import { currentTotalXP } from "../../../Lib/Levels";
 
 // ====================
 // Tipos para ordenar
@@ -44,7 +45,7 @@ export default function AdminRanking() {
   type DerivedStudent = {
     id: string;
     name: string;
-    xp: number;
+    totalXp: number;
     progress: number;
     lastActiveIso: string | null;
     lastActiveHours: number | null;
@@ -56,10 +57,15 @@ export default function AdminRanking() {
       const lastHours = lastIso
         ? Math.max(0, Math.floor((Date.now() - new Date(lastIso).getTime()) / 36e5))
         : null;
+      const totalXp =
+        typeof student.totalXp === "number" && Number.isFinite(student.totalXp)
+          ? Math.max(0, Math.floor(student.totalXp))
+          : currentTotalXP(student.level ?? 1, student.xp ?? 0);
+
       return {
         id: student.id,
         name: student.name,
-        xp: student.xp ?? 0,
+        totalXp,
         progress: Math.round(student.progressAverage ?? 0),
         lastActiveIso: lastIso,
         lastActiveHours: lastHours,
@@ -82,7 +88,7 @@ export default function AdminRanking() {
   const sorted = useMemo(() => {
     const arr = [...filtered];
 
-    const rankingOrder = [...arr].sort((a, b) => b.xp - a.xp);
+    const rankingOrder = [...arr].sort((a, b) => b.totalXp - a.totalXp);
     const idToPosition = new Map<string, number>();
     rankingOrder.forEach((s, i) => idToPosition.set(s.id, i + 1));
 
@@ -93,7 +99,7 @@ export default function AdminRanking() {
 
       if (sortKey === "position") cmp = posA - posB;
       else if (sortKey === "name") cmp = a.name.localeCompare(b.name, "es");
-      else if (sortKey === "xp") cmp = a.xp - b.xp;
+      else if (sortKey === "xp") cmp = a.totalXp - b.totalXp;
       else if (sortKey === "progress") cmp = a.progress - b.progress;
       else if (sortKey === "lastActive") {
         if (a.lastActiveHours == null && b.lastActiveHours == null) cmp = 0;
@@ -212,7 +218,7 @@ export default function AdminRanking() {
                     {(s as any).position}
                   </td>
                   <td className={styles.name}>{s.name}</td>
-                  <td className={styles.xp}>{nf.format(s.xp)} XP</td>
+                  <td className={styles.xp}>{nf.format(s.totalXp)} XP</td>
                   <td className={styles.progress}>
                     <div className={styles.bar}>
                       <div className={styles.fill} style={{ width: `${s.progress}%` }} />

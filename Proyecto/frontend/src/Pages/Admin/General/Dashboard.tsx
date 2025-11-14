@@ -143,7 +143,7 @@ export default function AdminDashboard() {
             <div className={styles.kpiIcon} aria-hidden>⭐</div>
             <div className={styles.kpiText}>
               <div className={styles.kpiNumber}>
-                {formatNumber(overview?.topStudent?.xp ?? 0)}
+                {formatNumber(overview?.topStudent?.totalXp ?? 0)}
               </div>
               <div className={styles.kpiLabel}>XP alumno rank 1</div>
             </div>
@@ -165,7 +165,11 @@ export default function AdminDashboard() {
               <div className={styles.kpiNumber}>{overview?.topStudent?.name ?? "—"}</div>
               <div className={styles.kpiLabel}>
                 {overview?.topStudent
-                  ? `${formatNumber(overview.topStudent.xp)} XP`
+                  ? `${formatNumber(overview.topStudent.totalXp)} XP${
+                      overview.topStudent.level
+                        ? ` · Nivel ${overview.topStudent.level}`
+                        : ""
+                    }`
                   : "Sin datos"}
               </div>
             </div>
