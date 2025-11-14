@@ -15,7 +15,7 @@ import { currentTotalXP } from "../../../Lib/Levels";
 // ====================
 // Tipos para ordenar
 // ====================
-type SortKey = "position" | "name" | "xp" | "progress" | "lastActive";
+type SortKey = "position" | "name" | "xp" | "lastActive";
 type SortDir = "asc" | "desc";
 
 // Formateador de números con separador de miles
@@ -46,7 +46,6 @@ export default function AdminRanking() {
     id: string;
     name: string;
     totalXp: number;
-    progress: number;
     lastActiveIso: string | null;
     lastActiveHours: number | null;
   };
@@ -66,7 +65,6 @@ export default function AdminRanking() {
         id: student.id,
         name: student.name,
         totalXp,
-        progress: Math.round(student.progressAverage ?? 0),
         lastActiveIso: lastIso,
         lastActiveHours: lastHours,
       };
@@ -100,7 +98,6 @@ export default function AdminRanking() {
       if (sortKey === "position") cmp = posA - posB;
       else if (sortKey === "name") cmp = a.name.localeCompare(b.name, "es");
       else if (sortKey === "xp") cmp = a.totalXp - b.totalXp;
-      else if (sortKey === "progress") cmp = a.progress - b.progress;
       else if (sortKey === "lastActive") {
         if (a.lastActiveHours == null && b.lastActiveHours == null) cmp = 0;
         else if (a.lastActiveHours == null) cmp = 1;
@@ -185,26 +182,25 @@ export default function AdminRanking() {
               <Th active={sortKey === "position"} dir={sortDir} onClick={() => toggleSort("position")} label="Posición" />
               <Th active={sortKey === "name"} dir={sortDir} onClick={() => toggleSort("name")} label="Estudiante" />
               <Th active={sortKey === "xp"} dir={sortDir} onClick={() => toggleSort("xp")} label="XP" />
-              <Th active={sortKey === "progress"} dir={sortDir} onClick={() => toggleSort("progress")} label="% Progreso" />
               <Th active={sortKey === "lastActive"} dir={sortDir} onClick={() => toggleSort("lastActive")} label="Última Actividad" />
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td className={styles.empty} colSpan={5}>
+                <td className={styles.empty} colSpan={4}>
                   Cargando…
                 </td>
               </tr>
             ) : error ? (
               <tr>
-                <td className={styles.empty} colSpan={5}>
+                <td className={styles.empty} colSpan={4}>
                   {error}
                 </td>
               </tr>
             ) : pageItems.length === 0 ? (
               <tr>
-                <td className={styles.empty} colSpan={5}>
+                <td className={styles.empty} colSpan={4}>
                   Sin resultados
                 </td>
               </tr>
@@ -219,12 +215,6 @@ export default function AdminRanking() {
                   </td>
                   <td className={styles.name}>{s.name}</td>
                   <td className={styles.xp}>{nf.format(s.totalXp)} XP</td>
-                  <td className={styles.progress}>
-                    <div className={styles.bar}>
-                      <div className={styles.fill} style={{ width: `${s.progress}%` }} />
-                    </div>
-                    <span className={styles.pct}>{s.progress}%</span>
-                  </td>
                   <td className={styles.last}>{timeAgo(s.lastActiveIso)}</td>
                 </tr>
               ))

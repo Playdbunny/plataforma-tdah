@@ -241,12 +241,17 @@ export default function MateriasPage() {
   return (
     <div className={styles.screen}>
       {/* Barra de acciones: crear / buscar / alternar orden */}
-      <div className={styles.actions}>
-        <button className={styles.primary} onClick={openCreate}>
-          + Nueva materia
-        </button>
-
-        <div className={styles.right}>
+      <header className={styles.header}>
+        <div className={styles.title}>
+          <span role="img" aria-label="Materias">
+            📚
+          </span>
+          &nbsp; Materias
+        </div>
+        <div className={styles.actions}>
+          <button className={styles.primary} onClick={openCreate}>
+            + Nueva materia
+          </button>
           <input
             className={styles.search}
             placeholder="Buscar por nombre/descripción…"
@@ -262,7 +267,7 @@ export default function MateriasPage() {
             Orden: {sortAsc ? "A → Z" : "Z → A"}
           </button>
         </div>
-      </div>
+      </header>
 
       {/* Tabla de materias */}
       <div className={styles.tableWrap}>

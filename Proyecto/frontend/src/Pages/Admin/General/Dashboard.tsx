@@ -1,21 +1,29 @@
 // Dashboard.tsx
 // Vista principal del panel de admin con:
-// - KPIs (Alumnos conectados, XP rank 1, Total actividades, Alumno destacado)
+// - KPIs diarios (finalización, tiempo promedio e XP otorgado)
 // - Gráfico de "Evolución XP" (SVG sin librerías externas) con selector de rango
 // - Actividad reciente (timeline) + skeleton/empty
 
 import styles from "./Dashboard.module.css";
 import { useEffect, useMemo, useState } from "react";
 import { useBackendReady } from "@/hooks/useBackendReady";
-import { getAdminDashboardOverview, type AdminDashboardOverview } from "../../../api/admin";
+import { getAdminTodayKpis, type AdminTodayKpis } from "@/api/adminKpis";
+import {
+  getAdminDashboardOverview,
+  type AdminDashboardOverview,
+} from "@/api/admin";
+import { formatMMSS, formatShortNumber } from "@/utils/formatters";
 
-// Helper: formateo de números según ES
-const formatNumber = (n: number) =>
-  new Intl.NumberFormat("es-CL").format(n);
+const formatNumber = (n: number) => new Intl.NumberFormat("es-CL").format(n);
 
 export default function AdminDashboard() {
   const ready = useBackendReady();
+  const [kpis, setKpis] = useState<AdminTodayKpis | null>(null);
+  const [kpisLoading, setKpisLoading] = useState(true);
+  const [kpisError, setKpisError] = useState<string | null>(null);
   const [overview, setOverview] = useState<AdminDashboardOverview | null>(null);
+  const [overviewLoading, setOverviewLoading] = useState(true);
+  const [overviewError, setOverviewError] = useState<string | null>(null);
 
   // Rangos (para cuando conectes al backend puedes pedir 7/30/90 días)
   const [range, setRange] = useState<"7d" | "30d" | "90d">("7d");
@@ -33,8 +41,35 @@ export default function AdminDashboard() {
   // Selección de serie según rango
   const serie = weeklyXPByRange[range];
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    if (!ready) return;
+
+    let active = true;
+
+    async function loadKpis() {
+      setKpisLoading(true);
+      setKpisError(null);
+      try {
+        const data = await getAdminTodayKpis();
+        if (active) setKpis(data);
+      } catch (err) {
+        if (!active) return;
+        console.error("Error cargando KPIs diarios", err);
+        const message =
+          (err as any)?.response?.data?.error ??
+          (err instanceof Error ? err.message : "No se pudo cargar la información");
+        setKpisError(message);
+        setKpis(null);
+      } finally {
+        if (active) setKpisLoading(false);
+      }
+    }
+
+    loadKpis();
+    return () => {
+      active = false;
+    };
+  }, [ready]);
 
   useEffect(() => {
     if (!ready) return;
@@ -42,8 +77,8 @@ export default function AdminDashboard() {
     let active = true;
 
     async function loadOverview() {
-      setIsLoading(true);
-      setError(null);
+      setOverviewLoading(true);
+      setOverviewError(null);
       try {
         const data = await getAdminDashboardOverview();
         if (active) setOverview(data);
@@ -53,10 +88,10 @@ export default function AdminDashboard() {
         const message =
           (err as any)?.response?.data?.error ??
           (err instanceof Error ? err.message : "No se pudo cargar la información");
-        setError(message);
+        setOverviewError(message);
         setOverview(null);
       } finally {
-        if (active) setIsLoading(false);
+        if (active) setOverviewLoading(false);
       }
     }
 
@@ -114,67 +149,92 @@ export default function AdminDashboard() {
     );
   }
 
-  if (error) {
-    return (
-      <div role="alert" className={styles.error}>
-        Error: {error}
-      </div>
-    );
-  }
+  const safeKpis: AdminTodayKpis = kpis ?? {
+    started: 0,
+    completed: 0,
+    completionRatePct: 0,
+    avgDurationSec: 0,
+    xpAwarded: 0,
+  };
+  const completionPct = Number.isFinite(safeKpis.completionRatePct)
+    ? Math.round(safeKpis.completionRatePct)
+    : 0;
+  const completionHint = `${safeKpis.completed.toLocaleString("es-CL")}/${safeKpis.started.toLocaleString(
+    "es-CL",
+  )} intentos`;
+  const xpHint = `${safeKpis.xpAwarded.toLocaleString("es-CL")} XP`;
+
+  const topStudent = overview?.topStudent;
+  const topStudentName = topStudent?.name ?? (overviewLoading ? "Cargando…" : "—");
+  const levelLabel =
+    typeof topStudent?.level === "number" ? ` · Nivel ${topStudent.level}` : "";
+  const topStudentHint = topStudent
+    ? `${formatNumber(topStudent.totalXp ?? topStudent.xp ?? 0)} XP${levelLabel}`
+    : overviewLoading
+    ? "Buscando alumno destacado…"
+    : "Sin datos";
+
+  const showSkeleton = kpisLoading && overviewLoading;
 
   return (
     <div className={styles.screen}>
       {/* KPIs */}
-      {isLoading ? (
+      {showSkeleton ? (
         <div className={styles.skelRow} aria-hidden />
       ) : (
-        <section className={styles.kpis}>
-          <div className={styles.kpi} role="group" aria-label="Alumnos conectados">
-            <div className={styles.kpiIcon} aria-hidden>👥</div>
-            <div className={styles.kpiText}>
-              <div className={styles.kpiNumber}>
-                {formatNumber(overview?.connectedStudents ?? 0)}
+        <>
+          <section className={styles.kpis}>
+            <div className={styles.kpi} role="group" aria-label="Finalización hoy">
+              <div className={styles.kpiIcon} aria-hidden>
+                📈
               </div>
-              <div className={styles.kpiLabel}>Alumnos conectados</div>
+              <div className={styles.kpiText}>
+                <div className={styles.kpiLabel}>Finalización hoy</div>
+                <div className={styles.kpiNumber}>{completionPct}%</div>
+                <div className={styles.kpiHint}>{completionHint}</div>
+              </div>
             </div>
-          </div>
 
-          <div className={styles.kpi} role="group" aria-label="XP alumno rank 1">
-            <div className={styles.kpiIcon} aria-hidden>⭐</div>
-            <div className={styles.kpiText}>
-              <div className={styles.kpiNumber}>
-                {formatNumber(overview?.topStudent?.totalXp ?? 0)}
+            <div className={styles.kpi} role="group" aria-label="Tiempo medio por intento">
+              <div className={styles.kpiIcon} aria-hidden>
+                ⏱️
               </div>
-              <div className={styles.kpiLabel}>XP alumno rank 1</div>
+              <div className={styles.kpiText}>
+                <div className={styles.kpiLabel}>Tiempo medio por intento</div>
+                <div className={styles.kpiNumber}>{formatMMSS(safeKpis.avgDurationSec)}</div>
+                <div className={styles.kpiHint}>mm:ss</div>
+              </div>
             </div>
-          </div>
 
-          <div className={styles.kpi} role="group" aria-label="Total actividades">
-            <div className={styles.kpiIcon} aria-hidden>🧩</div>
-            <div className={styles.kpiText}>
-              <div className={styles.kpiNumber}>
-                {formatNumber(overview?.totalActivities ?? 0)}
+            <div className={styles.kpi} role="group" aria-label="XP otorgado hoy">
+              <div className={styles.kpiIcon} aria-hidden>
+                ⚡
               </div>
-              <div className={styles.kpiLabel}>Total actividades</div>
+              <div className={styles.kpiText}>
+                <div className={styles.kpiLabel}>XP otorgado hoy</div>
+                <div className={styles.kpiNumber}>{formatShortNumber(safeKpis.xpAwarded)}</div>
+                <div className={styles.kpiHint}>{xpHint}</div>
+              </div>
             </div>
-          </div>
 
-          <div className={styles.kpi} role="group" aria-label="Alumno rank 1">
-            <div className={styles.kpiIcon} aria-hidden>🏅</div>
-            <div className={styles.kpiText}>
-              <div className={styles.kpiNumber}>{overview?.topStudent?.name ?? "—"}</div>
-              <div className={styles.kpiLabel}>
-                {overview?.topStudent
-                  ? `${formatNumber(overview.topStudent.totalXp)} XP${
-                      overview.topStudent.level
-                        ? ` · Nivel ${overview.topStudent.level}`
-                        : ""
-                    }`
-                  : "Sin datos"}
+            <div className={styles.kpi} role="group" aria-label="Alumno destacado">
+              <div className={styles.kpiIcon} aria-hidden>
+                🏅
+              </div>
+              <div className={styles.kpiText}>
+                <div className={styles.kpiLabel}>Alumno destacado</div>
+                <div className={styles.kpiNumber}>{topStudentName}</div>
+                <div className={styles.kpiHint}>{topStudentHint}</div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+          {(kpisError || overviewError) && (
+            <p role="status" className={styles.kpiError}>
+              {kpisError && <>No se pudieron actualizar los KPIs. {kpisError} </>}
+              {overviewError && <>No se pudo cargar el alumno destacado. {overviewError}</>}
+            </p>
+          )}
+        </>
       )}
 
       {/* Gráfico + título estilo “tab” */}

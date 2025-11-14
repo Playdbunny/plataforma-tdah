@@ -97,11 +97,15 @@ router.post("/activities/:id/complete", requireAuth, async (req: any, res) => {
 
   const correctCount = payload.correctCount ?? 0;
   const totalCount = payload.totalCount ?? 0;
-  const durationSec = payload.durationSec ?? 0;
+  const rawDurationSec = payload.durationSec ?? 0;
+  const durationSec = Math.max(0, Math.round(rawDurationSec));
   const estimatedDurationSec = payload.estimatedDurationSec ?? null;
   const score = totalCount > 0 ? clamp(correctCount / totalCount, 0, 1) : 1;
 
   const now = new Date();
+  const endedAt = now;
+  const startedAt =
+    durationSec > 0 ? new Date(endedAt.getTime() - durationSec * 1000) : endedAt;
 
   if (xpAwarded > 0) {
     const updated = applyXpGain(user.level, user.xp, xpAwarded);
@@ -156,7 +160,10 @@ router.post("/activities/:id/complete", requireAuth, async (req: any, res) => {
     xpAwarded,
     correctCount: Math.max(0, Math.round(correctCount)),
     totalCount: Math.max(0, Math.round(totalCount)),
-    durationSec: Math.max(0, Math.round(durationSec)),
+    durationSec,
+    status: "completed",
+    startedAt,
+    endedAt,
   });
 
   const tasks: Promise<unknown>[] = [user.save()];
@@ -219,7 +226,7 @@ router.post("/activities/:id/complete", requireAuth, async (req: any, res) => {
   return res.json({
     xpAwarded,
     coinsAwarded,
-    durationSec: Math.max(0, Math.round(durationSec)),
+    durationSec,
     estimatedDurationSec,
     score,
     streak: safeUser.streak,

@@ -33,6 +33,11 @@
   opacity: 0.85;
   font-family: "PixelGrid", system-ui, sans-serif;
 }
+.kpiHint {
+  font-size: 11px;
+  opacity: 0.7;
+  font-family: "PixelGrid", system-ui, sans-serif;
+}
 
 /* ───── Gráfico ───── */
 .chartCard {
@@ -154,4 +159,11 @@
   background: #fee2e2;
   color: #7f1d1d;
   border-radius: 12px;
+}
+
+.kpiError {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #b45309;
+  font-family: "PixelGrid", system-ui, sans-serif;
 }
