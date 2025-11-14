@@ -3,6 +3,7 @@ import argon2 from "argon2";
 import { User } from "../models/User";
 import Activity from "../models/Activity";
 import UserProgress from "../models/UserProgress";
+import ActivityAttempt from "../models/ActivityAttempt";
 import { requireAuth, requireRole } from "../middleware/requireAuth";
 import { currentTotalXp } from "../lib/levels";
 
@@ -88,6 +89,181 @@ router.get(
       return res.status(500).json({
         error: "No se pudo obtener el resumen del dashboard del admin.",
       });
+    }
+  }
+);
+
+const MAX_RANGE_DAYS = 180;
+
+const clampRangeDays = (input: unknown, fallback = 7) => {
+  const parsed =
+    typeof input === "string" ? Number.parseInt(input, 10) : Number(input ?? fallback);
+  if (Number.isNaN(parsed) || !Number.isFinite(parsed)) return fallback;
+  return Math.min(Math.max(parsed, 1), MAX_RANGE_DAYS);
+};
+
+const startOfDay = (date: Date) => {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
+};
+
+const endOfDay = (date: Date) => {
+  const d = new Date(date);
+  d.setHours(23, 59, 59, 999);
+  return d;
+};
+
+const dateKey = (date: Date) => date.toISOString().slice(0, 10);
+
+router.get(
+  "/dashboard/students-growth",
+  requireAuth,
+  requireRole("admin"),
+  async (req, res) => {
+    try {
+      const days = clampRangeDays(req.query.days, 7);
+      const today = endOfDay(new Date());
+      const rangeStart = startOfDay(new Date(today));
+      rangeStart.setDate(rangeStart.getDate() - (days - 1));
+
+      const [baseline, grouped] = await Promise.all([
+        User.countDocuments({ role: "student", createdAt: { $lt: rangeStart } }),
+        User.aggregate<{ _id: string; count: number }>([
+          {
+            $match: {
+              role: "student",
+              createdAt: { $gte: rangeStart, $lte: today },
+            },
+          },
+          {
+            $group: {
+              _id: {
+                $dateToString: {
+                  format: "%Y-%m-%d",
+                  date: "$createdAt",
+                  timezone: "UTC",
+                },
+              },
+              count: { $sum: 1 },
+            },
+          },
+          { $sort: { _id: 1 } },
+        ]),
+      ]);
+
+      const groupedMap = new Map(grouped.map((item) => [item._id, item.count]));
+      const points: Array<{ date: string; newStudents: number; totalStudents: number }> = [];
+      let runningTotal = baseline;
+      for (let i = 0; i < days; i++) {
+        const current = new Date(rangeStart);
+        current.setDate(rangeStart.getDate() + i);
+        const key = dateKey(current);
+        const newStudents = groupedMap.get(key) ?? 0;
+        runningTotal += newStudents;
+        points.push({ date: current.toISOString(), newStudents, totalStudents: runningTotal });
+      }
+
+      res.json({ days, points });
+    } catch (error) {
+      console.error("Error fetching students growth", error);
+      res.status(500).json({ error: "STUDENTS_GROWTH_FAILED" });
+    }
+  }
+);
+
+router.get(
+  "/dashboard/avg-completion-time",
+  requireAuth,
+  requireRole("admin"),
+  async (req, res) => {
+    try {
+      const days = clampRangeDays(req.query.days, 7);
+      const today = endOfDay(new Date());
+      const rangeStart = startOfDay(new Date(today));
+      rangeStart.setDate(rangeStart.getDate() - (days - 1));
+
+      const dateExpr = { $ifNull: ["$endedAt", "$createdAt"] } as const;
+      const durationExpr = {
+        $cond: [
+          {
+            $and: [
+              { $ne: ["$startedAt", null] },
+              { $ne: ["$endedAt", null] },
+            ],
+          },
+          { $divide: [{ $subtract: ["$endedAt", "$startedAt"] }, 1000] },
+          { $ifNull: ["$durationSec", 0] },
+        ],
+      } as const;
+
+      const completedFilter = {
+        $and: [
+          {
+            $or: [{ status: "completed" }, { status: null }],
+          },
+          {
+            $expr: {
+              $and: [
+                { $gte: [{ $ifNull: ["$endedAt", "$createdAt"] }, rangeStart] },
+                { $lte: [{ $ifNull: ["$endedAt", "$createdAt"] }, today] },
+              ],
+            },
+          },
+        ],
+      };
+
+      const aggregates = await ActivityAttempt.aggregate<{
+        date: string;
+        avgDurationSec: number;
+      }>([
+        { $match: completedFilter },
+        {
+          $group: {
+            _id: {
+              $dateToString: {
+                format: "%Y-%m-%d",
+                date: dateExpr,
+                timezone: "UTC",
+              },
+            },
+            durationSum: { $sum: durationExpr },
+            durationCount: {
+              $sum: {
+                $cond: [{ $gt: [durationExpr, 0] }, 1, 0],
+              },
+            },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            date: "$_id",
+            avgDurationSec: {
+              $cond: [
+                { $gt: ["$durationCount", 0] },
+                { $divide: ["$durationSum", "$durationCount"] },
+                0,
+              ],
+            },
+          },
+        },
+        { $sort: { date: 1 } },
+      ]);
+
+      const aggregatesMap = new Map(aggregates.map((item) => [item.date, item.avgDurationSec]));
+      const points: Array<{ date: string; avgDurationSec: number }> = [];
+      for (let i = 0; i < days; i++) {
+        const current = new Date(rangeStart);
+        current.setDate(rangeStart.getDate() + i);
+        const key = dateKey(current);
+        points.push({ date: current.toISOString(), avgDurationSec: aggregatesMap.get(key) ?? 0 });
+      }
+
+      res.json({ days, points });
+    } catch (error) {
+      console.error("Error fetching average completion time", error);
+      res.status(500).json({ error: "AVG_COMPLETION_TIME_FAILED" });
     }
   }
 );
