@@ -34,8 +34,7 @@ const resolveInitialAttempts = (activity: SubjectActivity): number => {
 const normalizeInitialQuestions = (raw: unknown): Question[] => {
   if (!Array.isArray(raw)) return [];
 
-  return raw
-    .map((entry) => {
+  const mapped = raw.map((entry) => {
       if (!entry || typeof entry !== "object") return null;
 
       const value = entry as Record<string, unknown>;
@@ -70,7 +69,7 @@ const normalizeInitialQuestions = (raw: unknown): Question[] => {
         correct: correctIndex,
       } satisfies Question;
     })
-    .filter((question): question is Question => Boolean(question));
+    return mapped.filter(Boolean) as Question[];
 };
 
 interface Props {
@@ -261,7 +260,7 @@ export default function ActivityEditModal({ activity, onClose, onMockDelete, onB
               correctOption: correctAnswer,
             };
           })
-          .filter((question): question is Record<string, unknown> => Boolean(question));
+          .filter(Boolean) as Record<string, unknown>[];
 
         fieldsJSON.questions = sanitizedQuestions;
         fieldsJSON.attempts = attempts;
