@@ -46,6 +46,7 @@ cd Proyecto/backend
 npm install
 npm install google-auth-library
 npm install nodemailer
+npm install @google-cloud/storage multer
 npm run dev
 ```
 > El backend quedará corriendo en http://127.0.0.1:4000.
