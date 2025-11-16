@@ -23,11 +23,16 @@ const app = express();
 const apiRouter = express.Router();
 
 const PORT = Number(process.env.PORT) || 4000;
-const HOST = process.env.HOST || "127.0.0.1";
+
+const allowedOrigins = [
+  "http://127.0.0.1:5173",
+  "http://localhost:5173",
+  process.env.CORS_ORIGIN,      // <- URL de Vercel
+].filter(Boolean) as string[];
 
 app.use(
   cors({
-    origin: ["http://127.0.0.1:5173", "http://localhost:5173"],
+    origin: allowedOrigins,
     credentials: true,
   }),
 );
@@ -97,7 +102,7 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     console.warn("⚠️ MONGO_URI no definido. El servidor corre sin DB.");
   }
 
-  app.listen(PORT, HOST, () => {
-    console.log(`🚀 API corriendo en http://${HOST}:${PORT}`);
+  app.listen(PORT, () => {
+    console.log(`🚀 API corriendo en puerto ${PORT}`);
   });
 })();
