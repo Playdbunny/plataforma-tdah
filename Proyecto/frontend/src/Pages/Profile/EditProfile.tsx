@@ -1,7 +1,7 @@
 import { type ChangeEvent, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "./EditProfile.module.css";
-import cardStyles from "../../Components/CharacterCard/CharacterCard.module.css"; // 👈 NUEVO
+import cardStyles from "../../Components/CharacterCard/CharacterCard.module.css";
 import Navbar from "../../Components/Navbar/Navbar";
 import { useAppStore } from "../../stores/appStore";
 import { useAuthStore } from "../../stores/authStore";
@@ -159,16 +159,12 @@ export default function EditProfile() {
     };
 
     try {
-      let uploadedAvatarUrl: string | null = null;
       if (avatarFile) {
-        uploadedAvatarUrl = await uploadAvatar(avatarFile);
+        payload.avatarUrl = await uploadAvatar(avatarFile);
       }
       const updatedUser = await updateProfile(payload);
-      const finalUser = uploadedAvatarUrl
-        ? { ...updatedUser, avatarUrl: uploadedAvatarUrl }
-        : updatedUser;
-      setAppUser(finalUser as any);
-      setAuthUser(finalUser);
+      setAppUser(updatedUser as any);
+      setAuthUser(updatedUser);
       navigate("/profile");
     } catch (err: any) {
       const message =
