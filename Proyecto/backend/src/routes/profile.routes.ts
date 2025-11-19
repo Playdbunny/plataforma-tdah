@@ -9,14 +9,8 @@ import {
   isSafeAvatarUrl,
   normalizeAvatarUrl,
 } from "../models/User";
-import {
-  extractMultipartFile,
-  HttpError,
-} from "./helpers/multipart";
 
 const AVATAR_DIR = path.join(process.cwd(), "uploads", "avatars");
-const MAX_AVATAR_SIZE = 5 * 1024 * 1024; // 5MB
-const ALLOWED_AVATAR_MIME = /image\/(png|jpeg|jpg|webp|gif)/i;
 
 async function removeStoredAvatar(url: string | null | undefined) {
   if (!url || !url.startsWith("/uploads/avatars/")) return;
@@ -31,15 +25,6 @@ async function removeStoredAvatar(url: string | null | undefined) {
       console.warn(`No se pudo eliminar el avatar anterior: ${absolute}`, err);
     }
   }
-}
-
-function getExtensionFromMime(mimeType: string) {
-  const normalized = mimeType.toLowerCase();
-  if (normalized === "image/png") return ".png";
-  if (normalized === "image/jpeg" || normalized === "image/jpg") return ".jpg";
-  if (normalized === "image/webp") return ".webp";
-  if (normalized === "image/gif") return ".gif";
-  return "";
 }
 
 const router = Router();
@@ -79,19 +64,13 @@ const updateProfileSchema = z
 
 router.use(requireAuth);
 
+/**
+ * POST /profile/avatar
+ * Ahora SOLO recibe { avatarUrl } en el body (URL ya subida a GCS)
+ * Se mantiene para compatibilidad como un “atajo” de actualización de avatar.
+ */
 router.post("/avatar", async (req: any, res) => {
   try {
-    const file = await extractMultipartFile(req, {
-      field: "avatar",
-      maxSize: MAX_AVATAR_SIZE,
-      allowedMime: ALLOWED_AVATAR_MIME,
-      tooLargeMessage: "El avatar excede el tamaño permitido (5MB)",
-    });
-
-    if (!file) {
-      return res.status(400).json({ error: "No se recibió un avatar" });
-    }
-
     const userId = req.auth.sub;
     const user = await User.findById(userId);
     if (!user) {
@@ -100,35 +79,52 @@ router.post("/avatar", async (req: any, res) => {
 
     await fsPromises.mkdir(AVATAR_DIR, { recursive: true });
 
-    const originalExt = path.extname(file.filename).toLowerCase();
-    const inferredExt = getExtensionFromMime(file.mimeType);
-    const candidateExt = originalExt || inferredExt || ".png";
-    const safeExtension = /^\.[a-z0-9]+$/i.test(candidateExt) ? candidateExt : ".png";
-    const uniqueName = `${Date.now()}-${Math.random().toString(36).slice(2)}${safeExtension}`;
+    const rawAvatarUrl = (req.body ?? {}).avatarUrl as unknown;
 
-    const destination = path.join(AVATAR_DIR, uniqueName);
-    await fsPromises.writeFile(destination, file.buffer);
+    if (rawAvatarUrl === undefined) {
+      return res.status(400).json({ error: "avatarUrl es requerido" });
+    }
 
-    const nextUrl = `/uploads/avatars/${uniqueName}`;
     const previousUrl = user.avatarUrl ?? null;
 
-    user.avatarUrl = nextUrl;
+    if (rawAvatarUrl === null) {
+      // quitar avatar
+      user.avatarUrl = null;
+    } else if (typeof rawAvatarUrl === "string") {
+      const normalized = normalizeAvatarUrl(rawAvatarUrl);
+      if (!normalized) {
+        return res.status(400).json({ error: "avatarUrl inválido" });
+      }
+      user.avatarUrl = normalized;
+    } else {
+      return res.status(400).json({ error: "avatarUrl inválido" });
+    }
+
     await user.save();
 
-    if (previousUrl && previousUrl !== nextUrl) {
+    // limpiar avatar local viejo si existía y cambió
+    if (
+      previousUrl &&
+      previousUrl !== user.avatarUrl &&
+      previousUrl.startsWith("/uploads/avatars/")
+    ) {
       await removeStoredAvatar(previousUrl);
     }
 
-    return res.json({ avatarUrl: nextUrl });
+    return res.json({ avatarUrl: user.avatarUrl });
   } catch (error) {
-    if (error instanceof HttpError) {
-      return res.status(error.status).json({ error: error.message });
-    }
     console.error("Error al actualizar avatar", error);
-    return res.status(500).json({ error: "No se pudo actualizar el avatar" });
+    return res
+      .status(500)
+      .json({ error: "No se pudo actualizar el avatar" });
   }
 });
 
+/**
+ * PATCH /profile
+ * Sigue siendo el endpoint general de perfil,
+ * pero ahora también limpia avatares locales si cambia el avatarUrl.
+ */
 router.patch("/", async (req: any, res) => {
   const parsed = updateProfileSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -143,8 +139,13 @@ router.patch("/", async (req: any, res) => {
     return res.status(404).json({ error: "Usuario no encontrado" });
   }
 
+  const previousAvatarUrl = user.avatarUrl ?? null;
+
   if (updates.email && updates.email !== user.email) {
-    const existingEmail = await User.findOne({ email: updates.email, _id: { $ne: userId } });
+    const existingEmail = await User.findOne({ 
+      email: updates.email, 
+      _id: { $ne: userId }, 
+    });
     if (existingEmail) {
       return res.status(409).json({ error: "El correo ya está en uso" });
     }
@@ -159,7 +160,10 @@ router.patch("/", async (req: any, res) => {
 
     const currentUsername = typeof user.username === "string" ? user.username.trim() : null;
     if (!currentUsername || username !== currentUsername) {
-      const existingUsername = await User.findOne({ username, _id: { $ne: userId } });
+      const existingUsername = await User.findOne({ 
+        username, 
+        _id: { $ne: userId },
+      });
       if (existingUsername) {
         return res.status(409).json({ error: "El nombre de usuario no está disponible" });
       }
@@ -192,7 +196,11 @@ router.patch("/", async (req: any, res) => {
   }
 
   if (Array.isArray(updates.ownedCharacters)) {
-    user.ownedCharacters = Array.from(new Set(updates.ownedCharacters.map((c) => c.trim()).filter(Boolean)));
+    user.ownedCharacters = Array.from(
+      new Set(
+        updates.ownedCharacters.map((c) => c.trim()).filter(Boolean),
+      ),
+    );
   }
 
   if (typeof updates.coins === "number") {
@@ -200,6 +208,15 @@ router.patch("/", async (req: any, res) => {
   }
 
   await user.save();
+
+  // si se cambió el avatar y el anterior era local, intentar borrarlo
+  if (
+    previousAvatarUrl &&
+    previousAvatarUrl !== user.avatarUrl &&
+    previousAvatarUrl.startsWith("/uploads/avatars/")
+  ) {
+    await removeStoredAvatar(previousAvatarUrl);
+  }
 
   return res.json({ user: user.toJSON() });
 });

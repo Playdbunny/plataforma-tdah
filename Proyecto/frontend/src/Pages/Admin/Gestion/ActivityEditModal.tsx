@@ -35,7 +35,7 @@ const normalizeInitialQuestions = (raw: unknown): Question[] => {
   if (!Array.isArray(raw)) return [];
 
   const mapped = raw.map((entry) => {
-      if (!entry || typeof entry !== "object") return null;
+    if (!entry || typeof entry !== "object") return null;
 
       const value = entry as Record<string, unknown>;
       const questionValue = value.question ?? value.text;

@@ -4,19 +4,25 @@ import type { NextFunction, Request, Response } from "express";
 import cors from "cors";
 import path from "path";
 import { connectDB } from "./db";
-import authRouter from "./routes/auth.routes";
-import profileRouter from "./routes/profile.routes";
 import { requireAuth, requireRole } from "./middleware/requireAuth";
-import adminRouter from "./routes/admin.routes";
 import session from "express-session";
 import passport from "passport";
 import { initGoogleStrategy } from "./auth/google";
+
+import Subject from "./models/Subject";
+import Activity from "./models/Activity";
+
+// Rutas
+import authRouter from "./routes/auth.routes";
+import profileRouter from "./routes/profile.routes";
+import adminRouter from "./routes/admin.routes";
 import googleRouter from "./routes/google.routes";
 import adminActivitiesRouter from "./routes/adminActivities.routes";
 import adminSubjectsRouter from "./routes/adminSubjects.routes";
 import adminStudentsRouter from "./routes/adminStudents.routes";
 import adminKpisRouter from "./routes/adminKpis.routes";
 import studentActivitiesRouter from "./routes/studentActivities.routes";
+import uploadRouter from "./routes/upload.routes";
 import Subject from "./models/Subject";
 import Activity from "./models/Activity";
 import ActivityAttempt from "./models/ActivityAttempt";
@@ -69,6 +75,7 @@ apiRouter.use("/auth", googleRouter);
 apiRouter.use("/profile", profileRouter);
 apiRouter.use("/admin", adminRouter);
 apiRouter.use("/admin", adminStudentsRouter);
+apiRouter.use("/uploads", uploadRouter);
 apiRouter.use(
   "/admin/kpis",
   requireAuth,
