@@ -145,21 +145,23 @@ export default function EstudianteDetallePage() {
 
           {/* Paneles: progreso por materia + gráfico semanal */}
           <div className={styles.panels}>
-            <section className={styles.card}>
+            <section className={`${styles.card} ${styles.progressCard}`}>
               <div className={styles.cardTitle}>Progreso por materia</div>
               <ul className={styles.progressList}>
-                {(student.progress.subjects ?? []).map((p) => (
-                  <li key={p.subjectId} className={styles.progressItem}>
-                    <span className={styles.pLabel}>{p.subjectName}</span>
-                    <div className={styles.pBar}>
-                      <div
-                        className={styles.pFill}
-                        style={{ width: `${Math.max(0, Math.min(100, p.progressPercent))}%` }}
-                      />
-                    </div>
-                    <span className={styles.pPct}>{p.progressPercent}%</span>
-                  </li>
-                ))}
+                {(student.progress.subjects ?? []).map((p) => {
+                  const pct = Number.isFinite(p.progressPercent)
+                    ? Math.max(0, Math.min(100, Math.round(p.progressPercent)))
+                    : 0;
+                  return (
+                    <li key={p.subjectId} className={styles.progressItem}>
+                      <span className={styles.pLabel}>{p.subjectName}</span>
+                      <div className={styles.pBar}>
+                        <div className={styles.pFill} style={{ width: `${pct}%` }} />
+                      </div>
+                      <span className={styles.pPct}>{pct}%</span>
+                    </li>
+                  );
+                })}
                 {(!student.progress.subjects || student.progress.subjects.length === 0) && (
                   <div className={styles.empty}>Sin datos de progreso.</div>
                 )}

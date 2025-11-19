@@ -2,6 +2,7 @@ import { api, getAdminApiBaseUrl, getApiBaseUrl } from "../Lib/api";
 import { SubjectActivity } from "../Lib/activityMocks";
 import { IUserSafe } from "../types/user";
 import { reviveUserDates } from "../utils/user_serializers";
+import type { ActivityAttemptStatus } from "../types/activityAttempt";
 
 export type ActivitySummary = {
   id: string;
@@ -221,6 +222,7 @@ export type ActivityCompletionResponse = {
     durationSec?: number;
     createdAt?: string;
   };
+  attemptStatus?: ActivityAttemptStatus | null;
 };
 
 export async function submitActivityCompletion(
@@ -248,5 +250,6 @@ export async function submitActivityCompletion(
       correctCount: data.attempt?.correctCount,
       totalCount: data.attempt?.totalCount,
     },
+    attemptStatus: data.attemptStatus ?? null,
   };
 }
