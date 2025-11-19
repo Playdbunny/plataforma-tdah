@@ -156,8 +156,8 @@ function validateBannerUrl(u: string) {
   if (trimmed.length > 512) {
     throw new Error("URL demasiado larga (>512)");
   }
-  if (!/^https?:\/\//i.test(trimmed) && !trimmed.startsWith("/uploads/")) {
-    throw new Error("Debe ser http(s) o /uploads/");
+  if (!/^https?:\/\//i.test(trimmed)) {
+    throw new Error("Debe ser una URL http(s) válida");
   }
   return trimmed;
 }
@@ -507,7 +507,7 @@ export default function ActivityForm({ subjectSlug, onClose }: ActivityFormProps
         <input
           type="text"
           className={styles.formInput}
-          placeholder="https://ejemplo.com/banner.jpg o /uploads/banners/banner.png"
+          placeholder="https://ejemplo.com/banner.jpg"
           value={bannerUrlInput}
           onChange={(event) => {
             const value = event.target.value;
@@ -519,7 +519,7 @@ export default function ActivityForm({ subjectSlug, onClose }: ActivityFormProps
           }}
         />
         <p className={styles.helperText}>
-          También puedes pegar una URL http(s) o un path válido dentro de /uploads/.
+          También puedes pegar una URL pública (http o https) para usarla como banner.
         </p>
         <p className={styles.helperText}>
           Formatos permitidos: PNG, JPG, WEBP o GIF (máx. {MAX_BANNER_SIZE_MB} MB).
