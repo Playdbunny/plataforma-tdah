@@ -10,6 +10,7 @@ import { requireAuth, requireRole, type AuthPayload } from "../middleware/requir
 import { normalizeBannerUrl } from "../lib/normalizeBannerUrl";
 
 const BANNERS_DIR = path.join(process.cwd(), "uploads", "banners");
+const VIDEOS_DIR = path.join(process.cwd(), "uploads", "videos");
 
 // Limpieza de banners locales antiguos (/uploads/banners/...)
 async function removeStoredBanner(url: string | null | undefined) {
