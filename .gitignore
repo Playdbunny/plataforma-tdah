@@ -35,6 +35,6 @@ Proyecto/backend/uploads/
 *.sln
 *.sw?
 
-# Otros (si usan pruebas u otras herramientas)
+# Otros 
 coverage
 gcp-key.json
