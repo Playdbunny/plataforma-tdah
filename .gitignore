@@ -37,3 +37,4 @@ Proyecto/backend/uploads/
 
 # Otros (si usan pruebas u otras herramientas)
 coverage
+gcp-key.json
