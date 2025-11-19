@@ -6,20 +6,23 @@
 // - Estilos accesibles y responsivos
 
 import { useEffect, useMemo, useState } from "react";
+import { useBackendReady } from "@/hooks/useBackendReady";
 import styles from "./Ranking.module.css";
 import { useStudentsStore } from "../../../stores/studentsStore";
 import { timeAgo } from "../../../utils/timeAgo";
+import { currentTotalXP } from "../../../Lib/Levels";
 
 // ====================
 // Tipos para ordenar
 // ====================
-type SortKey = "position" | "name" | "xp" | "progress" | "lastActive";
+type SortKey = "position" | "name" | "xp" | "lastActive";
 type SortDir = "asc" | "desc";
 
 // Formateador de números con separador de miles
 const nf = new Intl.NumberFormat("es-CL");
 
 export default function AdminRanking() {
+  const ready = useBackendReady();
   // Estado global de estudiantes
   const { items, list, loading, error } = useStudentsStore();
 
@@ -33,16 +36,16 @@ export default function AdminRanking() {
   const [sortDir, setSortDir] = useState<SortDir>("desc"); // dirección de orden
 
   useEffect(() => {
+    if (!ready) return;
     if (!items.length) {
       void list();
     }
-  }, [items.length, list]);
+  }, [items.length, list, ready]);
 
   type DerivedStudent = {
     id: string;
     name: string;
-    xp: number;
-    progress: number;
+    totalXp: number;
     lastActiveIso: string | null;
     lastActiveHours: number | null;
   };
@@ -53,11 +56,15 @@ export default function AdminRanking() {
       const lastHours = lastIso
         ? Math.max(0, Math.floor((Date.now() - new Date(lastIso).getTime()) / 36e5))
         : null;
+      const totalXp =
+        typeof student.totalXp === "number" && Number.isFinite(student.totalXp)
+          ? Math.max(0, Math.floor(student.totalXp))
+          : currentTotalXP(student.level ?? 1, student.xp ?? 0);
+
       return {
         id: student.id,
         name: student.name,
-        xp: student.xp ?? 0,
-        progress: Math.round(student.progressAverage ?? 0),
+        totalXp,
         lastActiveIso: lastIso,
         lastActiveHours: lastHours,
       };
@@ -79,7 +86,7 @@ export default function AdminRanking() {
   const sorted = useMemo(() => {
     const arr = [...filtered];
 
-    const rankingOrder = [...arr].sort((a, b) => b.xp - a.xp);
+    const rankingOrder = [...arr].sort((a, b) => b.totalXp - a.totalXp);
     const idToPosition = new Map<string, number>();
     rankingOrder.forEach((s, i) => idToPosition.set(s.id, i + 1));
 
@@ -90,8 +97,7 @@ export default function AdminRanking() {
 
       if (sortKey === "position") cmp = posA - posB;
       else if (sortKey === "name") cmp = a.name.localeCompare(b.name, "es");
-      else if (sortKey === "xp") cmp = a.xp - b.xp;
-      else if (sortKey === "progress") cmp = a.progress - b.progress;
+      else if (sortKey === "xp") cmp = a.totalXp - b.totalXp;
       else if (sortKey === "lastActive") {
         if (a.lastActiveHours == null && b.lastActiveHours == null) cmp = 0;
         else if (a.lastActiveHours == null) cmp = 1;
@@ -128,6 +134,14 @@ export default function AdminRanking() {
 
   const medal = (position: number) =>
     position === 1 ? "🥇" : position === 2 ? "🥈" : position === 3 ? "🥉" : "";
+
+  if (!ready) {
+    return (
+      <div style={{ display: "grid", placeItems: "center", minHeight: "100vh" }}>
+        <p style={{ opacity: 0.8 }}>Conectando al servidor…</p>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.screen}>
@@ -168,26 +182,25 @@ export default function AdminRanking() {
               <Th active={sortKey === "position"} dir={sortDir} onClick={() => toggleSort("position")} label="Posición" />
               <Th active={sortKey === "name"} dir={sortDir} onClick={() => toggleSort("name")} label="Estudiante" />
               <Th active={sortKey === "xp"} dir={sortDir} onClick={() => toggleSort("xp")} label="XP" />
-              <Th active={sortKey === "progress"} dir={sortDir} onClick={() => toggleSort("progress")} label="% Progreso" />
               <Th active={sortKey === "lastActive"} dir={sortDir} onClick={() => toggleSort("lastActive")} label="Última Actividad" />
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td className={styles.empty} colSpan={5}>
+                <td className={styles.empty} colSpan={4}>
                   Cargando…
                 </td>
               </tr>
             ) : error ? (
               <tr>
-                <td className={styles.empty} colSpan={5}>
+                <td className={styles.empty} colSpan={4}>
                   {error}
                 </td>
               </tr>
             ) : pageItems.length === 0 ? (
               <tr>
-                <td className={styles.empty} colSpan={5}>
+                <td className={styles.empty} colSpan={4}>
                   Sin resultados
                 </td>
               </tr>
@@ -201,13 +214,7 @@ export default function AdminRanking() {
                     {(s as any).position}
                   </td>
                   <td className={styles.name}>{s.name}</td>
-                  <td className={styles.xp}>{nf.format(s.xp)} XP</td>
-                  <td className={styles.progress}>
-                    <div className={styles.bar}>
-                      <div className={styles.fill} style={{ width: `${s.progress}%` }} />
-                    </div>
-                    <span className={styles.pct}>{s.progress}%</span>
-                  </td>
+                  <td className={styles.xp}>{nf.format(s.totalXp)} XP</td>
                   <td className={styles.last}>{timeAgo(s.lastActiveIso)}</td>
                 </tr>
               ))

@@ -5,12 +5,27 @@ import { User, type TDAHType, type IUserCharacter } from "../models/User";
 import UserProgress from "../models/UserProgress";
 import Subject from "../models/Subject";
 import Activity from "../models/Activity";
+import ActivityAttempt from "../models/ActivityAttempt";
 import XpEvent from "../models/XpEvent";
+import { currentTotalXp } from "../lib/levels";
 
 const router = Router();
 
 function toISO(value?: Date | null) {
   return value ? value.toISOString() : null;
+}
+
+function toInt(value: unknown, fallback = 0) {
+  if (typeof value !== "number" || !Number.isFinite(value)) return fallback;
+  const asInt = Math.round(value);
+  return asInt >= 0 ? asInt : fallback;
+}
+
+function calcProgressPercent(unitsCompleted: number, totalUnits: number) {
+  if (!Number.isFinite(totalUnits) || totalUnits <= 0) return 0;
+  const ratio = unitsCompleted / totalUnits;
+  if (!Number.isFinite(ratio) || ratio <= 0) return 0;
+  return Math.max(0, Math.min(100, Math.round(ratio * 100)));
 }
 
 function getStartOfWeek(date: Date) {
@@ -39,6 +54,7 @@ type StudentSummaryDto = {
   email: string;
   tdahType: TDAHType;
   xp: number;
+  totalXp: number;
   coins: number;
   level: number;
   activitiesCompleted: number;
@@ -86,6 +102,46 @@ type UserLean = {
   updatedAt: Date;
 };
 
+type CompletionAggregate = {
+  userId: Types.ObjectId;
+  subjectId: Types.ObjectId;
+  unitsCompleted: number;
+  lastActivityAt?: Date | null;
+};
+
+async function aggregateCompletedUnits(match: Record<string, unknown>) {
+  return ActivityAttempt.aggregate<CompletionAggregate>([
+    { $match: match },
+    {
+      $group: {
+        _id: { userId: "$userId", activityId: "$activityId" },
+        subjectId: { $first: "$subjectId" },
+        lastActivityAt: {
+          $max: {
+            $ifNull: ["$endedAt", "$createdAt"],
+          },
+        },
+      },
+    },
+    {
+      $group: {
+        _id: { userId: "$_id.userId", subjectId: "$subjectId" },
+        unitsCompleted: { $sum: 1 },
+        lastActivityAt: { $max: "$lastActivityAt" },
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        userId: "$_id.userId",
+        subjectId: "$_id.subjectId",
+        unitsCompleted: 1,
+        lastActivityAt: 1,
+      },
+    },
+  ]);
+}
+
 router.get(
   "/students",
   requireAuth,
@@ -117,8 +173,15 @@ router.get(
         .select("userId subjectId unitsCompleted xp lastActivityAt")
         .lean<ProgressLean[]>();
 
+      const completionAggregates = await aggregateCompletedUnits({
+        userId: { $in: userIds },
+      });
+
       const subjectIds = Array.from(
-        new Set(progressDocs.map((doc) => doc.subjectId.toString()))
+        new Set([
+          ...progressDocs.map((doc) => doc.subjectId.toString()),
+          ...completionAggregates.map((entry) => entry.subjectId.toString()),
+        ])
       ).map((id) => new Types.ObjectId(id));
 
       const [subjects, activitiesCount] = await Promise.all([
@@ -148,35 +211,92 @@ router.get(
         totalUnitsMap.set(entry._id.toString(), entry.total ?? 0);
       });
 
-      const progressByUser = new Map<string, SubjectProgressDto[]>();
+      type SubjectProgressMap = Map<string, SubjectProgressDto>;
+      const progressByUser = new Map<string, SubjectProgressMap>();
+      const completionMap = new Map<string, { units: number; lastActivityAt: Date | null }>();
+
+      completionAggregates.forEach((entry) => {
+        const key = `${entry.userId.toString()}:${entry.subjectId.toString()}`;
+        completionMap.set(key, {
+          units: toInt(entry.unitsCompleted, 0),
+          lastActivityAt: entry.lastActivityAt ?? null,
+        });
+      });
+
+      const ensureUserProgressMap = (userId: string): SubjectProgressMap => {
+        if (!progressByUser.has(userId)) {
+          progressByUser.set(userId, new Map());
+        }
+        return progressByUser.get(userId)!;
+      };
+
       progressDocs.forEach((doc) => {
         const userId = doc.userId.toString();
         const subjectId = doc.subjectId.toString();
-        const totalUnits = totalUnitsMap.get(subjectId) ?? 0;
-        const percent = totalUnits > 0
-          ? Math.min(100, Math.round((doc.unitsCompleted / totalUnits) * 100))
-          : 0;
         const subjectMeta = subjectNameMap.get(subjectId);
+        if (!subjectMeta) return;
+
+        const totalUnits = totalUnitsMap.get(subjectId) ?? 0;
+        const completionKey = `${userId}:${subjectId}`;
+        const completion = completionMap.get(completionKey);
+        const unitsCompleted = completion?.units ?? toInt(doc.unitsCompleted, 0);
+        const xpEarned = toInt(doc.xp, 0);
+        const percent = calcProgressPercent(unitsCompleted, totalUnits);
+        const lastActivitySource = completion?.lastActivityAt ?? doc.lastActivityAt ?? null;
 
         const entry: SubjectProgressDto = {
           subjectId,
-          subjectName: subjectMeta?.name ?? "Materia",
-          subjectSlug: subjectMeta?.slug ?? null,
-          unitsCompleted: doc.unitsCompleted ?? 0,
-          xp: doc.xp ?? 0,
+          subjectName: subjectMeta.name,
+          subjectSlug: subjectMeta.slug,
+          unitsCompleted,
+          xp: xpEarned,
           progressPercent: percent,
-          lastActivityAt: toISO(doc.lastActivityAt ?? null),
+          lastActivityAt: toISO(lastActivitySource),
         };
 
-        if (!progressByUser.has(userId)) {
-          progressByUser.set(userId, []);
+        ensureUserProgressMap(userId).set(subjectId, entry);
+      });
+
+      completionAggregates.forEach((entry) => {
+        const userId = entry.userId.toString();
+        const subjectId = entry.subjectId.toString();
+        const subjectMeta = subjectNameMap.get(subjectId);
+        if (!subjectMeta) return;
+
+        const unitsCompleted = toInt(entry.unitsCompleted, 0);
+        const totalUnits = totalUnitsMap.get(subjectId) ?? 0;
+        const isoDate = entry.lastActivityAt ? entry.lastActivityAt.toISOString() : null;
+        const userMap = ensureUserProgressMap(userId);
+        const existing = userMap.get(subjectId);
+
+        if (existing) {
+          existing.unitsCompleted = unitsCompleted;
+          if (isoDate) {
+            const previousDate = existing.lastActivityAt
+              ? new Date(existing.lastActivityAt)
+              : null;
+            if (!previousDate || entry.lastActivityAt! > previousDate) {
+              existing.lastActivityAt = isoDate;
+            }
+          }
+          existing.progressPercent = calcProgressPercent(unitsCompleted, totalUnits);
+        } else {
+          userMap.set(subjectId, {
+            subjectId,
+            subjectName: subjectMeta.name,
+            subjectSlug: subjectMeta.slug,
+            unitsCompleted,
+            xp: 0,
+            progressPercent: calcProgressPercent(unitsCompleted, totalUnits),
+            lastActivityAt: isoDate,
+          });
         }
-        progressByUser.get(userId)!.push(entry);
       });
 
       const summaries: StudentSummaryDto[] = users.map((user) => {
         const userId = user._id.toString();
-        const progress = progressByUser.get(userId) ?? [];
+        const progressEntries = progressByUser.get(userId);
+        const progress = progressEntries ? Array.from(progressEntries.values()) : [];
         const avg = progress.length
           ? Math.round(
               progress.reduce((acc, item) => acc + item.progressPercent, 0) /
@@ -199,12 +319,19 @@ router.get(
           null
         );
 
+        const xpInLevel =
+          typeof user.xp === "number" && Number.isFinite(user.xp)
+            ? Math.max(0, Math.floor(user.xp))
+            : 0;
+        const totalXp = currentTotalXp(user.level ?? 1, xpInLevel);
+
         return {
           id: userId,
           name: user.name,
           email: user.email,
           tdahType: user.tdahType,
-          xp: user.xp ?? 0,
+          xp: xpInLevel,
+          totalXp,
           coins: user.coins ?? 0,
           level: user.level ?? 0,
           activitiesCompleted: user.activitiesCompleted ?? 0,
@@ -219,7 +346,7 @@ router.get(
         } satisfies StudentSummaryDto;
       });
 
-      summaries.sort((a, b) => b.xp - a.xp);
+      summaries.sort((a, b) => b.totalXp - a.totalXp);
 
       return res.json({ items: summaries });
     } catch (err) {
@@ -263,8 +390,13 @@ router.get(
         .select("subjectId unitsCompleted xp lastActivityAt")
         .lean<ProgressLean[]>();
 
+      const completionAggregates = await aggregateCompletedUnits({ userId: user._id });
+
       const subjectIds = Array.from(
-        new Set(progressDocs.map((doc) => doc.subjectId.toString()))
+        new Set([
+          ...progressDocs.map((doc) => doc.subjectId.toString()),
+          ...completionAggregates.map((entry) => entry.subjectId.toString()),
+        ])
       ).map((sid) => new Types.ObjectId(sid));
 
       const [subjects, activitiesCount] = await Promise.all([
@@ -294,24 +426,72 @@ router.get(
         totalUnitsMap.set(entry._id.toString(), entry.total ?? 0);
       });
 
-      const progressEntries: SubjectProgressDto[] = progressDocs.map((doc) => {
+      const progressMap = new Map<string, SubjectProgressDto>();
+      const completionMap = new Map<string, { units: number; lastActivityAt: Date | null }>();
+
+      completionAggregates.forEach((entry) => {
+        completionMap.set(entry.subjectId.toString(), {
+          units: toInt(entry.unitsCompleted, 0),
+          lastActivityAt: entry.lastActivityAt ?? null,
+        });
+      });
+
+      progressDocs.forEach((doc) => {
         const subjectId = doc.subjectId.toString();
         const subjectMeta = subjectNameMap.get(subjectId);
-        const totalUnits = totalUnitsMap.get(subjectId) ?? 0;
-        const percent = totalUnits > 0
-          ? Math.min(100, Math.round((doc.unitsCompleted / totalUnits) * 100))
-          : 0;
+        if (!subjectMeta) return;
 
-        return {
+        const totalUnits = totalUnitsMap.get(subjectId) ?? 0;
+        const completion = completionMap.get(subjectId);
+        const unitsCompleted = completion?.units ?? toInt(doc.unitsCompleted, 0);
+        const xpEarned = toInt(doc.xp, 0);
+        const percent = calcProgressPercent(unitsCompleted, totalUnits);
+        const lastActivitySource = completion?.lastActivityAt ?? doc.lastActivityAt ?? null;
+
+        progressMap.set(subjectId, {
           subjectId,
-          subjectName: subjectMeta?.name ?? "Materia",
-          subjectSlug: subjectMeta?.slug ?? null,
-          unitsCompleted: doc.unitsCompleted ?? 0,
-          xp: doc.xp ?? 0,
+          subjectName: subjectMeta.name,
+          subjectSlug: subjectMeta.slug,
+          unitsCompleted,
+          xp: xpEarned,
           progressPercent: percent,
-          lastActivityAt: toISO(doc.lastActivityAt ?? null),
-        };
+          lastActivityAt: toISO(lastActivitySource),
+        });
       });
+
+      completionAggregates.forEach((entry) => {
+        const subjectId = entry.subjectId.toString();
+        const subjectMeta = subjectNameMap.get(subjectId);
+        if (!subjectMeta) return;
+
+        const totalUnits = totalUnitsMap.get(subjectId) ?? 0;
+        const unitsCompleted = toInt(entry.unitsCompleted, 0);
+        const isoDate = entry.lastActivityAt ? entry.lastActivityAt.toISOString() : null;
+        const existing = progressMap.get(subjectId);
+
+        if (existing) {
+          existing.unitsCompleted = unitsCompleted;
+          if (isoDate) {
+            const prev = existing.lastActivityAt ? new Date(existing.lastActivityAt) : null;
+            if (!prev || entry.lastActivityAt! > prev) {
+              existing.lastActivityAt = isoDate;
+            }
+          }
+          existing.progressPercent = calcProgressPercent(unitsCompleted, totalUnits);
+        } else {
+          progressMap.set(subjectId, {
+            subjectId,
+            subjectName: subjectMeta.name,
+            subjectSlug: subjectMeta.slug,
+            unitsCompleted,
+            xp: 0,
+            progressPercent: calcProgressPercent(unitsCompleted, totalUnits),
+            lastActivityAt: isoDate,
+          });
+        }
+      });
+
+      const progressEntries: SubjectProgressDto[] = Array.from(progressMap.values());
 
       const averageProgress = progressEntries.length
         ? Math.round(
@@ -385,12 +565,19 @@ router.get(
         null
       );
 
+      const xpInLevel =
+        typeof user.xp === "number" && Number.isFinite(user.xp)
+          ? Math.max(0, Math.floor(user.xp))
+          : 0;
+      const totalXp = currentTotalXp(user.level ?? 1, xpInLevel);
+
       const detail: StudentDetailDto = {
         id: user._id.toString(),
         name: user.name,
         email: user.email,
         tdahType: user.tdahType,
-        xp: user.xp ?? 0,
+        xp: xpInLevel,
+        totalXp,
         coins: user.coins ?? 0,
         level: user.level ?? 0,
         activitiesCompleted: user.activitiesCompleted ?? 0,

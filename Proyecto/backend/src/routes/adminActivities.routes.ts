@@ -26,10 +26,97 @@ async function removeStoredBanner(url: string | null | undefined) {
   }
 }
 
+async function removeStoredVideo(url: string | null | undefined) {
+  if (!url || typeof url !== "string" || !url.startsWith("/uploads/videos/")) return;
+  const filename = path.basename(url);
+  const absolute = path.join(VIDEOS_DIR, filename);
+  try {
+    await fsPromises.unlink(absolute);
+  } catch (err: any) {
+    if (err?.code !== "ENOENT") {
+      console.warn(`No se pudo eliminar el recurso anterior: ${absolute}`, err);
+    }
+  }
+}
+
 function isLocalBanner(url: string | null | undefined) {
   return (
     typeof url === "string" && url.startsWith("/uploads/banners/")
   );
+}
+
+function stripDataUrlFields(target: Record<string, any> | null | undefined) {
+  if (!target || typeof target !== "object") return;
+  if (typeof target.fileUrl === "string" && /^data:/i.test(target.fileUrl)) {
+    target.fileUrl = null;
+  }
+
+  const asset = target.asset;
+  if (asset && typeof asset === "object") {
+    if (typeof asset.url === "string" && /^data:/i.test(asset.url)) {
+      asset.url = null;
+    }
+    if (typeof asset.fileUrl === "string" && /^data:/i.test(asset.fileUrl)) {
+      asset.fileUrl = null;
+    }
+    if (typeof asset.dataUrl === "string") {
+      delete asset.dataUrl;
+    }
+  }
+}
+
+function applyUploadedResource(
+  target: Record<string, any> | null | undefined,
+  resourcePath: string,
+): Record<string, any> {
+  const base = target && typeof target === "object" ? target : {};
+  base.fileUrl = resourcePath;
+
+  const asset =
+    base.asset && typeof base.asset === "object"
+      ? (base.asset as Record<string, any>)
+      : {};
+
+  asset.url = resourcePath;
+  asset.source = typeof asset.source === "string" ? asset.source : "upload";
+  if (typeof asset.type !== "string" || !asset.type) {
+    asset.type = "video";
+  }
+  delete asset.dataUrl;
+  delete asset.fileUrl;
+
+  base.asset = asset;
+
+  return base;
+}
+
+function resolveLocalResourcePath(value: unknown): string | null {
+  if (!value || typeof value !== "object") return null;
+  const source = value as Record<string, any>;
+
+  const candidates: unknown[] = [];
+  if (typeof source.fileUrl === "string") {
+    candidates.push(source.fileUrl);
+  }
+
+  const asset = source.asset;
+  if (asset && typeof asset === "object") {
+    const assetRecord = asset as Record<string, any>;
+    if (typeof assetRecord.url === "string") {
+      candidates.push(assetRecord.url);
+    }
+    if (typeof assetRecord.fileUrl === "string") {
+      candidates.push(assetRecord.fileUrl);
+    }
+  }
+
+  for (const candidate of candidates) {
+    if (typeof candidate === "string" && candidate.startsWith("/uploads/videos/")) {
+      return candidate;
+    }
+  }
+
+  return null;
 }
 
 function parseActivityJson(

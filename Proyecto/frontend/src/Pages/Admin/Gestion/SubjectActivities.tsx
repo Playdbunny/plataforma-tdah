@@ -13,6 +13,7 @@ import ActivityEditModal from "./ActivityEditModal";
 import activityFormStyles from "./ActivityForm.module.css";
 import { useSubjectsStore } from "../../../stores/subjectsStore";
 import { useActivitiesStore } from "../../../stores/activitiesStore";
+import { useBackendReady } from "@/hooks/useBackendReady";
 import {
   SUBJECT_ACTIVITY_STATUS_LABELS,
   SUBJECT_ACTIVITY_TYPE_LABELS,
@@ -44,6 +45,7 @@ function useDebounced<T>(value: T, delay = 250) {
 type SortKey = "updatedDesc" | "titleAsc";
 
 export default function SubjectActivitiesAdminPage() {
+  const ready = useBackendReady();
   const { subjectId } = useParams<{ subjectId: string }>();
   const slug = useMemo(() => normalizeSubjectSlug(subjectId), [subjectId]);
 
@@ -56,9 +58,10 @@ export default function SubjectActivitiesAdminPage() {
   const activitiesVersion = useActivitiesStore((state) => state.version);
 
   useEffect(() => {
+    if (!ready) return;
     fetchSubjects().catch(() => {});
     fetchAdminActivities().catch(() => {});
-  }, [fetchSubjects, fetchAdminActivities, subjectsVersion, activitiesVersion]);
+  }, [activitiesVersion, fetchAdminActivities, fetchSubjects, ready, subjectsVersion]);
 
   const subject = subjects.find((s) => s.slug.toLowerCase() === slug);
   const subjectName =
@@ -113,6 +116,14 @@ export default function SubjectActivitiesAdminPage() {
   const hasActiveFilters = query.trim().length > 0 || typeFilter !== "all";
 
   if (!slug) return <Navigate to="/admin/actividades" replace />;
+
+  if (!ready) {
+    return (
+      <div style={{ display: "grid", placeItems: "center", minHeight: "100vh" }}>
+        <p style={{ opacity: 0.8 }}>Conectando al servidor…</p>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.screen}>

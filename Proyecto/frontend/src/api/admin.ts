@@ -7,6 +7,8 @@ export type AdminDashboardOverview = {
     id: string;
     name: string;
     xp: number;
+    totalXp: number;
+    level: number;
     lastLogin: string | null;
   } | null;
 };

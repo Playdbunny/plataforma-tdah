@@ -96,13 +96,9 @@ tbody tr:hover { background: #e7ecff; }
 .medal { margin-right: 8px; }
 .name { min-width: 200px; }
 .xp { width: 140px; }
-.progress { width: 220px; display: flex; align-items: center; gap: 10px; }
-.bar { height: 10px; width: 120px; background: #e5e7eb; border-radius: 999px; overflow: hidden; }
-.fill { height: 100%; background: #7c90ff; }
-.pct { font-weight: 700; }
 .last { width: 160px; }
 
-.pos, .name, .xp, .progress, .pct, .last {
+.pos, .name, .xp, .last {
   color: #111827; /* todas las columnas en negro */
 }
 
@@ -124,8 +120,6 @@ tbody tr:hover { background: #e7ecff; }
 /* Responsive */
 @media (max-width: 900px) {
   .search { width: 180px; }
-  .progress { width: 180px; }
-  .bar { width: 100px; }
 }
 @media (max-width: 640px) {
   .screen { gap: 12px; }

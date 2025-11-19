@@ -3,6 +3,8 @@ import mongoose from "mongoose";
 import path from "path";
 import Subject, { type SubjectDocument } from "../models/Subject";
 import Activity from "../models/Activity";
+import ActivityAttempt from "../models/ActivityAttempt";
+import UserProgress from "../models/UserProgress";
 import { requireAuth, requireRole } from "../middleware/requireAuth";
 import { normalizeBannerUrl } from "../lib/normalizeBannerUrl";
 import fsPromises from "fs/promises";
@@ -432,6 +434,12 @@ router.delete(
       const { id } = req.params;
       const subject = await findSubjectOr404(id, res);
       if (!subject) return;
+
+      await Promise.all([
+        Activity.deleteMany({ subjectId: subject._id }),
+        ActivityAttempt.deleteMany({ subjectId: subject._id }),
+        UserProgress.deleteMany({ subjectId: subject._id }),
+      ]);
 
       await subject.deleteOne();
 

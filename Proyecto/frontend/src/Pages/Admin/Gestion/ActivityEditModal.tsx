@@ -488,22 +488,28 @@ export default function ActivityEditModal({ activity, onClose, onMockDelete, onB
           </div>
         )}
 
-        {/* PPT/Video: Subir archivo (siempre visible para debug) */}
-        <div className={styles.formLabel} style={{marginBottom: 0}}>
-          <strong>Archivo {activity.type === "ppt-animada" ? "PPT" : "Video"}:</strong>
-        </div>
-        <input
-          type="file"
-          accept={activity.type === "ppt-animada" ? ".ppt,.pptx,.pdf" : "video/*"}
-          onChange={handleFileChange}
-          className={styles.formInput}
-          title={activity.type === "ppt-animada" ? "Subir archivo PPT o PDF" : "Subir archivo de video"}
-          placeholder={activity.type === "ppt-animada" ? "Selecciona un archivo PPT o PDF" : "Selecciona un archivo de video"}
-        />
-        {fileUrl && (
-          <div style={{marginTop: 10}}>
-            <a href={fileUrl} target="_blank" rel="noopener noreferrer">Ver archivo actual</a>
-          </div>
+        {/* Solo permitir carga de archivos cuando corresponda al tipo de actividad */}
+        {activity.type === "video" && (
+          <>
+            <div className={styles.formLabel} style={{ marginBottom: 0 }}>
+              <strong>Archivo Video:</strong>
+            </div>
+            <input
+              type="file"
+              accept="video/*"
+              onChange={handleFileChange}
+              className={styles.formInput}
+              title="Subir archivo de video"
+              placeholder="Selecciona un archivo de video"
+            />
+            {fileUrl && (
+              <div style={{ marginTop: 10 }}>
+                <a href={fileUrl} target="_blank" rel="noopener noreferrer">
+                  Ver archivo actual
+                </a>
+              </div>
+            )}
+          </>
         )}
         {error && <div className={styles.errorMsg}>{error}</div>}
         <div className={styles.formActions}>

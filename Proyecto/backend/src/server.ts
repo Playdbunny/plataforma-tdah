@@ -20,24 +20,34 @@ import googleRouter from "./routes/google.routes";
 import adminActivitiesRouter from "./routes/adminActivities.routes";
 import adminSubjectsRouter from "./routes/adminSubjects.routes";
 import adminStudentsRouter from "./routes/adminStudents.routes";
+import adminKpisRouter from "./routes/adminKpis.routes";
 import studentActivitiesRouter from "./routes/studentActivities.routes";
 import uploadRouter from "./routes/upload.routes";
+import Subject from "./models/Subject";
+import Activity from "./models/Activity";
+import ActivityAttempt from "./models/ActivityAttempt";
 
 const app = express();
 const apiRouter = express.Router();
 
 const PORT = Number(process.env.PORT) || 4000;
-const HOST = process.env.HOST || "127.0.0.1";
+const bodyLimit = process.env.JSON_BODY_LIMIT || "5mb";
+
+const allowedOrigins = [
+  "http://127.0.0.1:5173",
+  "http://localhost:5173",
+  process.env.CORS_ORIGIN,      // <- URL de Vercel
+].filter(Boolean) as string[];
 
 app.use(
   cors({
-    origin: ["http://127.0.0.1:5173", "http://localhost:5173"],
+    origin: allowedOrigins,
     credentials: true,
   }),
 );
 
-app.use(express.json({ limit: "1mb" }));
-app.use(express.urlencoded({ extended: true, limit: "1mb" }));
+app.use(express.json({ limit: bodyLimit }));
+app.use(express.urlencoded({ extended: true, limit: bodyLimit }));
 
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
@@ -66,6 +76,12 @@ apiRouter.use("/profile", profileRouter);
 apiRouter.use("/admin", adminRouter);
 apiRouter.use("/admin", adminStudentsRouter);
 apiRouter.use("/uploads", uploadRouter);
+apiRouter.use(
+  "/admin/kpis",
+  requireAuth,
+  requireRole("admin"),
+  adminKpisRouter,
+);
 apiRouter.use(adminActivitiesRouter);
 apiRouter.use(adminSubjectsRouter);
 apiRouter.use(studentActivitiesRouter);
@@ -92,7 +108,11 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
 
     if (process.env.NODE_ENV !== "production") {
       try {
-        await Promise.all([Subject.syncIndexes(), Activity.syncIndexes()]);
+        await Promise.all([
+          Subject.syncIndexes(),
+          Activity.syncIndexes(),
+          ActivityAttempt.syncIndexes(),
+        ]);
         console.log("[indexes] Sincronizados");
       } catch (error) {
         console.error("[indexes] Error al sincronizar", error);
@@ -102,7 +122,7 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     console.warn("⚠️ MONGO_URI no definido. El servidor corre sin DB.");
   }
 
-  app.listen(PORT, HOST, () => {
-    console.log(`🚀 API corriendo en http://${HOST}:${PORT}`);
+  app.listen(PORT, () => {
+    console.log(`🚀 API corriendo en puerto ${PORT}`);
   });
 })();

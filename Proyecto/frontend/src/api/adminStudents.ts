@@ -17,6 +17,7 @@ export type AdminStudentSummary = {
   email: string;
   tdahType: TDAHType;
   xp: number;
+  totalXp: number;
   coins: number;
   level: number;
   activitiesCompleted: number;

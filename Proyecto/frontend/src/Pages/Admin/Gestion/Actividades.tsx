@@ -11,8 +11,10 @@ import { useEffect, useMemo } from "react";
 
 import styles from "./Actividades.module.css";
 import { useSubjectsStore } from "../../../stores/subjectsStore";
+import { useBackendReady } from "@/hooks/useBackendReady";
 
 export default function ActividadesPage() {
+  const ready = useBackendReady();
   const items = useSubjectsStore((state) => state.items);
   const fetchSubjects = useSubjectsStore((state) => state.fetchSubjects);
   const version = useSubjectsStore((state) => state.version);
@@ -20,14 +22,23 @@ export default function ActividadesPage() {
   // Si el store todavía no tiene materias (p.ej. primera carga en un navegador
   // nuevo), pedimos la lista mock para hidratar la vista.
   useEffect(() => {
+    if (!ready) return;
     fetchSubjects().catch(() => {});
-  }, [fetchSubjects, version]);
+  }, [fetchSubjects, ready, version]);
 
   // Orden alfabético estable para que la grilla sea más predecible.
   const subjects = useMemo(
     () => [...items].sort((a, b) => a.name.localeCompare(b.name, "es")),
     [items]
   );
+
+  if (!ready) {
+    return (
+      <div style={{ display: "grid", placeItems: "center", minHeight: "100vh" }}>
+        <p style={{ opacity: 0.8 }}>Conectando al servidor…</p>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.screen}>

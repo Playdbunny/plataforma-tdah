@@ -2,7 +2,7 @@
 
 @font-face {
   font-family: 'PixelGrid';
-  src: url('/src/assets/fonts/pixelgrid-squarebolds.woff') format('woff');
+  src: url('/fonts/pixelgrid-squarebolds.woff') format('woff');
   font-weight: bold;
   font-style: normal;
 }
