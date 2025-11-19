@@ -26,6 +26,9 @@ export interface ActivityAttemptAttrs {
   correctCount?: number;      // int ≥ 0, default 0
   totalCount?: number;        // int ≥ 0, default 0
   durationSec?: number;       // int ≥ 0, default 0 (duración del intento en segundos)
+  status?: string | null;
+  startedAt?: Date | null;
+  endedAt?: Date | null;
 }
 
 export interface ActivityAttemptDocument
@@ -119,6 +122,18 @@ const activityAttemptSchema = new Schema<
         message: "durationSec must be an integer",
       },
     },
+    status: {
+      type: String,
+      default: null,
+    },
+    startedAt: {
+      type: Date,
+      default: null,
+    },
+    endedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: { createdAt: true, updatedAt: false },
@@ -155,6 +170,8 @@ activityAttemptSchema.pre("validate", function (next) {
  */
 activityAttemptSchema.index({ userId: 1, activityId: 1, createdAt: -1 });
 activityAttemptSchema.index({ userId: 1, subjectId: 1, createdAt: -1 });
+activityAttemptSchema.index({ startedAt: 1 });
+activityAttemptSchema.index({ endedAt: 1, status: 1 });
 
 /**
  * ===========================

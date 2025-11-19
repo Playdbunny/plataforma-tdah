@@ -110,11 +110,17 @@
   align-items: center;
   gap: 12px;
   transition: transform .1s ease, filter .15s ease;
+  position: relative;
+  overflow: hidden;
 }
 .cardLink:hover .card,
 .cardLink:focus-visible .card{
   filter: brightness(1.05);
   transform: translateY(-2px);
+}
+
+.cardLocked {
+  filter: grayscale(.2) brightness(.7);
 }
 
 .cardThumb{
@@ -135,6 +141,35 @@
   font-weight:800;
   text-align:center;
   font-family:"PixelGrid", system-ui, sans-serif;
+}
+
+.cardMeta {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.lockOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 6, 15, 0.85);
+  color: #f6f7ff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+  padding: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.lockTimer {
+  font-size: 18px;
+  font-family: "Press Start 2P", system-ui, sans-serif;
+  color: #ffd87d;
 }
 
 /* Footer */

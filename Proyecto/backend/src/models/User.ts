@@ -1,5 +1,6 @@
 import { Schema, model, models, Document } from "mongoose";
 import argon2 from "argon2";
+import { currentTotalXp } from "../lib/levels";
 
 /** Tipos */
 export type TDAHType = "inatento" | "hiperactivo" | "combinado" | null;
@@ -210,6 +211,10 @@ const UserSchema = new Schema<IUserDoc>(
         Reflect.deleteProperty(ret, "passwordResetExpiresAt");
         Reflect.deleteProperty(ret, "refreshTokenHash");
         Reflect.deleteProperty(ret, "refreshTokenExpiresAt");
+
+        const level = typeof ret.level === "number" ? ret.level : 1;
+        const xpInLevel = typeof ret.xp === "number" ? ret.xp : 0;
+        ret.totalXp = currentTotalXp(level, xpInLevel);
         return ret;
       }
     }

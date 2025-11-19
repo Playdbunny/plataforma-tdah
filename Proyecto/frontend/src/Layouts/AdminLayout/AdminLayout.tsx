@@ -128,17 +128,6 @@ export default function AdminLayout() {
         <header className={styles.topbar}>
 
           <div className={styles.topRight}>
-            <button
-              className={styles.bell}
-              title="Notificaciones"
-              aria-label="Notificaciones"
-            >
-              🔔
-              {/* Badge con cantidad (hardcode 0 por ahora) */}
-              <span className={styles.badge} aria-hidden>
-                0
-              </span>
-            </button>
 
             {/* Etiqueta con nombre del admin */}
             <div className={styles.adminTag}>

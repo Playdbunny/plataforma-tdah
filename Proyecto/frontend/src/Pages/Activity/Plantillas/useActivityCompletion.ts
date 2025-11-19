@@ -1,3 +1,4 @@
+import axios from "axios";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { xpForLevel } from "../../../Lib/Levels";
 import {
@@ -16,6 +17,14 @@ const MEDIUM_THRESHOLD_RATIO = 0.8;
 const MAX_COMPLETION_ATTEMPTS = 3;
 const RETRY_BASE_DELAY_MS = 1000;
 const RETRY_MAX_DELAY_MS = 8000;
+
+function extractLockedErrorMessage(err: unknown): string | null {
+  if (!axios.isAxiosError(err)) return null;
+  const data = err.response?.data as Record<string, unknown> | undefined;
+  if (data?.code !== "ATTEMPTS_LOCKED") return null;
+  const message = typeof data?.error === "string" ? data.error : null;
+  return message ?? "Alcanzaste el límite de intentos. Vuelve a intentarlo más tarde.";
+}
 
 function computeEstimatedDuration(config: ActivityDetail["config"]): number | null {
   const questions = extractQuestions(config);
@@ -149,6 +158,11 @@ export function useActivityCompletion(activity: ActivityDetail) {
 
           return response;
         } catch (err) {
+          const lockedMessage = extractLockedErrorMessage(err);
+          if (lockedMessage) {
+            alert(lockedMessage);
+            throw err;
+          }
           lastError = err;
           attempt += 1;
           if (attempt >= MAX_COMPLETION_ATTEMPTS) {

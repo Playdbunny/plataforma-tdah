@@ -1,17 +1,37 @@
 /* Contenedor general */
-.screen { display: flex; flex-direction: column; gap: 14px; min-height:100vh; }
-
-/* Acciones superiores (crear / buscar / orden) */
-.actions { display: flex; 
-  align-items: center; 
-  justify-content: space-between; 
-  font-family: "Press Start 2P", system-ui, sans-serif; 
-  font-size: 10px;
+.screen {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 100vh;
+  color: #111827;
 }
 
-.right { display: flex; 
-  align-items: center; 
-  gap: 8px; 
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.title {
+  font-family: "Press Start 2P", system-ui, sans-serif;
+  font-weight: 800;
+  background: #e6ebff;
+  border: 2px solid #c6d1ff;
+  color: #111827;
+  padding: 6px 12px;
+  border-radius: 14px;
+  font-size: 14px;
+}
+
+/* Acciones superiores (crear / buscar / orden) */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .primary {
@@ -39,21 +59,21 @@
 .ghost:hover { background:#f8faff; }
 
 .search {
-  background: #fff; 
-  border:2px solid #c6d1ff; 
+  background: #fff;
+  border: 2px solid #c6d1ff;
   border-radius: 12px;
-  padding: 8px 10px; 
-  width: 280px;
+  padding: 8px 12px;
+  width: 260px;
 }
 
 /* Tabla */
 .tableWrap {
-  background: #fff; 
-  border: 2px solid #c6d1ff; 
-  border-radius: 12px; 
+  background: #fff;
+  border: 2px solid #c6d1ff;
+  border-radius: 18px;
   overflow: hidden;
 
-  
+
 }
 .table {
   width: 100%; 
@@ -64,9 +84,12 @@
 
 .table thead th {
   background: #f3f5ff;
-  border-bottom: 2px solid #c6d1ff; 
-  text-align: left; padding: 10px 12px;
+  border-bottom: 2px solid #c6d1ff;
+  text-align: left;
+  padding: 10px 12px;
   font-weight: 800;
+  font-family: "PixelGrid", "Press Start 2P", system-ui, sans-serif;
+  letter-spacing: 0.5px;
 }
 .table td { padding: 10px 12px; 
   border-top: 1px solid #eaeefc; }
@@ -201,6 +224,9 @@ tbody tr:hover { background: #eef2ff; }
   .bannerThumb { width: 100px; height: 48px; }
 }
 @media (max-width: 640px) {
+  .title { font-size: 12px; }
+  .actions { justify-content: flex-start; }
+  .search { width: 160px; }
   .colAcciones { width: 160px; }
   .slug { display:none; } /* Oculta slug en móvil para respirar */
 }

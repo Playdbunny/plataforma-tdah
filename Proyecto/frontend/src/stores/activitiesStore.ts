@@ -27,7 +27,8 @@ export type PublicActivity = ActivitySummary & {
 };
 
 type ActivityMutationOptions = {
-  bannerFile?: File;
+  bannerFile?: File | null;
+  videoFile?: File | null;
 };
 
 type ActivitiesState = {

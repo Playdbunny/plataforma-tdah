@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, type Response } from "express";
 import { Types } from "mongoose";
 import { z } from "zod";
 import { requireAuth } from "../middleware/requireAuth";
@@ -33,6 +33,155 @@ function getToday(): Date {
   return today;
 }
 
+const ATTEMPT_COOLDOWN_MINUTES = 15;
+const ATTEMPT_COOLDOWN_MS = ATTEMPT_COOLDOWN_MINUTES * 60 * 1000;
+
+function resolveAttemptLimit(config: unknown): number | null {
+  if (!config || typeof config !== "object") return null;
+  const raw = (config as Record<string, unknown>).attempts;
+  if (typeof raw !== "number") return null;
+  if (!Number.isFinite(raw) || raw <= 0) return null;
+  return Math.max(1, Math.floor(raw));
+}
+
+interface AttemptStatus {
+  attemptsLimit: number;
+  attemptsUsed: number;
+  attemptsRemaining: number;
+  cooldownExpiresAt: Date | null;
+  locked: boolean;
+}
+
+type AttemptStatusResponse = {
+  activityId: string;
+  attemptsLimit: number | null;
+  attemptsUsed: number;
+  attemptsRemaining: number | null;
+  cooldownExpiresAt: string | null;
+  locked: boolean;
+};
+
+async function computeAttemptStatus(
+  userId: Types.ObjectId,
+  activityId: Types.ObjectId,
+  attemptLimit: number,
+  now: Date,
+): Promise<AttemptStatus> {
+  const attempts = await ActivityAttempt.find({ userId, activityId })
+    .sort({ createdAt: -1 })
+    .limit(attemptLimit)
+    .select({ createdAt: 1 })
+    .lean<{ createdAt?: Date }[]>();
+
+  let attemptsUsed = 0;
+  let previousTimestamp = now.getTime();
+  let cooldownUntil: Date | null = null;
+
+  for (const entry of attempts) {
+    if (!entry?.createdAt) continue;
+    const createdAt = new Date(entry.createdAt);
+    const createdAtTime = createdAt.getTime();
+    if (previousTimestamp - createdAtTime >= ATTEMPT_COOLDOWN_MS) {
+      break;
+    }
+    attemptsUsed += 1;
+    previousTimestamp = createdAtTime;
+    if (attemptsUsed >= attemptLimit) {
+      cooldownUntil = new Date(createdAtTime + ATTEMPT_COOLDOWN_MS);
+      break;
+    }
+  }
+
+  const isLocked = Boolean(cooldownUntil && cooldownUntil.getTime() > now.getTime());
+  const attemptsRemaining = isLocked ? 0 : Math.max(0, attemptLimit - attemptsUsed);
+
+  return {
+    attemptsLimit: attemptLimit,
+    attemptsUsed: isLocked ? attemptLimit : attemptsUsed,
+    attemptsRemaining,
+    cooldownExpiresAt: isLocked ? cooldownUntil : null,
+    locked: isLocked,
+  };
+}
+
+function serializeAttemptStatus(
+  activityId: string,
+  status: AttemptStatus,
+): AttemptStatusResponse {
+  return {
+    activityId,
+    attemptsLimit: status.attemptsLimit,
+    attemptsUsed: status.attemptsUsed,
+    attemptsRemaining: status.attemptsRemaining,
+    cooldownExpiresAt: status.cooldownExpiresAt?.toISOString() ?? null,
+    locked: status.locked,
+  };
+}
+
+const attemptStatusRequestSchema = z
+  .object({
+    activityIds: z.array(z.string().trim().min(1)).min(1).max(50),
+  })
+  .strict();
+
+async function handleAttemptStatusRequest(req: any, res: Response) {
+  const parsed = attemptStatusRequestSchema.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.flatten() });
+  }
+
+  const userId = req.auth?.sub;
+  if (!userId || !Types.ObjectId.isValid(userId)) {
+    return res.status(401).json({ error: "Sesión inválida" });
+  }
+
+  const requestedIds = parsed.data.activityIds;
+  const validIds = requestedIds.filter((value) => Types.ObjectId.isValid(value));
+  if (validIds.length === 0) {
+    return res.json({ statuses: [] });
+  }
+
+  const uniqueObjectIds = Array.from(new Set(validIds)).map(
+    (value) => new Types.ObjectId(value),
+  );
+
+  const activities = await Activity.find({ _id: { $in: uniqueObjectIds } })
+    .select({ _id: 1, config: 1 })
+    .lean<{ _id: Types.ObjectId; config?: Record<string, unknown> | null }[]>();
+
+  const activityMap = new Map<string, { _id: Types.ObjectId; config?: Record<string, unknown> | null }>(
+    activities.map((doc) => [doc._id.toString(), doc]),
+  );
+
+  const userObjectId = new Types.ObjectId(userId);
+  const now = new Date();
+  const statuses = await Promise.all(
+    validIds.map(async (id) => {
+      const activity = activityMap.get(id);
+      if (!activity) return null;
+      const limit = resolveAttemptLimit(activity.config ?? null);
+      if (!limit) {
+        return {
+          activityId: id,
+          attemptsLimit: null,
+          attemptsUsed: 0,
+          attemptsRemaining: null,
+          cooldownExpiresAt: null,
+          locked: false,
+        } satisfies AttemptStatusResponse;
+      }
+      const status = await computeAttemptStatus(userObjectId, activity._id, limit, now);
+      return serializeAttemptStatus(id, status);
+    }),
+  );
+  res.json({ statuses: statuses.filter((entry): entry is AttemptStatusResponse => Boolean(entry)) });
+}
+
+const attemptStatusPaths = ["/activities/status", "/student/activities/status"];
+for (const path of attemptStatusPaths) {
+  router.post(path, requireAuth, handleAttemptStatusRequest);
+}
+
 router.post("/activities/:id/complete", requireAuth, async (req: any, res) => {
   const { id } = req.params;
 
@@ -46,8 +195,16 @@ router.post("/activities/:id/complete", requireAuth, async (req: any, res) => {
   }
 
   const activity = await Activity.findById(id)
-    .select({ _id: 1, subjectId: 1, xpReward: 1 })
-    .lean<{ _id: Types.ObjectId; subjectId?: Types.ObjectId | string; xpReward?: number } | null>();
+    .select({ _id: 1, subjectId: 1, xpReward: 1, config: 1 })
+    .lean<
+      | {
+          _id: Types.ObjectId;
+          subjectId?: Types.ObjectId | string;
+          xpReward?: number;
+          config?: Record<string, unknown> | null;
+        }
+      | null
+    >();
 
   if (!activity) {
     return res.status(404).json({ error: "Actividad no encontrada" });
@@ -80,6 +237,26 @@ router.post("/activities/:id/complete", requireAuth, async (req: any, res) => {
   }
 
   const activityObjectId = new Types.ObjectId(id);
+  const attemptLimit = resolveAttemptLimit(activity.config ?? null);
+
+  const now = new Date();
+
+  if (attemptLimit) {
+    const currentStatus = await computeAttemptStatus(
+      user._id,
+      activityObjectId,
+      attemptLimit,
+      now,
+    );
+    if (currentStatus.locked) {
+      return res.status(429).json({
+        error: "Alcanzaste el límite de intentos. Inténtalo más tarde.",
+        code: "ATTEMPTS_LOCKED",
+        attemptsLimit: attemptLimit,
+        cooldownExpiresAt: currentStatus.cooldownExpiresAt?.toISOString() ?? null,
+      });
+    }
+  }
   const hasCompletedActivity = await ActivityAttempt.exists({
     userId: user._id,
     activityId: activityObjectId,
@@ -90,18 +267,24 @@ router.post("/activities/:id/complete", requireAuth, async (req: any, res) => {
   const baseXp = Math.max(0, Math.round(activity.xpReward ?? 0));
   const requestedXp = payload.xpAwarded ?? baseXp;
   const xpCap = baseXp > 0 ? baseXp : 50_000;
-  const xpAwarded = clamp(Math.round(requestedXp), 0, xpCap);
+  const normalizedXpAward = clamp(Math.round(requestedXp), 0, xpCap);
 
-  const requestedCoins = payload.coinsAwarded ?? xpAwarded;
-  const coinsAwarded = clamp(Math.round(requestedCoins), 0, 50_000);
+  const requestedCoins = payload.coinsAwarded ?? normalizedXpAward;
+  const normalizedCoinsAward = clamp(Math.round(requestedCoins), 0, 50_000);
+
+  const xpAwarded = alreadyCompleted ? 0 : normalizedXpAward;
+  const coinsAwarded = alreadyCompleted ? 0 : normalizedCoinsAward;
 
   const correctCount = payload.correctCount ?? 0;
   const totalCount = payload.totalCount ?? 0;
-  const durationSec = payload.durationSec ?? 0;
+  const rawDurationSec = payload.durationSec ?? 0;
+  const durationSec = Math.max(0, Math.round(rawDurationSec));
   const estimatedDurationSec = payload.estimatedDurationSec ?? null;
   const score = totalCount > 0 ? clamp(correctCount / totalCount, 0, 1) : 1;
 
-  const now = new Date();
+  const endedAt = now;
+  const startedAt =
+    durationSec > 0 ? new Date(endedAt.getTime() - durationSec * 1000) : endedAt;
 
   if (xpAwarded > 0) {
     const updated = applyXpGain(user.level, user.xp, xpAwarded);
@@ -156,17 +339,31 @@ router.post("/activities/:id/complete", requireAuth, async (req: any, res) => {
     xpAwarded,
     correctCount: Math.max(0, Math.round(correctCount)),
     totalCount: Math.max(0, Math.round(totalCount)),
-    durationSec: Math.max(0, Math.round(durationSec)),
+    durationSec,
+    status: "completed",
+    startedAt,
+    endedAt,
   });
 
   const tasks: Promise<unknown>[] = [user.save()];
 
-  if (xpAwarded > 0) {
+  if (!alreadyCompleted) {
+    tasks.push(
+      UserProgress.completeUnit(user._id, subjectId, xpAwarded, now).catch(
+        (err: any) => {
+          console.error("No se pudo actualizar el progreso del usuario", err);
+        },
+      ),
+    );
+  } else if (xpAwarded > 0) {
     tasks.push(
       UserProgress.awardXp(user._id, subjectId, xpAwarded, now).catch((err: any) => {
         console.error("No se pudo actualizar el progreso del usuario", err);
       }),
     );
+  }
+
+  if (xpAwarded > 0) {
     tasks.push(
       XpEvent.create({
         userId: user._id,
@@ -216,15 +413,27 @@ router.post("/activities/:id/complete", requireAuth, async (req: any, res) => {
         : attempt.createdAt?.toISOString?.() ?? null,
   };
 
+  let nextAttemptStatus = null;
+  if (attemptLimit) {
+    const refreshedStatus = await computeAttemptStatus(
+      user._id,
+      activityObjectId,
+      attemptLimit,
+      new Date(),
+    );
+    nextAttemptStatus = serializeAttemptStatus(activityObjectId.toString(), refreshedStatus);
+  }
+
   return res.json({
     xpAwarded,
     coinsAwarded,
-    durationSec: Math.max(0, Math.round(durationSec)),
+    durationSec,
     estimatedDurationSec,
     score,
     streak: safeUser.streak,
     user: safeUser,
     attempt: safeAttempt,
+    attemptStatus: nextAttemptStatus,
   });
 });
 

@@ -12,6 +12,7 @@ import styles from "./Materias.module.css";
 import { bumpContentVersion } from "../../../stores/contentVersionStore";
 import { useActivitiesStore } from "../../../stores/activitiesStore";
 import { useSubjectsStore, type Subject } from "../../../stores/subjectsStore";
+import { useBackendReady } from "@/hooks/useBackendReady";
 
 const subjectKey = (subject: Subject) => subject._id ?? subject.id;
 
@@ -22,6 +23,7 @@ type Form = { name: string; description: string; slug?: string };
 const EMPTY_FORM: Form = { name: "", description: "", slug: "" };
 
 export default function MateriasPage() {
+  const ready = useBackendReady();
   /* =========================================================================
      1) STORE (Zustand): items + acciones CRUD mock
      ========================================================================= */
@@ -54,7 +56,10 @@ export default function MateriasPage() {
   /* =========================================================================
      3) EFECTOS: listar al montar + limpiar ObjectURL del preview
      ========================================================================= */
-  useEffect(() => { list(); }, [list]);
+  useEffect(() => {
+    if (!ready) return;
+    list();
+  }, [list, ready]);
 
   useEffect(() => {
     // Limpia el ObjectURL anterior cuando cambie el preview o al desmontar
@@ -225,15 +230,28 @@ export default function MateriasPage() {
   /* =========================================================================
      7) RENDER
      ========================================================================= */
+  if (!ready) {
+    return (
+      <div style={{ display: "grid", placeItems: "center", minHeight: "100vh" }}>
+        <p style={{ opacity: 0.8 }}>Conectando al servidor…</p>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.screen}>
       {/* Barra de acciones: crear / buscar / alternar orden */}
-      <div className={styles.actions}>
-        <button className={styles.primary} onClick={openCreate}>
-          + Nueva materia
-        </button>
-
-        <div className={styles.right}>
+      <header className={styles.header}>
+        <div className={styles.title}>
+          <span role="img" aria-label="Materias">
+            📚
+          </span>
+          &nbsp; Materias
+        </div>
+        <div className={styles.actions}>
+          <button className={styles.primary} onClick={openCreate}>
+            + Nueva materia
+          </button>
           <input
             className={styles.search}
             placeholder="Buscar por nombre/descripción…"
@@ -249,7 +267,7 @@ export default function MateriasPage() {
             Orden: {sortAsc ? "A → Z" : "Z → A"}
           </button>
         </div>
-      </div>
+      </header>
 
       {/* Tabla de materias */}
       <div className={styles.tableWrap}>

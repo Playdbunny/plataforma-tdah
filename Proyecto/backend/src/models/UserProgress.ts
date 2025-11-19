@@ -165,7 +165,17 @@ userProgressSchema.statics.completeUnit = async function (
     [
       {
         $set: {
-          unitsCompleted: { $add: ["$unitsCompleted", 1] },
+          unitsCompleted: {
+            $max: [
+              0,
+              {
+                $add: [
+                  { $toInt: { $ifNull: ["$unitsCompleted", 0] } },
+                  1,
+                ],
+              },
+            ],
+          },
           xp: {
             $max: [
               0,

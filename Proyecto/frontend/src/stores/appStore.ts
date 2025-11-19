@@ -5,6 +5,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { normalizeAvatarUrl } from "../utils/avatar";
+import { currentTotalXP, xpForLevel } from "../Lib/Levels";
 
 /* ======================
    Tipos base del dominio
@@ -35,6 +36,7 @@ export type User = {
   tdahType?: TDAHType;
   level?: number;
   xp?: number;
+  totalXp?: number;
   
   nextXp?: number;
   // location?: string;
@@ -52,6 +54,43 @@ export type User = {
   updatedAt?: Date;
   lastLogin?: Date | null;
 } | null;
+
+function normalizeLevelProgression(user: NonNullable<User>): NonNullable<User> {
+  const normalizeLevel = (value: unknown): number => {
+    if (typeof value !== "number" || !Number.isFinite(value)) return 1;
+    return Math.max(1, Math.floor(value));
+  };
+
+  const normalizeXP = (value: unknown): number => {
+    if (typeof value !== "number" || !Number.isFinite(value)) return 0;
+    return Math.max(0, Math.floor(value));
+  };
+
+  let level = normalizeLevel(user.level);
+  let xp = normalizeXP(user.xp);
+  let requiredXPForLevel = xpForLevel(level);
+
+  while (xp >= requiredXPForLevel) {
+    xp -= requiredXPForLevel;
+    level += 1;
+    requiredXPForLevel = xpForLevel(level);
+  }
+
+  const normalizeTotalXP = (value: unknown): number => {
+    if (typeof value !== "number" || !Number.isFinite(value)) return currentTotalXP(level, xp);
+    return Math.max(0, Math.floor(value));
+  };
+
+  const totalXp = normalizeTotalXP(user.totalXp);
+
+  return {
+    ...user,
+    level,
+    xp,
+    nextXp: requiredXPForLevel,
+    totalXp,
+  };
+}
 
 /* ======================
    Estado + Acciones
@@ -126,12 +165,14 @@ export const useAppStore = create<AppState>()(
             ? u
             : ({ ...u, avatarUrl: normalizedAvatar } as typeof u);
 
+        const leveledUser = normalizeLevelProgression(nextUser as NonNullable<User>);
+
         // Si te llega un usuario con coins, sincronizamos compat con wallet/points
-        if (typeof nextUser.coins === "number") {
-          const coins = Math.max(0, Math.floor(nextUser.coins));
-          set({ user: { ...nextUser, coins }, points: coins, wallet: { coins } });
+        if (typeof leveledUser.coins === "number") {
+          const coins = Math.max(0, Math.floor(leveledUser.coins));
+          set({ user: { ...leveledUser, coins }, points: coins, wallet: { coins } });
         } else {
-          set({ user: nextUser });
+          set({ user: leveledUser });
         }
       },
 
@@ -142,7 +183,8 @@ export const useAppStore = create<AppState>()(
             patch.avatarUrl !== undefined
               ? { ...patch, avatarUrl: normalizeAvatarUrl(patch.avatarUrl) }
               : patch;
-          const nextUser = { ...s.user, ...normalizedPatch };
+          const nextUser = { ...s.user, ...normalizedPatch } as NonNullable<User>;
+          const leveledUser = normalizeLevelProgression(nextUser);
 
           // Si el patch trae coins válidas, sincronizamos todo (compat)
           if (
@@ -151,13 +193,13 @@ export const useAppStore = create<AppState>()(
           ) {
             const coins = Math.max(0, Math.floor(normalizedPatch.coins));
             return {
-              user: { ...nextUser, coins },
+              user: { ...leveledUser, coins },
               points: coins, // compat: points = coins
               wallet: { coins },
             };
           }
 
-          return { user: nextUser };
+          return { user: leveledUser };
         }),
 
       setCharacter: (c) =>
