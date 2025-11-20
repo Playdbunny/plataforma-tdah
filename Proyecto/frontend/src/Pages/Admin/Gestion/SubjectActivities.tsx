@@ -13,7 +13,7 @@ import ActivityEditModal from "./ActivityEditModal";
 import activityFormStyles from "./ActivityForm.module.css";
 import { useSubjectsStore } from "../../../stores/subjectsStore";
 import { useActivitiesStore } from "../../../stores/activitiesStore";
-import { useBackendReady } from "@/Hooks";
+import { useBackendReady } from "@/hooks";
 import {
   SUBJECT_ACTIVITY_STATUS_LABELS,
   SUBJECT_ACTIVITY_TYPE_LABELS,

@@ -15,7 +15,7 @@ import {
   type AdminStudentDetail,
 } from "../../../api/adminStudents";
 import { timeAgo } from "../../../utils/timeAgo";
-import { useBackendReady } from "@/Hooks";
+import { useBackendReady } from "@/hooks";
 import { currentTotalXP } from "../../../Lib/Levels";
 
 function formatActivity(ev: AdminStudentActivity) {
