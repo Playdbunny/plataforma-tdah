@@ -136,43 +136,11 @@ function sanitizeActivityPayload(activity: Partial<SubjectActivity>) {
 
   if (normalized.config && typeof normalized.config === "object") {
     const config = { ...(normalized.config as Record<string, any>) };
-    if (typeof config.fileUrl === "string" && DATA_URL_REGEX.test(config.fileUrl)) {
-      delete config.fileUrl;
-    }
-    if (config.asset && typeof config.asset === "object") {
-      const asset = { ...(config.asset as Record<string, any>) };
-      if (typeof asset.url === "string" && DATA_URL_REGEX.test(asset.url)) {
-        delete asset.url;
-      }
-      if (typeof asset.fileUrl === "string" && DATA_URL_REGEX.test(asset.fileUrl)) {
-        delete asset.fileUrl;
-      }
-      if (typeof asset.dataUrl === "string") {
-        delete asset.dataUrl;
-      }
-      config.asset = asset;
-    }
     normalized.config = config;
   }
 
   if (normalized.fieldsJSON && typeof normalized.fieldsJSON === "object") {
-    const fields = { ...(normalized.fieldsJSON as Record<string, any>) };
-    if (typeof fields.fileUrl === "string" && DATA_URL_REGEX.test(fields.fileUrl)) {
-      delete fields.fileUrl;
-    }
-    if (fields.asset && typeof fields.asset === "object") {
-      const asset = { ...(fields.asset as Record<string, any>) };
-      if (typeof asset.url === "string" && DATA_URL_REGEX.test(asset.url)) {
-        delete asset.url;
-      }
-      if (typeof asset.fileUrl === "string" && DATA_URL_REGEX.test(asset.fileUrl)) {
-        delete asset.fileUrl;
-      }
-      if (typeof asset.dataUrl === "string") {
-        delete asset.dataUrl;
-      }
-      fields.asset = asset;
-    }
+    const fields = { ...(normalized.fieldsJSON as Record<string, any>) }
     normalized.fieldsJSON = fields as any;
   }
 
