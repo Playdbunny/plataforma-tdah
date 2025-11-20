@@ -12,7 +12,7 @@ import styles from "./Materias.module.css";
 import { bumpContentVersion } from "../../../stores/contentVersionStore";
 import { useActivitiesStore } from "../../../stores/activitiesStore";
 import { useSubjectsStore, type Subject } from "../../../stores/subjectsStore";
-import { useBackendReady } from "src/Hooks/useBackendReady";
+import { useBackendReady } from "@/Hooks";
 
 const subjectKey = (subject: Subject) => subject._id ?? subject.id;
 

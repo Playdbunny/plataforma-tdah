@@ -6,7 +6,7 @@
 
 import styles from "./Dashboard.module.css";
 import { useEffect, useMemo, useState } from "react";
-import { useBackendReady } from "src/Hooks/useBackendReady";
+import { useBackendReady } from "@/Hooks";
 import { getAdminTodayKpis, type AdminTodayKpis } from "@/api/adminKpis";
 import {
   getAdminDashboardOverview,
