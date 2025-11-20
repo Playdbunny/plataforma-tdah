@@ -6,17 +6,17 @@ import { requireAuth } from "../middleware/requireAuth";
 import {
   MAX_AVATAR_URL_LENGTH,
   User,
-  isSafeAvatarUrl,
   normalizeAvatarUrl,
 } from "../models/User";
 
-const AVATAR_DIR = path.join(process.cwd(), "uploads", "avatars");
+const isRemoteHttpUrl = (url: string | null | undefined): url is string =>
+  typeof url === "string" && /^https?:\/\//i.test(url);
 
 async function removeStoredAvatar(url: string | null | undefined) {
   if (!url || !url.startsWith("/uploads/avatars/")) return;
 
   const filename = path.basename(url);
-  const absolute = path.join(AVATAR_DIR, filename);
+  const absolute = path.join(process.cwd(), "uploads", "avatars", filename);
 
   try {
     await fsPromises.unlink(absolute);
@@ -49,8 +49,11 @@ const updateProfileSchema = z
           .trim()
           .min(1)
           .max(MAX_AVATAR_URL_LENGTH)
-          .refine((value) => isSafeAvatarUrl(value), {
-            message: "avatarUrl inválido",
+          .refine((value) => {
+            const normalized = normalizeAvatarUrl(value);
+            return Boolean(normalized && isRemoteHttpUrl(normalized));
+          }, {
+            message: "avatarUrl debe ser una URL http(s) válida",
           }),
         z.literal(null),
       ])
@@ -77,8 +80,6 @@ router.post("/avatar", async (req: any, res) => {
       return res.status(404).json({ error: "Usuario no encontrado" });
     }
 
-    await fsPromises.mkdir(AVATAR_DIR, { recursive: true });
-
     const rawAvatarUrl = (req.body ?? {}).avatarUrl as unknown;
 
     if (rawAvatarUrl === undefined) {
@@ -92,8 +93,8 @@ router.post("/avatar", async (req: any, res) => {
       user.avatarUrl = null;
     } else if (typeof rawAvatarUrl === "string") {
       const normalized = normalizeAvatarUrl(rawAvatarUrl);
-      if (!normalized) {
-        return res.status(400).json({ error: "avatarUrl inválido" });
+      if (!normalized || !isRemoteHttpUrl(normalized)) {
+        return res.status(400).json({ error: "avatarUrl debe ser una URL http(s) válida" });
       }
       user.avatarUrl = normalized;
     } else {
@@ -180,8 +181,8 @@ router.patch("/", async (req: any, res) => {
     user.avatarUrl = null;
   } else if (typeof updates.avatarUrl === "string") {
     const normalized = normalizeAvatarUrl(updates.avatarUrl);
-    if (!normalized) {
-      return res.status(400).json({ error: "avatarUrl inválido" });
+    if (!normalized || !isRemoteHttpUrl(normalized)) {
+      return res.status(400).json({ error: "avatarUrl debe ser una URL http(s) válida" });
     }
     user.avatarUrl = normalized;
   }
