@@ -1,7 +1,7 @@
 
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import api from "../lib/api";
+import api from "../Lib/api";
 import { IUserSafe, TDAHType } from "../types/user";
 import { useAppStore } from "./appStore";
 import { reviveUserDates } from "../utils/user_serializers";

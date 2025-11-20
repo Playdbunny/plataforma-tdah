@@ -7,7 +7,7 @@ import {
   SUBJECT_ACTIVITY_TYPE_LABELS,
   BackendActivityPayload,
   ActivityKind,
-} from "../../../lib/activityMocks";
+} from "../../../Lib/activityMocks";
 import styles from "./ActivityForm.module.css";
 
 interface ActivityFormProps {

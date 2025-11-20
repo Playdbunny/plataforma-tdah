@@ -10,7 +10,7 @@ import { useBackendReady } from "@/Hooks";
 import styles from "./Ranking.module.css";
 import { useStudentsStore } from "../../../stores/studentsStore";
 import { timeAgo } from "../../../utils/timeAgo";
-import { currentTotalXP } from "../../../lib/Levels";
+import { currentTotalXP } from "../../../Lib/Levels";
 
 // ====================
 // Tipos para ordenar

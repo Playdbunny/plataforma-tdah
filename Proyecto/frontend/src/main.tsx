@@ -7,7 +7,7 @@ import { RouterProvider } from "react-router-dom";
 import { router } from "./router";         // ← usamos router.tsx
 import "./globals.css";
 import { useAppStore } from "./stores/appStore";
-import { setAuthTokenGetter, setOnSessionRefresh, setOnUnauthorized } from "./lib/api";
+import { setAuthTokenGetter, setOnSessionRefresh, setOnUnauthorized } from "./Lib/api";
 import { useAuthStore } from "./stores/authStore";
 
 // Configura el getter de token para todas las peticiones API

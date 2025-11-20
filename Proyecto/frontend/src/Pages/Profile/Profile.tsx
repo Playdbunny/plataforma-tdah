@@ -21,7 +21,7 @@ import XPBar from "../../Components/XPBar/XPBar";
 import PetEvolution from "../../Components/PetEvolution/PetEvolution";
 
 // Helper de niveles/XP acumulada (ya creado en /Lib/Levels)
-import { currentTotalXP, xpForLevel } from "../../lib/Levels";
+import { currentTotalXP, xpForLevel } from "../../Lib/Levels";
 
 type Stat = {
   label: string;

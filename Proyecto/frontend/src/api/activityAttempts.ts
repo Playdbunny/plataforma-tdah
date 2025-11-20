@@ -1,5 +1,5 @@
 import type { AxiosError } from "axios";
-import { api, getApiBaseUrl } from "../lib/api";
+import { api, getApiBaseUrl } from "../Lib/api";
 import type { ActivityAttemptStatus } from "../types/activityAttempt";
 
 export async function getActivitiesAttemptStatus(

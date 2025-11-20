@@ -1,4 +1,4 @@
-import { api } from "../lib/api";
+import { api } from "../Lib/api";
 import { IUserSafe } from "../types/user";
 import { normalizeAvatarUrl } from "../utils/avatar";
 import { reviveUserDates } from "../utils/user_serializers";

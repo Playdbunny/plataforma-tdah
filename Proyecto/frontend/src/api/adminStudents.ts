@@ -1,4 +1,4 @@
-import { api, getAdminApiBaseUrl } from "../lib/api";
+import { api, getAdminApiBaseUrl } from "../Lib/api";
 import type { TDAHType } from "../types/user";
 
 export type AdminStudentSubjectProgress = {

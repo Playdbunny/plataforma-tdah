@@ -19,7 +19,7 @@ import {
   SUBJECT_ACTIVITY_TYPE_LABELS,
   SubjectActivity,
   SubjectActivityType,
-} from "../../../lib/activityMocks";
+} from "../../../Lib/activityMocks";
 import { normalizeSubjectSlug } from "../../../utils/subjects";
 
 // Utilidad de formateo de fecha

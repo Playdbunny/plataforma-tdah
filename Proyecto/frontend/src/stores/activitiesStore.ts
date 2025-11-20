@@ -7,8 +7,8 @@ import {
   deleteActivity,
   type ActivitySummary,
 } from "../api/activities";
-import { SubjectActivity, SubjectActivityType } from "../lib/activityMocks";
-import { getApiBaseUrl } from "../lib/api";
+import { SubjectActivity, SubjectActivityType } from "../Lib/activityMocks";
+import { getApiBaseUrl } from "../Lib/api";
 import { useSubjectsStore } from "./subjectsStore";
 
 const extractErrorMessage = (err: any, fallback: string) => {

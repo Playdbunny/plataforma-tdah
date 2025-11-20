@@ -1,4 +1,4 @@
-import api from "../lib/api";
+import api from "../Lib/api";
 
 export interface ForgotPasswordPayload {
   email: string;

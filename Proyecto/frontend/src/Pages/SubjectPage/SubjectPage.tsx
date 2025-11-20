@@ -18,7 +18,7 @@ import { useSubjectsStore } from "../../stores/subjectsStore";
 import { useActivitiesStore, type PublicActivity } from "../../stores/activitiesStore";
 import { useContentVersionStore } from "../../stores/contentVersionStore";
 import { getSubject } from "../../api/subjects";
-import { getApiBaseUrl } from "../../lib/api";
+import { getApiBaseUrl } from "../../Lib/api";
 import { useAuthStore } from "../../stores/authStore";
 import { getActivitiesAttemptStatus } from "../../api/activityAttempts";
 import type { ActivityAttemptStatus } from "../../types/activityAttempt";
