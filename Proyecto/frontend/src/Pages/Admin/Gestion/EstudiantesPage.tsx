@@ -10,7 +10,7 @@ import { useNavigate } from "react-router-dom";
 import styles from "./Estudiantes.module.css";
 import { useStudentsStore } from "../../../stores/studentsStore";
 import { timeAgo } from "../../../utils/timeAgo";
-import { useBackendReady } from "@/Hooks/useBackendReady";
+import { useBackendReady } from "src/Hooks/useBackendReady";
 
 export default function EstudiantesPage() {
   const ready = useBackendReady();

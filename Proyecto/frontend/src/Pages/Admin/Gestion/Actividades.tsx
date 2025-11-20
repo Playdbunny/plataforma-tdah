@@ -11,7 +11,7 @@ import { useEffect, useMemo } from "react";
 
 import styles from "./Actividades.module.css";
 import { useSubjectsStore } from "../../../stores/subjectsStore";
-import { useBackendReady } from "@/Hooks/useBackendReady";
+import { useBackendReady } from "src/Hooks/useBackendReady";
 
 export default function ActividadesPage() {
   const ready = useBackendReady();

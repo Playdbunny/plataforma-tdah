@@ -1,3 +1,5 @@
+// src/Hooks/useBackendReady.ts
+// Hook para verificar si el backend está listo
 import { useEffect, useState } from "react";
 
 export function useBackendReady() {

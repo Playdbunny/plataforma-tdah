@@ -6,7 +6,7 @@
 // - Estilos accesibles y responsivos
 
 import { useEffect, useMemo, useState } from "react";
-import { useBackendReady } from "@/Hooks/useBackendReady";
+import { useBackendReady } from "src/Hooks/useBackendReady";
 import styles from "./Ranking.module.css";
 import { useStudentsStore } from "../../../stores/studentsStore";
 import { timeAgo } from "../../../utils/timeAgo";
