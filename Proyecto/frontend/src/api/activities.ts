@@ -84,14 +84,32 @@ const buildActivityFormData = (
   return formData;
 };
 
+const uploadActivityBanner = async (file: File) => {
+  const uploadFormData = new FormData();
+  uploadFormData.append("file", file);
+
+  const { data } = await api.post<{ url: string }>("/uploads/banner", uploadFormData);
+  const publicUrl = data?.url;
+  if (typeof publicUrl !== "string" || !publicUrl) {
+    throw new Error("No se pudo obtener la URL pública del banner subido");
+  }
+
+  return publicUrl;
+};
+
 export const createActivity = async (
   activity: Partial<SubjectActivity>,
   options?: { bannerFile?: File | null; videoFile?: File | null },
 ) => {
   const baseURL = getAdminApiBaseUrl();
-  if (options?.bannerFile || options?.videoFile) {
-    const formData = buildActivityFormData(activity, {
-      banner: options.bannerFile ?? undefined,
+  const payload: Partial<SubjectActivity> = { ...activity };
+
+  if (options?.bannerFile) {
+    payload.bannerUrl = await uploadActivityBanner(options.bannerFile);
+  }
+
+  if (options?.videoFile) {
+    const formData = buildActivityFormData(payload, {
       video: options.videoFile ?? undefined,
     });
     const { data } = await api.post<SubjectActivity>("/activities", formData, {
@@ -100,7 +118,7 @@ export const createActivity = async (
     return data;
   }
 
-  const { data } = await api.post<SubjectActivity>("/activities", activity, {
+  const { data } = await api.post<SubjectActivity>("/activities", payload, {
     baseURL,
   });
   return data;
@@ -168,11 +186,14 @@ export const updateActivity = async (
 ) => {
   const baseURL = getAdminApiBaseUrl();
   const sanitized = sanitizeActivityPayload(activity);
-  const shouldSendFormData = Boolean(options?.bannerFile) || Boolean(options?.videoFile);
+  const shouldSendFormData = Boolean(options?.videoFile);
+
+  if (options?.bannerFile) {
+    sanitized.bannerUrl = await uploadActivityBanner(options.bannerFile);
+  }
 
   if (shouldSendFormData) {
     const formData = buildActivityFormData(sanitized, {
-      banner: options?.bannerFile ?? undefined,
       video: options?.videoFile ?? undefined,
     });
     const { data } = await api.put<SubjectActivity>(`/activities/${id}`, formData, {
