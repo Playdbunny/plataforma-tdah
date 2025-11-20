@@ -1,4 +1,4 @@
-import { getApiBaseUrl } from "../Lib/api";
+import { getApiBaseUrl } from "../lib/api";
 
 const ABSOLUTE_URL_REGEX = /^https?:\/\//i;
 

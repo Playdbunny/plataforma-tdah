@@ -1,5 +1,5 @@
-import { api, getAdminApiBaseUrl, getApiBaseUrl } from "../Lib/api";
-import { SubjectActivity } from "../Lib/activityMocks";
+import { api, getAdminApiBaseUrl, getApiBaseUrl } from "../lib/api";
+import { SubjectActivity } from "../lib/activityMocks";
 import { IUserSafe } from "../types/user";
 import { reviveUserDates } from "../utils/user_serializers";
 import type { ActivityAttemptStatus } from "../types/activityAttempt";

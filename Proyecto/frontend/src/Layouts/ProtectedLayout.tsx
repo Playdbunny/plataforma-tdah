@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
-import { useRequireProfileComplete } from "@/hooks";
+import { useRequireProfileComplete } from "@/Hooks";
 
 
 // Este layout envuelve las rutas internas y ejecuta el guard

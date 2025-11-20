@@ -1,4 +1,4 @@
-import { api } from "../Lib/api";
+import { api } from "../lib/api";
 
 export type AdminDashboardOverview = {
   connectedStudents: number;

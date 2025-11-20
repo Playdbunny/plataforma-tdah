@@ -5,7 +5,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { normalizeAvatarUrl } from "../utils/avatar";
-import { currentTotalXP, xpForLevel } from "../Lib/Levels";
+import { currentTotalXP, xpForLevel } from "../lib/Levels";
 
 /* ======================
    Tipos base del dominio

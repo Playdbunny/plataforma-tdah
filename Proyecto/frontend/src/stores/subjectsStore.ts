@@ -12,7 +12,7 @@ import type {
   SubjectPayload,
   SubjectResponse,
 } from "../api/subjects";
-import { getApiBaseUrl } from "../Lib/api";
+import { getApiBaseUrl } from "../lib/api";
 import { useAppStore } from "./appStore";
 
 // ========================

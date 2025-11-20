@@ -1,6 +1,6 @@
 import axios from "axios";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { xpForLevel } from "../../../Lib/Levels";
+import { xpForLevel } from "../../../lib/Levels";
 import {
   submitActivityCompletion,
   type ActivityCompletionResponse,

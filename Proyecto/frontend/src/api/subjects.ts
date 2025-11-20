@@ -1,4 +1,4 @@
-import { api, getAdminApiBaseUrl, getApiBaseUrl } from "../Lib/api";
+import { api, getAdminApiBaseUrl, getApiBaseUrl } from "../lib/api";
 
 export type SubjectResponse = {
   _id: string;

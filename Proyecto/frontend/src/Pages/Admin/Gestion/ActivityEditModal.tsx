@@ -1,7 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import styles from "./ActivityForm.module.css";
-import { SubjectActivity } from "../../../Lib/activityMocks";
+import { SubjectActivity } from "../../../lib/activityMocks";
 
 import { useActivitiesStore } from "../../../stores/activitiesStore";
 

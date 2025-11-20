@@ -15,8 +15,8 @@ import {
   type AdminStudentDetail,
 } from "../../../api/adminStudents";
 import { timeAgo } from "../../../utils/timeAgo";
-import { useBackendReady } from "@/hooks";
-import { currentTotalXP } from "../../../Lib/Levels";
+import { useBackendReady } from "@/Hooks";
+import { currentTotalXP } from "../../../lib/Levels";
 
 function formatActivity(ev: AdminStudentActivity) {
   const amount = ev.amount >= 0 ? `+${ev.amount}` : `${ev.amount}`;

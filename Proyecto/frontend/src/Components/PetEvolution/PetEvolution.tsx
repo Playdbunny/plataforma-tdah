@@ -12,7 +12,7 @@ import { useAppStore } from "../../stores/appStore";
 import {
   currentTotalXP,
   totalXPRequiredToReachLevel,
-} from "../../Lib/Levels";
+} from "../../lib/Levels";
 
 // ──────────────────────────────────────────────
 // Config por etapas usando "metas acumuladas" por niveles:
