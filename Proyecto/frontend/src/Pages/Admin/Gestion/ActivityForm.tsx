@@ -421,7 +421,7 @@ export default function ActivityForm({ subjectSlug, onClose }: ActivityFormProps
         description: normalizedDescription || undefined,
         status: "published",
         updatedAt: new Date().toISOString(),
-        subjectSlug,
+        subjectSlug: subject.slug || subjectSlug,
         // Campos requeridos por el backend:
         fieldsJSON,
         config,
