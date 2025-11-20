@@ -7,17 +7,23 @@ export function useBackendReady() {
 
   useEffect(() => {
     let stop = false;
-    const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+    const wait = (ms: number) => 
+      new Promise((resolve) => setTimeout(resolve, ms));
 
     (async () => {
       let delay = 300;
       while (!stop) {
         try {
-          const response = await fetch("/api/health", { credentials: "include" });
+          const response = await fetch("/api/health", {
+            credentials: "include" 
+          });
+
           if (response.ok) {
+            if ( stop ) return;
             setReady(true);
             return;
           }
+          
         } catch {
           // Ignoramos errores de red, se reintentará con backoff.
         }
