@@ -9,7 +9,8 @@ import { requireAuth, requireRole } from "../middleware/requireAuth";
 import { normalizeBannerUrl } from "../lib/normalizeBannerUrl";
 import fsPromises from "fs/promises";
 
-const BANNERS_DIR = path.join(process.cwd(), "uploads", "banners");
+const isRemoteHttpUrl = (url: string | null | undefined): url is string =>
+  typeof url === "string" && /^https?:\/\//i.test(url);
 const PUBLIC_ORIGIN = (process.env.PUBLIC_BACKEND_ORIGIN ?? "http://127.0.0.1:4000").replace(
   /\/+$/,
   "",
@@ -26,7 +27,7 @@ async function removeStoredBanner(url: string | null | undefined) {
   if (!url || !url.startsWith("/uploads/banners/")) return;
 
   const filename = path.basename(url);
-  const absolute = path.join(BANNERS_DIR, filename);
+  const absolute = path.join(process.cwd(), "uploads", "banners", filename);
 
   try {
     await fsPromises.unlink(absolute);
@@ -58,8 +59,36 @@ function validateObjectId(id: string) {
 }
 
 function sanitizeBannerUrl(url: unknown) {
-  const normalized = normalizeBannerUrl(typeof url === "string" ? url : null);
-  return toAbsoluteBanner(normalized);
+  if (typeof url !== "string") return null;
+  if (url.startsWith("/uploads/")) {
+    return toAbsoluteBanner(url);
+  }
+  const normalized = normalizeBannerUrl(url);
+  return normalized ?? null;
+}
+
+function resolveBannerInput(
+  value: unknown,
+): { value: string | null | undefined; error?: string } {
+  if (typeof value === "undefined") return { value: undefined };
+  if (value === null) return { value: null };
+  if (typeof value !== "string") {
+    return { value: null, error: "bannerUrl inválido" };
+  }
+
+  const normalized = normalizeBannerUrl(value);
+  if (!normalized) {
+    return { value: null, error: "bannerUrl inválido" };
+  }
+
+  if (!isRemoteHttpUrl(normalized)) {
+    return {
+      value: null,
+      error: "bannerUrl debe ser una URL http(s) pública",
+    };
+  }
+
+  return { value: normalized };
 }
 
 function toISO(value: unknown) {
@@ -463,23 +492,26 @@ router.patch( "/admin/subjects/:id/banner", requireAuth, requireRole("admin"), a
 
       const rawBanner = (req.body ?? {}).bannerUrl as unknown;
 
-      // Normalizamos la URL: acepta solo http(s) o null, rechaza data: etc.
-      const normalizedBanner = normalizeBannerUrl(
-        typeof rawBanner === "string" ? rawBanner : null,
+      const { value: nextBanner, error: bannerError } = resolveBannerInput(
+        rawBanner,
       );
+
+      if (bannerError) {
+        return res.status(400).json({ error: bannerError });
+      }
 
       const previousBanner = subject.bannerUrl ?? null;
 
       // Guardamos la nueva URL (puede ser null para quitar el banner)
-      subject.bannerUrl = normalizedBanner;
+      subject.bannerUrl = nextBanner ?? null;
       await subject.save();
 
       // Si el banner anterior era LOCAL (/uploads/banners/...), intentamos borrarlo
-      if (!normalizedBanner && previousBanner?.startsWith("/uploads/banners/")) {
+      if (!nextBanner && previousBanner?.startsWith("/uploads/banners/")) {
         await removeStoredBanner(previousBanner);
       } else if (
-        normalizedBanner &&
-        normalizedBanner !== previousBanner &&
+        nextBanner &&
+        nextBanner !== previousBanner &&
         previousBanner?.startsWith("/uploads/banners/")
       ) {
         await removeStoredBanner(previousBanner);

@@ -9,9 +9,6 @@ import session from "express-session";
 import passport from "passport";
 import { initGoogleStrategy } from "./auth/google";
 
-import Subject from "./models/Subject";
-import Activity from "./models/Activity";
-
 // Rutas
 import authRouter from "./routes/auth.routes";
 import profileRouter from "./routes/profile.routes";

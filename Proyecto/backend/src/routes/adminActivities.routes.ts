@@ -1,5 +1,5 @@
 import { Router } from "express";
-import type { NextFunction, Request, Response } from "express";
+import type { Request, Response } from "express";
 import fsPromises from "fs/promises";
 import mongoose from "mongoose";
 import path from "path";
@@ -9,32 +9,20 @@ import Subject, { type SubjectDocument } from "../models/Subject";
 import { requireAuth, requireRole, type AuthPayload } from "../middleware/requireAuth";
 import { normalizeBannerUrl } from "../lib/normalizeBannerUrl";
 
-const BANNERS_DIR = path.join(process.cwd(), "uploads", "banners");
+const isRemoteHttpUrl = (url: string | null | undefined): url is string =>
+  typeof url === "string" && /^https?:\/\//i.test(url);
 
 // Limpieza de banners locales antiguos (/uploads/banners/...)
 async function removeStoredBanner(url: string | null | undefined) {
   if (!url || typeof url !== "string" || !url.startsWith("/uploads/banners/"))
     return;
   const filename = path.basename(url);
-  const absolute = path.join(BANNERS_DIR, filename);
+  const absolute = path.join(process.cwd(), "uploads", "banners", filename);
   try {
     await fsPromises.unlink(absolute);
   } catch (err: any) {
     if (err?.code !== "ENOENT") {
       console.warn(`No se pudo eliminar el banner anterior: ${absolute}`, err);
-    }
-  }
-}
-
-async function removeStoredVideo(url: string | null | undefined) {
-  if (!url || typeof url !== "string" || !url.startsWith("/uploads/videos/")) return;
-  const filename = path.basename(url);
-  const absolute = path.join(VIDEOS_DIR, filename);
-  try {
-    await fsPromises.unlink(absolute);
-  } catch (err: any) {
-    if (err?.code !== "ENOENT") {
-      console.warn(`No se pudo eliminar el recurso anterior: ${absolute}`, err);
     }
   }
 }
@@ -45,78 +33,28 @@ function isLocalBanner(url: string | null | undefined) {
   );
 }
 
-function stripDataUrlFields(target: Record<string, any> | null | undefined) {
-  if (!target || typeof target !== "object") return;
-  if (typeof target.fileUrl === "string" && /^data:/i.test(target.fileUrl)) {
-    target.fileUrl = null;
+function resolveBannerInput(
+  value: unknown,
+): { value: string | null | undefined; error?: string } {
+  if (typeof value === "undefined") return { value: undefined };
+  if (value === null) return { value: null };
+  if (typeof value !== "string") {
+    return { value: null, error: "bannerUrl inválido" };
   }
 
-  const asset = target.asset;
-  if (asset && typeof asset === "object") {
-    if (typeof asset.url === "string" && /^data:/i.test(asset.url)) {
-      asset.url = null;
-    }
-    if (typeof asset.fileUrl === "string" && /^data:/i.test(asset.fileUrl)) {
-      asset.fileUrl = null;
-    }
-    if (typeof asset.dataUrl === "string") {
-      delete asset.dataUrl;
-    }
-  }
-}
-
-function applyUploadedResource(
-  target: Record<string, any> | null | undefined,
-  resourcePath: string,
-): Record<string, any> {
-  const base = target && typeof target === "object" ? target : {};
-  base.fileUrl = resourcePath;
-
-  const asset =
-    base.asset && typeof base.asset === "object"
-      ? (base.asset as Record<string, any>)
-      : {};
-
-  asset.url = resourcePath;
-  asset.source = typeof asset.source === "string" ? asset.source : "upload";
-  if (typeof asset.type !== "string" || !asset.type) {
-    asset.type = "video";
-  }
-  delete asset.dataUrl;
-  delete asset.fileUrl;
-
-  base.asset = asset;
-
-  return base;
-}
-
-function resolveLocalResourcePath(value: unknown): string | null {
-  if (!value || typeof value !== "object") return null;
-  const source = value as Record<string, any>;
-
-  const candidates: unknown[] = [];
-  if (typeof source.fileUrl === "string") {
-    candidates.push(source.fileUrl);
+  const normalized = normalizeBannerUrl(value);
+  if (!normalized) {
+    return { value: null, error: "bannerUrl inválido" };
   }
 
-  const asset = source.asset;
-  if (asset && typeof asset === "object") {
-    const assetRecord = asset as Record<string, any>;
-    if (typeof assetRecord.url === "string") {
-      candidates.push(assetRecord.url);
-    }
-    if (typeof assetRecord.fileUrl === "string") {
-      candidates.push(assetRecord.fileUrl);
-    }
+  if (!isRemoteHttpUrl(normalized)) {
+    return {
+      value: null,
+      error: "bannerUrl debe ser una URL http(s) pública",
+    };
   }
 
-  for (const candidate of candidates) {
-    if (typeof candidate === "string" && candidate.startsWith("/uploads/videos/")) {
-      return candidate;
-    }
-  }
-
-  return null;
+  return { value: normalized };
 }
 
 function parseActivityJson(
@@ -280,16 +218,15 @@ router.post( "/admin/activities", requireAuth, requireRole("admin"), async (req:
       delete payload.isPublished;
 
       // solo usamos bannerUrl desde el body (URL ya subida a GCS)
-      if (Object.prototype.hasOwnProperty.call(rawBody, "bannerUrl")) {
-        const normalizedBanner = normalizeBannerUrl(
-          typeof rawBody.bannerUrl === "string"
-            ? rawBody.bannerUrl
-            : null,
-        );
-        payload.bannerUrl = normalizedBanner;
-      } else {
-        payload.bannerUrl = null;
+      const { value: bannerValue, error: bannerError } = resolveBannerInput(
+        rawBody.bannerUrl,
+      );
+
+      if (bannerError) {
+        return res.status(400).json({ error: bannerError });
       }
+
+      payload.bannerUrl = bannerValue ?? null;
 
       const parsedFields = parseActivityJson(
         rawBody.fieldsJSON,
@@ -384,24 +321,22 @@ router.put( "/admin/activities/:id", requireAuth, requireRole("admin"), async (r
 
       delete updatable.bannerUrl;
 
-      if (
-        Object.prototype.hasOwnProperty.call(rawBody, "bannerUrl")
-      ) {
-        const normalizedBanner = normalizeBannerUrl(
-          typeof rawBody.bannerUrl === "string"
-            ? rawBody.bannerUrl
-            : null,
-        );
-        updatable.bannerUrl = normalizedBanner;
+      const { value: nextBanner, error: bannerError } = resolveBannerInput(
+        rawBody.bannerUrl,
+      );
 
-        // si teníamos un banner local viejo y:
-        // - lo limpiamos (normalizedBanner null)
-        // - o lo cambiamos a otro banner distinto
-        if (!normalizedBanner && isLocalBanner(previousBanner)) {
+      if (bannerError) {
+        return res.status(400).json({ error: bannerError });
+      }
+
+      if (typeof nextBanner !== "undefined") {
+        updatable.bannerUrl = nextBanner;
+
+        if (!nextBanner && isLocalBanner(previousBanner)) {
           bannerToRemove = previousBanner;
         } else if (
-          normalizedBanner &&
-          normalizedBanner !== previousBanner &&
+          nextBanner &&
+          nextBanner !== previousBanner &&
           isLocalBanner(previousBanner)
         ) {
           bannerToRemove = previousBanner;
