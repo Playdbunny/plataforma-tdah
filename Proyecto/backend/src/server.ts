@@ -86,15 +86,6 @@ apiRouter.get(
   requireRole("admin"),
   handlePrecisionToday,
 );
-// Alias temporal para la ruta antigua sin el prefijo /admin.
-// Permite que dashboards desactualizados sigan funcionando mientras se
-// alinea el frontend al namespace de /admin.
-apiRouter.get(
-  "/metrics/precision-today",
-  requireAuth,
-  requireRole("admin"),
-  handlePrecisionToday,
-);
 apiRouter.use("/admin/metrics", requireAuth, requireRole("admin"), adminMetricsRouter);
 apiRouter.use(adminActivitiesRouter);
 apiRouter.use(adminSubjectsRouter);
