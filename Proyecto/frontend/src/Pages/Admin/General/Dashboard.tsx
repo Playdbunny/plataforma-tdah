@@ -18,6 +18,10 @@ import {
   type AvgCompletionTimePoint,
   type StudentsGrowthPoint,
 } from "@/api/adminDashboard";
+import {
+  getAdminPrecisionToday,
+  type AdminPrecisionToday,
+} from "@/api/adminMetrics";
 import { formatMMSS, formatShortNumber } from "@/utils/formatters";
 
 const formatNumber = (n: number) => new Intl.NumberFormat("es-CL").format(n);
@@ -160,6 +164,10 @@ export default function AdminDashboard() {
   const [kpis, setKpis] = useState<AdminTodayKpis | null>(null);
   const [kpisLoading, setKpisLoading] = useState(true);
   const [kpisError, setKpisError] = useState<string | null>(null);
+  const [precisionToday, setPrecisionToday] =
+    useState<AdminPrecisionToday | null>(null);
+  const [precisionLoading, setPrecisionLoading] = useState(true);
+  const [precisionError, setPrecisionError] = useState<string | null>(null);
   const [overview, setOverview] = useState<AdminDashboardOverview | null>(null);
   const [overviewLoading, setOverviewLoading] = useState(true);
   const [overviewError, setOverviewError] = useState<string | null>(null);
@@ -198,7 +206,27 @@ export default function AdminDashboard() {
       }
     }
 
+    async function loadPrecisionToday() {
+      setPrecisionLoading(true);
+      setPrecisionError(null);
+      try {
+        const data = await getAdminPrecisionToday();
+        if (active) setPrecisionToday(data);
+      } catch (err) {
+        if (!active) return;
+        console.error("Error cargando precisión global", err);
+        const message =
+          (err as any)?.response?.data?.error ??
+          (err instanceof Error ? err.message : "No se pudo cargar la precisión global");
+        setPrecisionError(message);
+        setPrecisionToday(null);
+      } finally {
+        if (active) setPrecisionLoading(false);
+      }
+    }
+
     loadKpis();
+    loadPrecisionToday();
     return () => {
       active = false;
     };
@@ -328,7 +356,7 @@ export default function AdminDashboard() {
       ? avgCompletion[avgCompletion.length - 1]
       : null;
 
-  const showSkeleton = kpisLoading && overviewLoading;
+  const showSkeleton = kpisLoading && overviewLoading && precisionLoading;
 
   const studentsTotal = formatNumber(lastGrowthPoint?.totalStudents ?? 0);
   const studentsDelta = formatNumber(lastGrowthPoint?.newStudents ?? 0);
@@ -350,12 +378,28 @@ export default function AdminDashboard() {
     avgDurationSec: 0,
     xpAwarded: 0,
   };
-  const completionPct = Number.isFinite(safeKpis.completionRatePct)
-    ? Math.round(safeKpis.completionRatePct)
+  const safePrecision: AdminPrecisionToday = precisionToday ?? {
+    precisionPercent: 0,
+    correctTotal: 0,
+    answersTotal: 0,
+  };
+  const precisionPct = Number.isFinite(safePrecision.precisionPercent)
+    ? Math.round(safePrecision.precisionPercent)
     : 0;
-  const completionHint = `${safeKpis.completed.toLocaleString("es-CL")}/${safeKpis.started.toLocaleString(
-    "es-CL",
-  )} intentos`;
+  const precisionNumber = precisionLoading
+    ? "—"
+    : precisionError
+    ? "—"
+    : `${precisionPct}%`;
+  const precisionHint = precisionLoading
+    ? "Cargando precisión…"
+    : precisionError
+    ? "No se pudo cargar la precisión global"
+    : safePrecision.answersTotal > 0
+    ? `${safePrecision.correctTotal.toLocaleString("es-CL")}/${safePrecision.answersTotal.toLocaleString(
+        "es-CL",
+      )} respuestas correctas`
+    : "0/0 respuestas registradas hoy";
   const xpHint = `${safeKpis.xpAwarded.toLocaleString("es-CL")} XP`;
 
   const topStudent = overview?.topStudent;
@@ -371,19 +415,19 @@ export default function AdminDashboard() {
   return (
     <div className={styles.screen}>
       {/* KPIs */}
-      {showSkeleton ? (
-        <div className={styles.skelRow} aria-hidden />
-      ) : (
-        <>
-          <section className={styles.kpis}>
-            <div className={styles.kpi} role="group" aria-label="Finalización hoy">
+          {showSkeleton ? (
+            <div className={styles.skelRow} aria-hidden />
+          ) : (
+            <>
+              <section className={styles.kpis}>
+            <div className={styles.kpi} role="group" aria-label="Precisión global hoy">
               <div className={styles.kpiIcon} aria-hidden>
                 📈
               </div>
               <div className={styles.kpiText}>
-                <div className={styles.kpiLabel}>Finalización hoy</div>
-                <div className={styles.kpiNumber}>{completionPct}%</div>
-                <div className={styles.kpiHint}>{completionHint}</div>
+                <div className={styles.kpiLabel}>Precisión global hoy</div>
+                  <div className={styles.kpiNumber}>{precisionNumber}</div>
+                <div className={styles.kpiHint}>{precisionHint}</div>
               </div>
             </div>
 
@@ -420,9 +464,10 @@ export default function AdminDashboard() {
               </div>
             </div>
           </section>
-          {(kpisError || overviewError) && (
+          {(kpisError || overviewError || precisionError) && (
             <p role="status" className={styles.kpiError}>
               {kpisError && <>No se pudieron actualizar los KPIs. {kpisError} </>}
+              {precisionError && <>No se pudo cargar la precisión global. {precisionError} </>}
               {overviewError && <>No se pudo cargar el alumno destacado. {overviewError}</>}
             </p>
           )}
