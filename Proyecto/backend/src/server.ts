@@ -18,6 +18,7 @@ import adminActivitiesRouter from "./routes/adminActivities.routes";
 import adminSubjectsRouter from "./routes/adminSubjects.routes";
 import adminStudentsRouter from "./routes/adminStudents.routes";
 import adminKpisRouter from "./routes/adminKpis.routes";
+import adminMetricsRouter from "./routes/adminMetrics.routes";
 import studentActivitiesRouter from "./routes/studentActivities.routes";
 import uploadRouter from "./routes/upload.routes";
 import Subject from "./models/Subject";
@@ -78,6 +79,12 @@ apiRouter.use(
   requireAuth,
   requireRole("admin"),
   adminKpisRouter,
+);
+apiRouter.use(
+  "/admin/metrics",
+  requireAuth,
+  requireRole("admin"),
+  adminMetricsRouter,
 );
 apiRouter.use(adminActivitiesRouter);
 apiRouter.use(adminSubjectsRouter);
