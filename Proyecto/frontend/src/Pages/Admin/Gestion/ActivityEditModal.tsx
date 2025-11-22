@@ -97,6 +97,7 @@ export default function ActivityEditModal({ activity, onClose, onMockDelete, onB
   const [error, setError] = useState<string | null>(null);
   const { update, remove } = useActivitiesStore();
   const overlayTitleId = useId();
+  const overlayDescriptionId = useId();
   const objectUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -344,6 +345,7 @@ export default function ActivityEditModal({ activity, onClose, onMockDelete, onB
       role="dialog"
       aria-modal="true"
       aria-labelledby={overlayTitleId}
+      aria-describedby={overlayDescriptionId}
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
@@ -356,6 +358,10 @@ export default function ActivityEditModal({ activity, onClose, onMockDelete, onB
         }}
       >
         <h2 id={overlayTitleId} className={styles.formTitle}>Editar Actividad</h2>
+        <p id={overlayDescriptionId} className={styles.srOnly}>
+          Usa este formulario para actualizar título, intentos y preguntas de la
+          actividad seleccionada. Los cambios se guardarán al confirmar.
+        </p>
         <label className={styles.formLabel}>
           Título
           <input
