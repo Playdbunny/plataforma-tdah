@@ -166,12 +166,24 @@ tbody tr:hover { background: #eef2ff; }
   z-index: 50;
 }
 .modal {
-  width: 100%; 
-  max-width: 560px; 
-  background: #fff; 
+  width: 100%;
+  max-width: 560px;
+  background: #fff;
   border-radius: 16px;
   border: 2px solid #c6d1ff;
   box-shadow: 0 12px 30px rgba(0,0,0,.25);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .modalHeader {

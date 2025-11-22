@@ -1,4 +1,5 @@
 import { type Request, type Response, Router } from "express";
+import { requireAuth, requireRole } from "../middleware/requireAuth";
 import ActivityAttempt from "../models/ActivityAttempt";
 
 const router = Router();
@@ -59,6 +60,11 @@ export async function handlePrecisionToday(_req: Request, res: Response) {
   }
 }
 
-router.get("/precision-today", handlePrecisionToday);
+router.get(
+  "/precision-today",
+  requireAuth,
+  requireRole("admin"),
+  handlePrecisionToday,
+);
 
 export default router;

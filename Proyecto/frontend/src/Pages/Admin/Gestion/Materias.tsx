@@ -5,7 +5,7 @@
 // — Cargar / previsualizar / quitar banner por materia
 // Fase 1 (mock): usa subjectsStore (Zustand) con persistencia localStorage.
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import styles from "./Materias.module.css";
 
 // Store (mock) y tipo Subject
@@ -24,6 +24,8 @@ const EMPTY_FORM: Form = { name: "", description: "", slug: "" };
 
 export default function MateriasPage() {
   const ready = useBackendReady();
+  const modalTitleId = useId();
+  const modalDescriptionId = useId();
   /* =========================================================================
      1) STORE (Zustand): items + acciones CRUD mock
      ========================================================================= */
@@ -342,11 +344,17 @@ export default function MateriasPage() {
 
       {/* Modal Crear/Editar */}
       {open && (
-        <div className={styles.modalBackdrop} role="dialog" aria-modal="true">
+        <div
+          className={styles.modalBackdrop}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={modalTitleId}
+          aria-describedby={modalDescriptionId}
+        >
           <div className={styles.modal}>
             {/* Header del modal */}
             <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>
+              <h3 id={modalTitleId} className={styles.modalTitle}>
                 {editingId ? "Editar materia" : "Nueva materia"}
               </h3>
               <button
@@ -357,6 +365,12 @@ export default function MateriasPage() {
                 ✕
               </button>
             </div>
+
+            <p id={modalDescriptionId} className={styles.srOnly}>
+              Completa el formulario para crear o editar una materia. Los campos
+              incluyen nombre, descripción, slug y una imagen de banner
+              opcional.
+            </p>
 
             {/* Formulario */}
             <form onSubmit={handleSubmit} className={styles.form}>
