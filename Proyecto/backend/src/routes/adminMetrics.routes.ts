@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { type Request, type Response, Router } from "express";
 import ActivityAttempt from "../models/ActivityAttempt";
 
 const router = Router();
@@ -11,7 +11,7 @@ const getTodayRange = () => {
   return { start, end } as const;
 };
 
-router.get("/precision-today", async (_req, res) => {
+export async function handlePrecisionToday(_req: Request, res: Response) {
   const { start, end } = getTodayRange();
 
   try {
@@ -57,6 +57,8 @@ router.get("/precision-today", async (_req, res) => {
     console.error("[admin/metrics] Error calculando precisión", error);
     res.status(500).json({ error: "PRECISION_TODAY_FAILED" });
   }
-});
+}
+
+router.get("/precision-today", handlePrecisionToday);
 
 export default router;
