@@ -103,6 +103,12 @@
   align-items: start;
 }
 
+.inputsColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .label {
   display: flex;
   flex-direction: column;
@@ -117,6 +123,18 @@
   border-radius: 10px;
   padding: 10px 12px;
   color: var(--ink);
+}
+
+.select {
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #9bb8ff 50%),
+    linear-gradient(135deg, #9bb8ff 50%, transparent 50%);
+  background-position:
+    calc(100% - 22px) calc(50% - 2px),
+    calc(100% - 16px) calc(50% - 2px);
+  background-size: 6px 6px;
+  background-repeat: no-repeat;
 }
 
 /* ============================
