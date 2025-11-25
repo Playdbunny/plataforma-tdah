@@ -46,10 +46,12 @@
   border: 2px solid #c6d1ff;
   border-radius: 18px;
   overflow: hidden;
+  overflow-x: auto;
 }
 
 .table {
   width: 100%;
+  min-width: 640px;
   border-collapse: collapse;
   color: #111827;
 }
@@ -148,8 +150,11 @@ tbody tr:hover {
     font-size: 12px;
   }
 
+  .header { align-items: flex-start; }
+  .actions { width: 100%; }
   .search {
-    width: 160px;
+    width: 100%;
+    max-width: 240px;
   }
 
   .table thead th,
