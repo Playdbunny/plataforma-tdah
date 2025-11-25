@@ -89,7 +89,7 @@ export default function Profile() {
         accent: "pink",
       },
     ],
-    [totalXP, user?.activitiesCompleted, user?.courseBadges, user?.streak?.count]
+    [totalXP, user?.activitiesCompleted, user?.streak?.count]
   );
 
   return (
