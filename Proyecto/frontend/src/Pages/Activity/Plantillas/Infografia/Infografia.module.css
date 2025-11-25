@@ -22,6 +22,7 @@
   gap: clamp(0.75rem, 1.8vh, 1.1rem);
   min-height: 0;
   height: 100%;
+  overflow: hidden;
 }
 
 .imageHeader {
@@ -368,7 +369,7 @@
 @media (max-width: 1180px) {
   .layout {
     grid-template-columns: 1fr;
-    grid-template-rows: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
   }
 
   .controls {
@@ -398,5 +399,63 @@
 
   .optionsGrid {
     grid-template-columns: 1fr;
+  }
+
+.controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .primaryButton {
+    width: 100%;
+    text-align: center;
+  }
+
+  .completionRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .finishButton {
+    width: 100%;
+  }
+
+  .rewardsRow {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 520px) {
+  .layout {
+    padding: 0;
+  }
+
+  .imagePanel,
+  .questionPanel {
+    border-width: 3px;
+    padding: 1rem 1.1rem;
+  }
+
+  .imageHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .imageActions {
+    width: 100%;
+  }
+
+  .secondaryButton {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .progress {
+    grid-template-columns: 1fr;
+  }
+
+  .progressLabel {
+    text-align: center;
   }
 }

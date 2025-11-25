@@ -34,6 +34,7 @@
   gap: clamp(1.1rem, 2vh, 1.65rem);
   flex: 1;
   min-height: clamp(520px, 68vh, 620px);
+  overflow: hidden;
 }
 
 .quizHeader {
@@ -266,5 +267,42 @@
   .completionRow {
     justify-content: center;
     text-align: center;
+  }
+}
+
+@media (max-width: 520px) {
+  .quizWrapper {
+    padding: 1.2rem;
+  }
+
+  .quizHeader {
+    gap: 0.9rem;
+  }
+
+  .optionsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .quizFooter {
+    width: 100%;
+  }
+
+  .primaryButton {
+    width: 100%;
+    text-align: center;
+  }
+
+  .completionRow {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .finishButton {
+    width: 100%;
+  }
+
+  .rewardsRow {
+    width: 100%;
+    justify-content: center;
   }
 }
