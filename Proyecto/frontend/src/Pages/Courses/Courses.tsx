@@ -70,9 +70,9 @@ export default function Courses() {
 
       <main className={styles.container}>
         <h2 className={styles.sectionTitle}>
-          The Lorem <span>ipsum</span>
+          Catálogo de <span>materias</span>
         </h2>
-        <p className={styles.sectionLead}>lorem ipsum dolor sit amet.</p>
+        <p className={styles.sectionLead}>Elige una materia para comenzar tu aprendizaje.</p>
 
         {/* Estado vacío: invita a crear materias en Admin */}
         {(!items || items.length === 0) && (

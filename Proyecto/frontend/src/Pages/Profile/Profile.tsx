@@ -37,6 +37,11 @@ const DEFAULT_CHARACTER = {
   sprite: "/characters/bunny_idle.png",
 };
 
+function capitalize(word?: string | null) {
+  if (!word) return "";
+  return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+}
+
 export default function Profile() {
   const navigate = useNavigate();
 
@@ -71,12 +76,11 @@ export default function Profile() {
         icon: "💠",
         accent: "blue",
       },
-      { label: "TOTAL  XP", value: totalXP, icon: "🔥", accent: "orange" },
-      {
-        label: "COURSE BADGES",
-        value: user?.courseBadges ?? 0,
-        icon: "🟢",
-        accent: "green",
+      { 
+        label: "TOTAL  XP", 
+        value: totalXP, 
+        icon: "🔥", 
+        accent: "orange" 
       },
       {
         label: "DAILY  STREAK",
@@ -129,13 +133,13 @@ export default function Profile() {
                 <span className={styles.star}>⭐</span>
                 <span className={styles.username}>{name}</span>
                 <span className={styles.flag}>🚩</span>
-                <span className={styles.tdahType}>{tdah}</span>
+                <span className={styles.tdahType}>{capitalize(tdah)}</span>
               </div>
             </div>
 
             {/* Botón editar perfil */}
             <button className={styles.editBtn} onClick={() => navigate("/profile/edit")}>
-              Edit Profile
+              Editar Perfil
             </button>
           </div>
         </section>
