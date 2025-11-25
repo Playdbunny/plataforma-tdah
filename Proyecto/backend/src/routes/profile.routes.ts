@@ -59,6 +59,7 @@ const updateProfileSchema = z
       ])
       .optional(),
     education: z.string().trim().min(2).max(200).optional(),
+    tdahType: z.enum(["inatento", "hiperactivo", "combinado"]).nullable().optional(),
     character: characterSchema.nullable().optional(),
     ownedCharacters: z.array(z.string().min(1)).optional(),
     coins: z.number().int().min(0).optional(),
@@ -190,6 +191,10 @@ router.patch("/", async (req: any, res) => {
   if (typeof updates.education === "string") {
     const value = updates.education.trim();
     user.education = value || null;
+  }
+
+  if (updates.tdahType !== undefined) {
+    user.tdahType = updates.tdahType;
   }
 
   if (updates.character !== undefined) {
