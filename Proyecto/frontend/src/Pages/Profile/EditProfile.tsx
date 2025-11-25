@@ -1,10 +1,11 @@
 import { type ChangeEvent, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "./EditProfile.module.css";
-import cardStyles from "../../Components/CharacterCard/CharacterCard.module.css"; // 👈 NUEVO
+import cardStyles from "../../Components/CharacterCard/CharacterCard.module.css";
 import Navbar from "../../Components/Navbar/Navbar";
 import { useAppStore } from "../../stores/appStore";
 import { useAuthStore } from "../../stores/authStore";
+import type { TDAHType } from "../../types/user";
 import { updateProfile, type UpdateProfilePayload, uploadAvatar } from "../../api/users";
 
 // Catálogo con rareza y precio (solo pagan los no-comunes)
@@ -17,9 +18,9 @@ const CHARACTERS = [
   { id: "robot",   name: "robot",   sprite: "/Characters/robot.gif",   rarity: "common" as const },
 
   // nuevos
-  { id: "alien",   name: "alien",   sprite: "/Characters/alien.gif",   rarity: "rare" as const,       price: 100 },
-  { id: "dragon",  name: "dragon",  sprite: "/Characters/dragon.gif",  rarity: "epic" as const,       price: 200 },
-  { id: "unicorn", name: "unicorn", sprite: "/Characters/unicorn.gif", rarity: "legendary" as const,  price: 400 },
+  { id: "grandKnight",  name: "Grand Knight",  sprite: "/Characters/Grand Knight.gif",  rarity: "rare" as const, price: 100 },
+  { id: "skeletonKing", name: "Skeleton King", sprite: "/Characters/Skeleton King.gif", rarity: "epic" as const, price: 200 },
+  { id: "witch",        name: "Witch",         sprite: "/Characters/Witch.gif",         rarity: "legendary" as const,  price: 400 },
 ];
 
 type Rarity = "common" | "rare" | "epic" | "legendary";
@@ -51,6 +52,7 @@ export default function EditProfile() {
   const [email, setEmail]       = useState(user?.email ?? "");
   const [username, setUsername] = useState(user?.username ?? "");
   const [education, setEducation] = useState(user?.education ?? "");
+  const [tdahType, setTdahType]   = useState<TDAHType>(user?.tdahType ?? null);
   const [avatarPreview, setAvatarPreview] = useState<string>(user?.avatarUrl ?? "/Images/default-profile.jpg");
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [selectedChar, setSelectedChar]   = useState<string>(user?.character?.id ?? CHARACTERS[0].id);
@@ -65,9 +67,10 @@ export default function EditProfile() {
     return (
       trimmedUsername.length >= 3 &&
       trimmedEducation.length >= 2 &&
-      /\S+@\S+\.\S+/.test(trimmedEmail)
+      /\S+@\S+\.\S+/.test(trimmedEmail) &&
+      !!tdahType      
     );
-  }, [username, email, education]);
+  }, [username, email, education, tdahType]);
 
   // Previsualizar avatar (frontend)
   const onPickAvatar = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -153,22 +156,19 @@ export default function EditProfile() {
       email: trimmedEmail,
       username: trimmedUsername,
       education: trimmedEducation,
+      tdahType,
       character: { id: c.id, name: c.name, sprite: c.sprite },
       ownedCharacters,
       coins: coins,
     };
 
     try {
-      let uploadedAvatarUrl: string | null = null;
       if (avatarFile) {
-        uploadedAvatarUrl = await uploadAvatar(avatarFile);
+        payload.avatarUrl = await uploadAvatar(avatarFile);
       }
       const updatedUser = await updateProfile(payload);
-      const finalUser = uploadedAvatarUrl
-        ? { ...updatedUser, avatarUrl: uploadedAvatarUrl }
-        : updatedUser;
-      setAppUser(finalUser as any);
-      setAuthUser(finalUser);
+      setAppUser(updatedUser as any);
+      setAuthUser(updatedUser);
       navigate("/profile");
     } catch (err: any) {
       const message =
@@ -202,14 +202,57 @@ export default function EditProfile() {
 
           {/* Form grid */}
           <div className={styles.formGrid}>
-            <label className={styles.label}>Name
-              <input
-                className={styles.input}
-                value={name}
-                onChange={e=>setName(e.target.value)}
-                placeholder="Your name"
-              />
-            </label>
+            <div className={styles.inputsColumn}>
+              <label className={styles.label}>Nombre
+                <input
+                  className={styles.input}
+                  value={name}
+                  onChange={e=>setName(e.target.value)}
+                  placeholder="Tu nombre"
+                />
+              </label>
+
+              <label className={styles.label}>Nombre de usuario
+                <input
+                  className={styles.input}
+                  value={username}
+                  onChange={e=>setUsername(e.target.value)}
+                  placeholder="Escoge un nombre de usuario"
+                />
+              </label>
+
+              <label className={styles.label}>Tipo de TDAH
+                <select
+                  className={`${styles.input} ${styles.select}`}
+                  value={tdahType ?? ""}
+                  onChange={(e) => setTdahType((e.target.value || null) as TDAHType)}
+                >
+                  <option value="" disabled>Selecciona tu tipo</option>
+                  <option value="inatento">Inatento</option>
+                  <option value="hiperactivo">Hiperactivo</option>
+                  <option value="combinado">Combinado</option>
+                </select>
+              </label>
+
+              <label className={styles.label}>Correo
+                <input
+                  className={styles.input}
+                  type="email"
+                  value={email}
+                  onChange={e=>setEmail(e.target.value)}
+                  placeholder="tu@correo.com"
+                />
+              </label>
+
+              <label className={styles.label}>Institución
+                <input
+                  className={styles.input}
+                  value={education}
+                  onChange={e=>setEducation(e.target.value)}
+                  placeholder="Colegio"
+                />
+              </label>
+            </div>
 
             <div className={styles.avatarBox}>
               <img
@@ -220,38 +263,10 @@ export default function EditProfile() {
               />
               <label className={styles.editAvatar}>
                 <input type="file" accept="image/*" hidden onChange={onPickAvatar} />
-                Change photo
+                Cambia tu foto de perfil
               </label>
               <small className={styles.hint}>PNG/JPG &lt; 5MB — relación 1:1</small>
             </div>
-
-            <label className={styles.label}>Correo
-              <input
-                className={styles.input}
-                type="email"
-                value={email}
-                onChange={e=>setEmail(e.target.value)}
-                placeholder="tu@correo.com"
-              />
-            </label>
-
-            <label className={styles.label}>Nombre de usuario
-              <input
-                className={styles.input}
-                value={username}
-                onChange={e=>setUsername(e.target.value)}
-                placeholder="Pick a username"
-              />
-            </label>
-
-            <label className={styles.label}>Institución
-              <input
-                className={styles.input}
-                value={education}
-                onChange={e=>setEducation(e.target.value)}
-                placeholder="Colegio / Universidad"
-              />
-            </label>
           </div>
 
           {/* Selector de personaje */}

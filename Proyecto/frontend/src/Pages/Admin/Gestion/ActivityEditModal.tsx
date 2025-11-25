@@ -35,7 +35,7 @@ const normalizeInitialQuestions = (raw: unknown): Question[] => {
   if (!Array.isArray(raw)) return [];
 
   const mapped = raw.map((entry) => {
-      if (!entry || typeof entry !== "object") return null;
+    if (!entry || typeof entry !== "object") return null;
 
       const value = entry as Record<string, unknown>;
       const questionValue = value.question ?? value.text;
@@ -97,6 +97,7 @@ export default function ActivityEditModal({ activity, onClose, onMockDelete, onB
   const [error, setError] = useState<string | null>(null);
   const { update, remove } = useActivitiesStore();
   const overlayTitleId = useId();
+  const overlayDescriptionId = useId();
   const objectUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -344,6 +345,7 @@ export default function ActivityEditModal({ activity, onClose, onMockDelete, onB
       role="dialog"
       aria-modal="true"
       aria-labelledby={overlayTitleId}
+      aria-describedby={overlayDescriptionId}
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
@@ -356,6 +358,10 @@ export default function ActivityEditModal({ activity, onClose, onMockDelete, onB
         }}
       >
         <h2 id={overlayTitleId} className={styles.formTitle}>Editar Actividad</h2>
+        <p id={overlayDescriptionId} className={styles.srOnly}>
+          Usa este formulario para actualizar título, intentos y preguntas de la
+          actividad seleccionada. Los cambios se guardarán al confirmar.
+        </p>
         <label className={styles.formLabel}>
           Título
           <input
@@ -488,22 +494,28 @@ export default function ActivityEditModal({ activity, onClose, onMockDelete, onB
           </div>
         )}
 
-        {/* PPT/Video: Subir archivo (siempre visible para debug) */}
-        <div className={styles.formLabel} style={{marginBottom: 0}}>
-          <strong>Archivo {activity.type === "ppt-animada" ? "PPT" : "Video"}:</strong>
-        </div>
-        <input
-          type="file"
-          accept={activity.type === "ppt-animada" ? ".ppt,.pptx,.pdf" : "video/*"}
-          onChange={handleFileChange}
-          className={styles.formInput}
-          title={activity.type === "ppt-animada" ? "Subir archivo PPT o PDF" : "Subir archivo de video"}
-          placeholder={activity.type === "ppt-animada" ? "Selecciona un archivo PPT o PDF" : "Selecciona un archivo de video"}
-        />
-        {fileUrl && (
-          <div style={{marginTop: 10}}>
-            <a href={fileUrl} target="_blank" rel="noopener noreferrer">Ver archivo actual</a>
-          </div>
+        {/* Solo permitir carga de archivos cuando corresponda al tipo de actividad */}
+        {activity.type === "video" && (
+          <>
+            <div className={styles.formLabel} style={{ marginBottom: 0 }}>
+              <strong>Archivo Video:</strong>
+            </div>
+            <input
+              type="file"
+              accept="video/*"
+              onChange={handleFileChange}
+              className={styles.formInput}
+              title="Subir archivo de video"
+              placeholder="Selecciona un archivo de video"
+            />
+            {fileUrl && (
+              <div style={{ marginTop: 10 }}>
+                <a href={fileUrl} target="_blank" rel="noopener noreferrer">
+                  Ver archivo actual
+                </a>
+              </div>
+            )}
+          </>
         )}
         {error && <div className={styles.errorMsg}>{error}</div>}
         <div className={styles.formActions}>

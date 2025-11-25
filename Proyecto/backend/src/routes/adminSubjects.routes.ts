@@ -1,23 +1,21 @@
 import { Router, type Request, type Response } from "express";
 import mongoose from "mongoose";
 import path from "path";
-import fsPromises from "fs/promises";
 import Subject, { type SubjectDocument } from "../models/Subject";
 import Activity from "../models/Activity";
+import ActivityAttempt from "../models/ActivityAttempt";
+import UserProgress from "../models/UserProgress";
 import { requireAuth, requireRole } from "../middleware/requireAuth";
-import {
-  extractMultipartFile,
-  HttpError,
-  type ParsedFile,
-} from "./helpers/multipart";
 import { normalizeBannerUrl } from "../lib/normalizeBannerUrl";
+import fsPromises from "fs/promises";
 
-const BANNERS_DIR = path.join(process.cwd(), "uploads", "banners");
-const MAX_BANNER_SIZE = 10 * 1024 * 1024; // 10MB
+const isRemoteHttpUrl = (url: string | null | undefined): url is string =>
+  typeof url === "string" && /^https?:\/\//i.test(url);
 const PUBLIC_ORIGIN = (process.env.PUBLIC_BACKEND_ORIGIN ?? "http://127.0.0.1:4000").replace(
   /\/+$/,
   "",
 );
+
 const toAbsoluteBanner = (p?: string | null) => {
   if (!p) return null;
   if (/^https?:\/\//i.test(p)) return p;
@@ -29,7 +27,7 @@ async function removeStoredBanner(url: string | null | undefined) {
   if (!url || !url.startsWith("/uploads/banners/")) return;
 
   const filename = path.basename(url);
-  const absolute = path.join(BANNERS_DIR, filename);
+  const absolute = path.join(process.cwd(), "uploads", "banners", filename);
 
   try {
     await fsPromises.unlink(absolute);
@@ -38,23 +36,6 @@ async function removeStoredBanner(url: string | null | undefined) {
       console.warn(`No se pudo eliminar el banner anterior: ${absolute}`, err);
     }
   }
-}
-
-function getExtensionFromMime(mimeType: string) {
-  const normalized = mimeType.toLowerCase();
-  if (normalized === "image/png") return ".png";
-  if (normalized === "image/jpeg" || normalized === "image/jpg") return ".jpg";
-  if (normalized === "image/webp") return ".webp";
-  if (normalized === "image/gif") return ".gif";
-  return "";
-}
-async function extractBannerFromRequest(req: Request): Promise<ParsedFile | null> {
-  return extractMultipartFile(req, {
-    field: "banner",
-    maxSize: MAX_BANNER_SIZE,
-    allowedMime: /image\/(png|jpeg|jpg|webp|gif)/i,
-    tooLargeMessage: "El banner excede el tamaño permitido (10MB)",
-  });
 }
 
 const router = Router();
@@ -78,8 +59,36 @@ function validateObjectId(id: string) {
 }
 
 function sanitizeBannerUrl(url: unknown) {
-  const normalized = normalizeBannerUrl(typeof url === "string" ? url : null);
-  return toAbsoluteBanner(normalized);
+  if (typeof url !== "string") return null;
+  if (url.startsWith("/uploads/")) {
+    return toAbsoluteBanner(url);
+  }
+  const normalized = normalizeBannerUrl(url);
+  return normalized ?? null;
+}
+
+function resolveBannerInput(
+  value: unknown,
+): { value: string | null | undefined; error?: string } {
+  if (typeof value === "undefined") return { value: undefined };
+  if (value === null) return { value: null };
+  if (typeof value !== "string") {
+    return { value: null, error: "bannerUrl inválido" };
+  }
+
+  const normalized = normalizeBannerUrl(value);
+  if (!normalized) {
+    return { value: null, error: "bannerUrl inválido" };
+  }
+
+  if (!isRemoteHttpUrl(normalized)) {
+    return {
+      value: null,
+      error: "bannerUrl debe ser una URL http(s) pública",
+    };
+  }
+
+  return { value: normalized };
 }
 
 function toISO(value: unknown) {
@@ -455,6 +464,12 @@ router.delete(
       const subject = await findSubjectOr404(id, res);
       if (!subject) return;
 
+      await Promise.all([
+        Activity.deleteMany({ subjectId: subject._id }),
+        ActivityAttempt.deleteMany({ subjectId: subject._id }),
+        UserProgress.deleteMany({ subjectId: subject._id }),
+      ]);
+
       await subject.deleteOne();
 
       res.status(204).send();
@@ -464,43 +479,46 @@ router.delete(
   },
 );
 
-// PATCH /admin/subjects/:id/banner - Subir banner (archivo multipart/form-data)
-router.patch(
-  "/admin/subjects/:id/banner",
-  requireAuth,
-  requireRole("admin"),
-  async (req: Request, res: Response) => {
+// ------------------
+// Banner de materia
+// ------------------
+
+// PATCH /admin/subjects/:id/banner - Actualizar banner (ahora usando solo URL)
+router.patch( "/admin/subjects/:id/banner", requireAuth, requireRole("admin"), async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const subject = await findSubjectOr404(id, res);
       if (!subject) return;
 
-      const banner = await extractBannerFromRequest(req);
-      if (!banner) {
-        return res.status(400).json({ error: "No se recibió un banner" });
+      const rawBanner = (req.body ?? {}).bannerUrl as unknown;
+
+      const { value: nextBanner, error: bannerError } = resolveBannerInput(
+        rawBanner,
+      );
+
+      if (bannerError) {
+        return res.status(400).json({ error: bannerError });
       }
 
-      await removeStoredBanner(subject.bannerUrl ?? null);
+      const previousBanner = subject.bannerUrl ?? null;
 
-      const originalExt = path.extname(banner.filename).toLowerCase();
-      const inferredExt = getExtensionFromMime(banner.mimeType);
-      const extension = originalExt || inferredExt;
-      const uniqueName = `${Date.now()}-${Math.random()
-        .toString(36)
-        .slice(2)}${extension}`;
-
-      await fsPromises.mkdir(BANNERS_DIR, { recursive: true });
-      const destination = path.join(BANNERS_DIR, uniqueName);
-      await fsPromises.writeFile(destination, banner.buffer);
-
-      subject.bannerUrl = `/uploads/banners/${uniqueName}`;
+      // Guardamos la nueva URL (puede ser null para quitar el banner)
+      subject.bannerUrl = nextBanner ?? null;
       await subject.save();
+
+      // Si el banner anterior era LOCAL (/uploads/banners/...), intentamos borrarlo
+      if (!nextBanner && previousBanner?.startsWith("/uploads/banners/")) {
+        await removeStoredBanner(previousBanner);
+      } else if (
+        nextBanner &&
+        nextBanner !== previousBanner &&
+        previousBanner?.startsWith("/uploads/banners/")
+      ) {
+        await removeStoredBanner(previousBanner);
+      }
 
       res.json(subject as SubjectDocument);
     } catch (err) {
-      if (err instanceof HttpError) {
-        return res.status(err.status).json({ error: err.message });
-      }
       handleError(res, err, "Error al subir banner");
     }
   },

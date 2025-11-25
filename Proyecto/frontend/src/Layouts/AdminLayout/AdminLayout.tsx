@@ -7,11 +7,12 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import styles from "./AdminLayout.module.css";
 import { useAppStore } from "../../stores/appStore";
-import { useMemo, useEffect } from "react";
+import { useMemo, useEffect, useState } from "react";
 
 export default function AdminLayout() {
   // Hook para redirecciones (ej: al cerrar sesión)
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Ajusta el color de fondo de <body> para que coincida con el área de administración.
   // Esto evita que se vea el color oscuro global cuando la ventana se reduce.
@@ -39,7 +40,10 @@ export default function AdminLayout() {
   return (
     <div className={styles.shell}>
       {/* ───────────────── Sidebar ───────────────── */}
-      <aside className={styles.sidebar}>
+      <aside
+        className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : ""}`}
+        aria-hidden={!sidebarOpen && typeof window !== "undefined" && window.innerWidth < 960}
+      >
         {/* Marca / logo del panel */}
         <div className={styles.brand}>
           <img src="/Images/Logo.png" alt="SynapQuest logo" className={styles.logoSlot} />
@@ -122,23 +126,23 @@ export default function AdminLayout() {
         </button>
       </aside>
 
+      {sidebarOpen && <button className={styles.backdrop} onClick={() => setSidebarOpen(false)} aria-label="Cerrar menú" />}
+
       {/* ───────────────── Contenido ───────────────── */}
       <div className={styles.content}>
         {/* Topbar con búsqueda + notificaciones + etiqueta Admin */}
         <header className={styles.topbar}>
 
+          <button
+            className={styles.menuBtn}
+            onClick={() => setSidebarOpen((v) => !v)}
+            aria-label="Alternar menú"
+            aria-expanded={sidebarOpen}
+          >
+            ☰
+          </button>
+
           <div className={styles.topRight}>
-            <button
-              className={styles.bell}
-              title="Notificaciones"
-              aria-label="Notificaciones"
-            >
-              🔔
-              {/* Badge con cantidad (hardcode 0 por ahora) */}
-              <span className={styles.badge} aria-hidden>
-                0
-              </span>
-            </button>
 
             {/* Etiqueta con nombre del admin */}
             <div className={styles.adminTag}>

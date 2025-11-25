@@ -10,18 +10,21 @@ import { useNavigate } from "react-router-dom";
 import styles from "./Estudiantes.module.css";
 import { useStudentsStore } from "../../../stores/studentsStore";
 import { timeAgo } from "../../../utils/timeAgo";
+import { useBackendReady } from "@/Hooks";
 
 export default function EstudiantesPage() {
+  const ready = useBackendReady();
   const { items, list, loading, error } = useStudentsStore();
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
   const pageSize = 10; // filas por página (ajústalo)
 
   useEffect(() => {
+    if (!ready) return;
     if (!items || items.length === 0) {
       void list();
     }
-  }, [items, list]);
+  }, [items, list, ready]);
 
   // Filtrado en memoria por nombre/email
   const filtered = useMemo(() => {
@@ -49,18 +52,33 @@ export default function EstudiantesPage() {
 
   const navigate = useNavigate();
 
+  if (!ready) {
+    return (
+      <div style={{ display: "grid", placeItems: "center", minHeight: "100vh" }}>
+        <p style={{ opacity: 0.8 }}>Conectando al servidor…</p>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.screen}>
-      <div className={styles.headerRow}>
-        <h2 className={styles.title}>Lista de estudiantes</h2>
-        <input
-          className={styles.search}
-          placeholder="Buscar por nombre o correo…"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          aria-label="Buscar estudiantes"
-        />
-      </div>
+      <header className={styles.header}>
+        <div className={styles.title}>
+          <span role="img" aria-label="Estudiantes">
+            🎒
+          </span>
+          &nbsp; Lista de estudiantes
+        </div>
+        <div className={styles.actions}>
+          <input
+            className={styles.search}
+            placeholder="Buscar por nombre o correo…"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            aria-label="Buscar estudiantes"
+          />
+        </div>
+      </header>
 
       <div className={styles.tableWrap}>
         <table className={styles.table}>
@@ -69,26 +87,25 @@ export default function EstudiantesPage() {
               <th>Estudiante</th>
               <th>Tipo TDAH</th>
               <th>Correo</th>
-              <th>% Progreso</th>
               <th>Última actividad</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td className={styles.empty} colSpan={5}>
+                <td className={styles.empty} colSpan={4}>
                   Cargando…
                 </td>
               </tr>
             ) : error ? (
               <tr>
-                <td className={styles.empty} colSpan={5}>
+                <td className={styles.empty} colSpan={4}>
                   {error}
                 </td>
               </tr>
             ) : pageItems.length === 0 ? (
               <tr>
-                <td className={styles.empty} colSpan={5}>
+                <td className={styles.empty} colSpan={4}>
                   Sin resultados
                 </td>
               </tr>
@@ -117,9 +134,6 @@ export default function EstudiantesPage() {
                       : "—"}
                   </td>
                   <td className={styles.mono}>{s.email}</td>
-                  <td>
-                    {Math.round(s.progressAverage ?? 0)}%
-                  </td>
                   <td className={styles.muted}>
                     {timeAgo(s.lastActivityAt ?? s.lastLogin ?? undefined)}
                   </td>
@@ -133,7 +147,7 @@ export default function EstudiantesPage() {
       {/* Paginación */}
       <div className={styles.pager}>
         <button
-          className={styles.pill}
+          className={styles.btn}
           onClick={() => setPage((p) => Math.max(1, p - 1))}
           disabled={pageClamped <= 1}
         >
@@ -143,7 +157,7 @@ export default function EstudiantesPage() {
           Página <b>{pageClamped}</b> de <b>{totalPages}</b>
         </span>
         <button
-          className={styles.pill}
+          className={styles.btn}
           onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
           disabled={pageClamped >= totalPages}
         >

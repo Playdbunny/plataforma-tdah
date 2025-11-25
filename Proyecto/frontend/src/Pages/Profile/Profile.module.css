@@ -82,7 +82,7 @@
 
 .statsGrid{
   margin-top: 12px;
-  display:grid; grid-template-columns: repeat(4, 1fr);
+  display:grid; grid-template-columns: repeat(3, 1fr);
   gap: 16px;
   background:#0b0f1c;
   border: 1px solid var(--border);

@@ -11,7 +11,7 @@
   border-radius:16px; padding:14px;
 }
 .avatar{ width:72px; height:72px; border-radius:999px; object-fit:cover; }
-.meta{}
+
 .name{
   margin:0 0 6px 0; font-size:18px; font-weight:800;
   color:#ffffff;
@@ -31,6 +31,11 @@
 .card{
   background:#0f1730; border:1px solid rgba(255,255,255,.08);
   border-radius:16px; padding:12px 14px;
+}
+.progressCard{
+  max-height:320px;
+  overflow-y:auto;
+  scrollbar-width:thin;
 }
 .cardTitle{
   font-weight:800; color:#dfe8ff; margin-bottom:8px;

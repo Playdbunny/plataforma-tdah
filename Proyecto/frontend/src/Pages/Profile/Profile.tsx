@@ -37,6 +37,11 @@ const DEFAULT_CHARACTER = {
   sprite: "/characters/bunny_idle.png",
 };
 
+function capitalize(word?: string | null) {
+  if (!word) return "";
+  return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+}
+
 export default function Profile() {
   const navigate = useNavigate();
 
@@ -54,7 +59,13 @@ export default function Profile() {
   const charName = user?.character?.name  ?? DEFAULT_CHARACTER.name;
 
   // ✅ TOTAL XP acumulado = suma niveles previos + xp actual de nivel en curso
-  const totalXP = useMemo(() => currentTotalXP(level, xp), [level, xp]);
+  const totalXP = useMemo(() => {
+    const provided = typeof user?.totalXp === "number" ? user.totalXp : null;
+    if (typeof provided === "number" && Number.isFinite(provided)) {
+      return Math.max(0, Math.round(provided));
+    }
+    return currentTotalXP(level, xp);
+  }, [user?.totalXp, level, xp]);
 
   // Stats (por ahora 3 de ellas son mock=0; TOTAL XP sí es real)
   const stats: Stat[] = useMemo(
@@ -65,12 +76,11 @@ export default function Profile() {
         icon: "💠",
         accent: "blue",
       },
-      { label: "TOTAL  XP", value: totalXP, icon: "🔥", accent: "orange" },
-      {
-        label: "COURSE BADGES",
-        value: user?.courseBadges ?? 0,
-        icon: "🟢",
-        accent: "green",
+      { 
+        label: "TOTAL  XP", 
+        value: totalXP, 
+        icon: "🔥", 
+        accent: "orange" 
       },
       {
         label: "DAILY  STREAK",
@@ -79,7 +89,7 @@ export default function Profile() {
         accent: "pink",
       },
     ],
-    [totalXP, user?.activitiesCompleted, user?.courseBadges, user?.streak?.count]
+    [totalXP, user?.activitiesCompleted, user?.streak?.count]
   );
 
   return (
@@ -123,13 +133,13 @@ export default function Profile() {
                 <span className={styles.star}>⭐</span>
                 <span className={styles.username}>{name}</span>
                 <span className={styles.flag}>🚩</span>
-                <span className={styles.tdahType}>{tdah}</span>
+                <span className={styles.tdahType}>{capitalize(tdah)}</span>
               </div>
             </div>
 
             {/* Botón editar perfil */}
             <button className={styles.editBtn} onClick={() => navigate("/profile/edit")}>
-              Edit Profile
+              Editar Perfil
             </button>
           </div>
         </section>

@@ -57,13 +57,26 @@ export const deleteSubject = async (subjectId: string) => {
 };
 
 export const uploadSubjectBanner = async (subjectId: string, file: File) => {
-  const formData = new FormData();
-  formData.append("banner", file);
+  const uploadFormData = new FormData();
+  uploadFormData.append("file", file);
+
+  const { data: uploadResponse } = await api.post<{ url: string }>(
+    `/uploads/banner`,
+    uploadFormData,
+  );
+
+  const publicUrl = uploadResponse?.url;
+  if (typeof publicUrl !== "string" || !publicUrl) {
+    throw new Error("No se pudo obtener la URL pública del banner subido");
+  }
 
   const { data } = await api.patch<SubjectResponse>(
     `/subjects/${subjectId}/banner`,
-    formData,
-    { baseURL: getAdminApiBaseUrl() },
+    { bannerUrl: publicUrl },
+    {
+      baseURL: getAdminApiBaseUrl(),
+      headers: { "Content-Type": "application/json" },
+    },
   );
 
   return data;

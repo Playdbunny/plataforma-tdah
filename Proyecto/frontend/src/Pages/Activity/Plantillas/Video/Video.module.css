@@ -32,6 +32,7 @@
   gap: clamp(1.25rem, 2.6vw, 2.2rem);
   align-items: stretch;
   grid-auto-rows: minmax(0, 1fr);
+  overflow: hidden;
 }
 
 .playerColumn {
@@ -132,6 +133,7 @@
   gap: 1.1rem;
   min-height: 0;
   overflow: hidden;
+  width: 100%;
 }
 
 .infoCard {
@@ -289,5 +291,38 @@
   .cardIcon {
     width: 56px;
     height: 56px;
+  }
+}
+
+@media (max-width: 520px) {
+  .videoWrapper {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .playerHeader {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .secondaryButton {
+    width: 100%;
+    text-align: center;
+  }
+
+  .sideColumn {
+    grid-template-rows: auto auto auto;
+  }
+
+  .rewardBadges {
+    justify-content: center;
+  }
+
+  .finishButton {
+    width: 100%;
+  }
+
+  .rewardCard {
+    text-align: center;
   }
 }

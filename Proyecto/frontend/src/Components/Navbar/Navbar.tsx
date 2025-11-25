@@ -93,11 +93,14 @@ export default function Navbar({
     fetchSubjects().catch(() => {});
   }, [fetchSubjects, subjectsVersion]);
 
+  const brandHref = user ? "/courses" : "/";
+  const brandAriaLabel = user ? "Ir a cursos" : "Ir al inicio";
+
   return (
     <header className={styles.navbar} role="banner">
       <div className={styles.inner}>
         {/* Marca */}
-        <Link to="/" className={styles.brand} aria-label="Ir al inicio">
+        <Link to={brandHref} className={styles.brand} aria-label={brandAriaLabel}>
           <img src="/Images/Logo.png" alt="SynapQuest logo" className={styles.logoSlot} />
           <span className={styles.brandText}>SynapQuest</span>
         </Link>

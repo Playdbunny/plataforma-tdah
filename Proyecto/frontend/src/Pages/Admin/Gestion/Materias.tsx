@@ -5,13 +5,14 @@
 // — Cargar / previsualizar / quitar banner por materia
 // Fase 1 (mock): usa subjectsStore (Zustand) con persistencia localStorage.
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import styles from "./Materias.module.css";
 
 // Store (mock) y tipo Subject
 import { bumpContentVersion } from "../../../stores/contentVersionStore";
 import { useActivitiesStore } from "../../../stores/activitiesStore";
 import { useSubjectsStore, type Subject } from "../../../stores/subjectsStore";
+import { useBackendReady } from "@/Hooks";
 
 const subjectKey = (subject: Subject) => subject._id ?? subject.id;
 
@@ -22,6 +23,9 @@ type Form = { name: string; description: string; slug?: string };
 const EMPTY_FORM: Form = { name: "", description: "", slug: "" };
 
 export default function MateriasPage() {
+  const ready = useBackendReady();
+  const modalTitleId = useId();
+  const modalDescriptionId = useId();
   /* =========================================================================
      1) STORE (Zustand): items + acciones CRUD mock
      ========================================================================= */
@@ -54,7 +58,10 @@ export default function MateriasPage() {
   /* =========================================================================
      3) EFECTOS: listar al montar + limpiar ObjectURL del preview
      ========================================================================= */
-  useEffect(() => { list(); }, [list]);
+  useEffect(() => {
+    if (!ready) return;
+    list();
+  }, [list, ready]);
 
   useEffect(() => {
     // Limpia el ObjectURL anterior cuando cambie el preview o al desmontar
@@ -225,15 +232,28 @@ export default function MateriasPage() {
   /* =========================================================================
      7) RENDER
      ========================================================================= */
+  if (!ready) {
+    return (
+      <div style={{ display: "grid", placeItems: "center", minHeight: "100vh" }}>
+        <p style={{ opacity: 0.8 }}>Conectando al servidor…</p>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.screen}>
       {/* Barra de acciones: crear / buscar / alternar orden */}
-      <div className={styles.actions}>
-        <button className={styles.primary} onClick={openCreate}>
-          + Nueva materia
-        </button>
-
-        <div className={styles.right}>
+      <header className={styles.header}>
+        <div className={styles.title}>
+          <span role="img" aria-label="Materias">
+            📚
+          </span>
+          &nbsp; Materias
+        </div>
+        <div className={styles.actions}>
+          <button className={styles.primary} onClick={openCreate}>
+            + Nueva materia
+          </button>
           <input
             className={styles.search}
             placeholder="Buscar por nombre/descripción…"
@@ -249,7 +269,7 @@ export default function MateriasPage() {
             Orden: {sortAsc ? "A → Z" : "Z → A"}
           </button>
         </div>
-      </div>
+      </header>
 
       {/* Tabla de materias */}
       <div className={styles.tableWrap}>
@@ -324,11 +344,17 @@ export default function MateriasPage() {
 
       {/* Modal Crear/Editar */}
       {open && (
-        <div className={styles.modalBackdrop} role="dialog" aria-modal="true">
+        <div
+          className={styles.modalBackdrop}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={modalTitleId}
+          aria-describedby={modalDescriptionId}
+        >
           <div className={styles.modal}>
             {/* Header del modal */}
             <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>
+              <h3 id={modalTitleId} className={styles.modalTitle}>
                 {editingId ? "Editar materia" : "Nueva materia"}
               </h3>
               <button
@@ -339,6 +365,12 @@ export default function MateriasPage() {
                 ✕
               </button>
             </div>
+
+            <p id={modalDescriptionId} className={styles.srOnly}>
+              Completa el formulario para crear o editar una materia. Los campos
+              incluyen nombre, descripción, slug y una imagen de banner
+              opcional.
+            </p>
 
             {/* Formulario */}
             <form onSubmit={handleSubmit} className={styles.form}>
