@@ -72,11 +72,13 @@
   border: 2px solid #c6d1ff;
   border-radius: 18px;
   overflow: hidden;
+  overflow-x: auto;
 
 
 }
 .table {
-  width: 100%; 
+  width: 100%;
+  min-width: 720px;
   border-collapse: collapse;
   color: #111827; /* texto negro consistente */
  
@@ -237,8 +239,12 @@ tbody tr:hover { background: #eef2ff; }
 }
 @media (max-width: 640px) {
   .title { font-size: 12px; }
-  .actions { justify-content: flex-start; }
-  .search { width: 160px; }
+  .header { align-items: flex-start; }
+  .actions { justify-content: flex-start; width: 100%; gap: 8px; }
+  .actions > * { width: 100%; }
+  .search { width: 100%; max-width: 260px; }
+  .primary,
+  .ghost { width: 100%; justify-content: center; text-align: center; }
   .colAcciones { width: 160px; }
   .slug { display:none; } /* Oculta slug en móvil para respirar */
 }
