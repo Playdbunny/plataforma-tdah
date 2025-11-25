@@ -32,6 +32,7 @@
   gap: clamp(1.25rem, 2.6vw, 2.15rem);
   align-items: stretch;
   grid-auto-rows: minmax(0, 1fr);
+  overflow: hidden;
 }
 
 .viewerColumn {
@@ -123,6 +124,7 @@
   grid-template-rows: auto auto 1fr;
   gap: 1.1rem;
   min-height: 0;
+  width: 100%;
 }
 
 .tipCard {
@@ -280,5 +282,42 @@
   .tipIcon {
     width: 56px;
     height: 56px;
+  }
+}
+
+@media (max-width: 520px) {
+  .layout {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .viewerHeader {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .viewerActions {
+    width: 100%;
+  }
+
+  .secondaryButton {
+    width: 100%;
+    text-align: center;
+  }
+
+  .infoColumn {
+    grid-template-rows: auto auto auto;
+  }
+
+  .rewardBadges {
+    justify-content: center;
+  }
+
+  .finishButton {
+    width: 100%;
+  }
+
+  .rewardCard {
+    text-align: center;
   }
 }
