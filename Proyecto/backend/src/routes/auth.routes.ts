@@ -1,4 +1,5 @@
 import { Router } from "express";
+import rateLimit from "express-rate-limit";
 import { z } from "zod";
 import argon2 from "argon2";
 import { randomBytes, createHash } from "crypto";
@@ -13,6 +14,23 @@ import {
 import { hashRefreshToken, issueSession, revokeSession } from "./helpers/session";
 
 const router = Router();
+
+// Rate limiters para endpoints sensibles
+const loginLimiter = rateLimit({
+  windowMs: 60_000, // 1 minuto
+  max: 6, // 6 intentos por IP por minuto
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Demasiados intentos, inténtalo más tarde." },
+});
+
+const forgotLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hora
+  max: 3,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Demasiados intentos de recuperación, inténtalo más tarde." },
+});
 
 /* ── Zod schemas ───────────────────────────────────────────── */
 const tdahEnum = z.enum(["inatento", "hiperactivo", "combinado"]);
@@ -66,7 +84,7 @@ router.post("/register", async (req, res) => {
 });
 
 /* ── POST /auth/login ──────────────────────────────────────── */
-router.post("/login", async (req, res) => {
+router.post("/login", loginLimiter, async (req, res) => {
   const parsed = loginSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
 
@@ -99,7 +117,7 @@ function buildResetUrl(token: string): string {
   return `${base}/reset/${token}`;
 }
 
-router.post("/forgot-password", async (req, res) => {
+router.post("/forgot-password", forgotLimiter, async (req, res) => {
   const parsed = forgotSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
 
@@ -168,7 +186,16 @@ const refreshSchema = z.object({
   refreshToken: z.string().min(10, "Token de refresco inválido").optional(),
 });
 
-router.post("/refresh", async (req, res) => {
+// Rate limiter para /refresh: evita abuso de endpoint de refresh
+const refreshLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minuto
+  max: 30, // 30 peticiones por minuto por IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Demasiadas solicitudes de refresh, inténtalo más tarde." },
+});
+
+router.post("/refresh", refreshLimiter, async (req, res) => {
   const parsed = refreshSchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
 

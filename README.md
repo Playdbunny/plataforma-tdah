@@ -53,6 +53,37 @@ npm run dev
 > En Google Cloud Console → OAuth → **Authorized redirect URIs**, registra exactamente `http://127.0.0.1:4000/api/auth/google/callback`.
 > Evita mezclar `localhost` y `127.0.0.1` en el flujo de OAuth: usa siempre `127.0.0.1` en las variables de entorno y en Google Cloud.
 
+### 🔐 Cambios rápidos de seguridad aplicados
+
+Hemos aplicado varias mejoras de seguridad rápidas en el backend para reducir riesgos inmediatos:
+- `helmet` — añade cabeceras HTTP seguras (HSTS, CSP básicos).
+- `express-mongo-sanitize` — evita inyección de operadores Mongo (p.ej. `$gt`).
+- `express-rate-limit` — límites en endpoints sensibles (`/api/auth/login`, `/api/auth/forgot-password`, `/api/auth/refresh`).
+
+Cómo probar localmente:
+- Comprobar cabeceras de seguridad (HSTS/CSP):
+```powershell
+Invoke-WebRequest -Uri 'http://127.0.0.1:4000/api/health' -Method Head | Select-Object -ExpandProperty Headers
+```
+- Probar rate-limit en `login` (tras varios intentos verás 429 o el mensaje JSON):
+```powershell
+1..10 | ForEach-Object {
+  try {
+    Invoke-RestMethod -Uri 'http://127.0.0.1:4000/api/auth/login' -Method Post `
+      -Body (@{ email='no@no.com'; password='x' } | ConvertTo-Json) -ContentType 'application/json'
+  } catch {
+    Write-Host "Error:" $_.Exception.Response.StatusCode.Value__ $_.Exception.Message
+  }
+}
+```
+- Probar sanitización Mongo (payload con operadores):
+```powershell
+Invoke-RestMethod -Uri 'http://127.0.0.1:4000/api/auth/login' -Method Post `
+  -Body (@{ email = @{ '$gt' = '' }; password='x' } | ConvertTo-Json -Depth 5) -ContentType 'application/json'
+```
+
+Si quieres que revertamos alguno de estos cambios o los ajustemos (p.ej. reglas CSP más estrictas), dímelo y lo adapto.
+
 ### 🔹 Frontend
 
 1. Crear un archivo **.env** basandose en el archivo de ejemplo **.env.example**.
