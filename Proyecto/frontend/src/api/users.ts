@@ -1,5 +1,5 @@
 import { api } from "../Lib/api";
-import { IUserSafe } from "../types/user";
+import { IUserSafe, type TDAHType } from "../types/user";
 import { normalizeAvatarUrl } from "../utils/avatar";
 import { reviveUserDates } from "../utils/user_serializers";
 
@@ -23,6 +23,7 @@ export type UpdateProfilePayload = {
   username?: string;
   avatarUrl?: string | null;
   education?: string | null;
+  tdahType?: TDAHType | null;
   character?: { id: string; name: string; sprite: string } | null;
   ownedCharacters?: string[];
   coins?: number;
