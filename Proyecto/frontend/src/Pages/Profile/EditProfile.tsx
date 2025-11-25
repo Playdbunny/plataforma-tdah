@@ -17,9 +17,9 @@ const CHARACTERS = [
   { id: "robot",   name: "robot",   sprite: "/Characters/robot.gif",   rarity: "common" as const },
 
   // nuevos
-  { id: "alien",   name: "alien",   sprite: "/Characters/alien.gif",   rarity: "rare" as const,       price: 100 },
-  { id: "dragon",  name: "dragon",  sprite: "/Characters/dragon.gif",  rarity: "epic" as const,       price: 200 },
-  { id: "unicorn", name: "unicorn", sprite: "/Characters/unicorn.gif", rarity: "legendary" as const,  price: 400 },
+  { id: "grandKnight",  name: "Grand Knight",  sprite: "/Characters/Grand Knight.gif",  rarity: "rare" as const, price: 100 },
+  { id: "skeletonKing", name: "Skeleton King", sprite: "/Characters/Skeleton King.gif", rarity: "epic" as const, price: 200 },
+  { id: "witch",        name: "Witch",         sprite: "/Characters/Witch.gif",         rarity: "legendary" as const,  price: 400 },
 ];
 
 type Rarity = "common" | "rare" | "epic" | "legendary";
@@ -198,12 +198,12 @@ export default function EditProfile() {
 
           {/* Form grid */}
           <div className={styles.formGrid}>
-            <label className={styles.label}>Name
+            <label className={styles.label}>Nombre
               <input
                 className={styles.input}
                 value={name}
                 onChange={e=>setName(e.target.value)}
-                placeholder="Your name"
+                placeholder="Tu nombre"
               />
             </label>
 
@@ -216,7 +216,7 @@ export default function EditProfile() {
               />
               <label className={styles.editAvatar}>
                 <input type="file" accept="image/*" hidden onChange={onPickAvatar} />
-                Change photo
+                Cambia tu foto de perfil
               </label>
               <small className={styles.hint}>PNG/JPG &lt; 5MB — relación 1:1</small>
             </div>
@@ -236,7 +236,7 @@ export default function EditProfile() {
                 className={styles.input}
                 value={username}
                 onChange={e=>setUsername(e.target.value)}
-                placeholder="Pick a username"
+                placeholder="Escoge un nombre de usuario"
               />
             </label>
 
@@ -245,7 +245,7 @@ export default function EditProfile() {
                 className={styles.input}
                 value={education}
                 onChange={e=>setEducation(e.target.value)}
-                placeholder="Colegio / Universidad"
+                placeholder="Colegio"
               />
             </label>
           </div>
