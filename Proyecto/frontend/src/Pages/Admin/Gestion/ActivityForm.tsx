@@ -54,7 +54,6 @@ const KIND_BY_TYPE: Record<SubjectActivityType, ActivityKind> = {
   video: "video_quiz",
   "ppt-animada": "ppt_review",
   quiz: "multiple_choice",
-  juego: "embedded_quiz",
 };
 
 const DEFAULT_XP_REWARD = 150;

@@ -10,7 +10,6 @@ export type SubjectActivityType =
   | "quiz"
   | "ppt-animada"
   | "video"
-  | "juego";
 
 export type SubjectActivityStatus = "published" | "draft" | "archived";
 
@@ -55,7 +54,6 @@ export const SUBJECT_ACTIVITY_TYPE_LABELS: Record<SubjectActivityType, string> =
   quiz: "Quiz",
   "ppt-animada": "PPT Animada",
   video: "Video",
-  juego: "Juego",
 };
 
 export const SUBJECT_ACTIVITY_STATUS_LABELS: Record<SubjectActivityStatus, string> = {
