@@ -173,6 +173,10 @@
 .pxBtn:active{ transform:translateY(1px); box-shadow:0 3px 0 rgba(0,0,0,.35); }
 .pxBtn[disabled]{ opacity:.6; cursor:default; }
 
+.error{
+  color: #ff0000;
+}
+
 /* Nota legal inferior */
 .terms{
   margin-top:10px; text-align:center; font-size:12px; color:#6a7a90;

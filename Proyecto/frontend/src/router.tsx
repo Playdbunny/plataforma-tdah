@@ -53,7 +53,7 @@ function RequireAdmin({ children }: GuardProps) {
   //if (!hydrated) return null;
   if (!hydrated) return <div className="loading-container">Cargando…</div>;
 
-
+  // Si no hay usuario o no es admin, redirige fuera del admin
   if (!user) return <Navigate to="/login" replace />;
   if (user.role !== "admin") return <Navigate to="/" replace />;
   return <>{children}</>;
@@ -75,14 +75,6 @@ export const router = createBrowserRouter([
   // Flujo inicial (selección TDAH)
   { path: "/tdah", element: <TdahSelect /> },
 
-  // Ruta dinámica de materias pública (si la quieres protegida, muévela más abajo)
-  {
-    path: "/subjects/:subjectId/activities/:activitySlug/result",
-    element: <ActivityResultPage />,
-  },
-  { path: "/subjects/:subjectId/activities/:activitySlug", element: <ActivityPage /> },
-  { path: "/subjects/:subjectId", element: <SubjectPage /> },
-
   // ── Autenticadas (requieren login) ─────────────────────────
   // Todo lo que vaya dentro de ProtectedLayout exige sesión (tu ProtectedLayout ya hace el guard).
   {
@@ -92,9 +84,13 @@ export const router = createBrowserRouter([
       { path: "/profile/edit", element: <EditProfile /> },
       { path: "/courses", element: <Courses /> },
 
-      // 👉 Si en vez de pública quieres proteger SubjectPage,
-      // comenta la versión pública de arriba y descomenta esta:
-      // { path: "/subjects/:subjectId", element: <SubjectPage /> },
+      // Materias y actividades (privadas)
+      {
+        path: "/subjects/:subjectId/activities/:activitySlug/result",
+        element: <ActivityResultPage />,
+      },
+      { path: "/subjects/:subjectId/activities/:activitySlug", element: <ActivityPage /> },
+      { path: "/subjects/:subjectId", element: <SubjectPage /> },
     ],
   },
 

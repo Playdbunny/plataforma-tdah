@@ -159,6 +159,10 @@
 .pxBtn:hover{ filter:brightness(1.05); box-shadow:0 5px 0 rgba(0,0,0,.3); }
 .pxBtn:active{ transform:translateY(1px); box-shadow:0 3px 0 rgba(0,0,0,.35); }
 
+.error{
+  color: #ff0000;
+}
+
 .forgot{
   display:block; margin-top:45px; text-align:center;
   font-size:15px; color:#6a7a90; text-decoration:none;
