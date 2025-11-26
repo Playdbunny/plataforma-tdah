@@ -48,7 +48,13 @@ if (process.env.NODE_ENV === "production") {
 }
 
 // Sanitiza campos potencialmente peligrosos para Mongo (evita $/$dot injection)
-app.use(mongoSanitize());
+// IMPORTANTE: Express 5 hace req.query read-only, solo sanitizamos body y params
+app.use(mongoSanitize({
+  onSanitize: ({ req, key }) => {
+    console.warn(`[mongoSanitize] Removido campo peligroso: ${key} en ${req.method} ${req.url}`);
+  },
+  replaceWith: '_',
+}));
 
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
