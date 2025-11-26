@@ -308,28 +308,26 @@ router.post("/activities/:id/complete", requireAuth, async (req: any, res) => {
     user.activitiesCompleted = Math.max(0, Math.round(user.activitiesCompleted ?? 0) + 1);
   }
 
-  if (xpAwarded > 0) {
-    const lastCheck = user.streak?.lastCheck ? new Date(user.streak.lastCheck) : null;
-    const today = getToday();
-    let nextCount = Math.max(0, user.streak?.count ?? 0);
+  const lastCheck = user.streak?.lastCheck ? new Date(user.streak.lastCheck) : null;
+  const today = getToday();
+  let nextCount = Math.max(0, user.streak?.count ?? 0);
 
-    if (!lastCheck) {
-      nextCount = 1;
+  if (!lastCheck) {
+    nextCount = 1;
+  } else {
+    const lastDay = new Date(lastCheck);
+    lastDay.setHours(0, 0, 0, 0);
+    const diffDays = Math.floor((today.getTime() - lastDay.getTime()) / 86_400_000);
+    if (diffDays <= 0) {
+      nextCount = Math.max(1, nextCount);
+    } else if (diffDays === 1) {
+      nextCount += 1;
     } else {
-      const lastDay = new Date(lastCheck);
-      lastDay.setHours(0, 0, 0, 0);
-      const diffDays = Math.floor((today.getTime() - lastDay.getTime()) / 86_400_000);
-      if (diffDays <= 0) {
-        nextCount = Math.max(1, nextCount);
-      } else if (diffDays === 1) {
-        nextCount += 1;
-      } else {
-        nextCount = 1;
-      }
+      nextCount = 1;
     }
-
-    user.streak = { count: nextCount, lastCheck: now };
   }
+
+  user.streak = { count: nextCount, lastCheck: now };
 
   const attempt = await ActivityAttempt.create({
     userId: user._id,
