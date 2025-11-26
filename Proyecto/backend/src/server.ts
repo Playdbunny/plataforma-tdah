@@ -39,7 +39,7 @@ app.use(
   }),
 );
 
-// Seguridad: cabeceras HTTP y saneamiento de inputs
+// Seguridad: cabeceras HTTP
 app.use(helmet());
 // Habilitar HSTS en producción y confiar en proxy si aplica
 if (process.env.NODE_ENV === "production") {
@@ -47,17 +47,17 @@ if (process.env.NODE_ENV === "production") {
   app.use(helmet.hsts({ maxAge: 31536000 }));
 }
 
-// Sanitiza campos potencialmente peligrosos para Mongo (evita $/$dot injection)
-// IMPORTANTE: Express 5 hace req.query read-only, solo sanitizamos body y params
-app.use(mongoSanitize({
-  onSanitize: ({ req, key }) => {
-    console.warn(`[mongoSanitize] Removido campo peligroso: ${key} en ${req.method} ${req.url}`);
-  },
-  replaceWith: '_',
-}));
-
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
+
+// Sanitiza campos potencialmente peligrosos para Mongo (evita $/$dot injection)
+// Se aplica DESPUÉS de parsear body, para evitar conflictos con Express 5
+app.use(mongoSanitize({
+  replaceWith: '_',
+  onSanitize: ({ req, key }) => {
+    console.warn(`[mongoSanitize] Campo peligroso removido: ${key} en ${req.method} ${req.url}`);
+  },
+}));
 
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
