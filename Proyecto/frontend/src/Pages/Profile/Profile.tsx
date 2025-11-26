@@ -71,19 +71,19 @@ export default function Profile() {
   const stats: Stat[] = useMemo(
     () => [
       {
-        label: "ACTIVITIES",
+        label: "ACTIVIDADES  COMPLETADAS",
         value: user?.activitiesCompleted ?? 0,
         icon: "💠",
         accent: "blue",
       },
       { 
-        label: "TOTAL  XP", 
+        label: "XP TOTAL", 
         value: totalXP, 
         icon: "🔥", 
         accent: "orange" 
       },
       {
-        label: "DAILY  STREAK",
+        label: "RACHA DIARIA",
         value: user?.streak?.count ?? 0,
         icon: "✨",
         accent: "pink",
@@ -122,7 +122,7 @@ export default function Profile() {
               {/* Fila: Nivel + barra XP */}
               <div className={styles.row}>
                 <span className={styles.diamond}>💎</span>
-                <span className={styles.levelLabel}>Level {level}</span>
+                <span className={styles.levelLabel}>Nivel {level}</span>
 
                 {/* Barra XP reutilizable */}
                 <XPBar currentXP={xp} requiredXP={nextXp} />
@@ -146,7 +146,7 @@ export default function Profile() {
 
         {/* ===== STATS ===== */}
         <section className={styles.statsWrap}>
-          <div className={styles.statsHeader}>Stats</div>
+          <div className={styles.statsHeader}>Estadísticas</div>
           <div className={styles.statsGrid}>
             {stats.map((s) => (
               <div key={s.label} className={`${styles.statCard} ${styles[s.accent ?? "blue"]}`}>
