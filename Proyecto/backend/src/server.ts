@@ -54,6 +54,17 @@ if (process.env.NODE_ENV === "production") {
   app.use(helmet.hsts({ maxAge: 31536000 }));
 }
 
+// Arreglo para compatibilidad Express 5 + express-mongo-sanitize
+app.use((req, res, next) => {
+  // @ts-ignore – redefinimos req.query para que sea mutable
+  Object.defineProperty(req, "query", {
+    value: { ...req.query },   // clonamos lo que ya tenía
+    writable: true,
+    configurable: true,
+    enumerable: true,
+  });
+  next();
+});
 // Sanitiza campos potencialmente peligrosos para Mongo (evita $/$dot injection)
 app.use(mongoSanitize());
 
