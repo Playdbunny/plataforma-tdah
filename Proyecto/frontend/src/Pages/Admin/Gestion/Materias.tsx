@@ -13,6 +13,7 @@ import { bumpContentVersion } from "../../../stores/contentVersionStore";
 import { useActivitiesStore } from "../../../stores/activitiesStore";
 import { useSubjectsStore, type Subject } from "../../../stores/subjectsStore";
 import { useBackendReady } from "@/Hooks";
+import { extractErrorMessage } from "@/utils/errorMessage";
 
 const subjectKey = (subject: Subject) => subject._id ?? subject.id;
 
@@ -200,7 +201,8 @@ export default function MateriasPage() {
       setBannerFile(null);
       setBannerPreview(null);
     } catch (err: any) {
-      setError(err?.message || "Error guardando la materia");
+      const message = extractErrorMessage(err, "Error guardando la materia");
+      setError(message);
     }
   }
 
@@ -220,7 +222,8 @@ export default function MateriasPage() {
       bumpContentVersion();
     } catch (error: any) {
       console.error(error);
-      alert(error?.message ?? "Error al eliminar la materia");
+      const message = extractErrorMessage(error, "Error al eliminar la materia");
+      alert(message);
     }
   }
 

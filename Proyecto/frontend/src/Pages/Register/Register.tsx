@@ -10,6 +10,7 @@ import { useAppStore } from "../../stores/appStore";
 // Store de autenticación (axios + persist + token)
 import { useAuthStore } from "../../stores/authStore";
 import type { TDAHType } from "../../types/user";
+import { extractErrorMessage } from "../../utils/errorMessage";
 
 export default function Register() {
   /* Bloquea el scroll */
@@ -22,7 +23,10 @@ export default function Register() {
   const tdahType = useAppStore((s) => s.tdahType) as TDAHType;
 
   // 2) Acciones de auth
-  const { register, loading, error } = useAuthStore();
+  const { register, loading, error: rawError } = useAuthStore();
+  const error = rawError
+    ? extractErrorMessage(rawError, "No se pudo registrar. Intenta nuevamente.")
+    : null;
   const navigate = useNavigate();
 
   // 3) Estado local del formulario

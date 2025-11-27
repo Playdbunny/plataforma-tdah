@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { useActivitiesStore } from "../../../stores/activitiesStore";
 import { useSubjectsStore } from "../../../stores/subjectsStore";
+import { extractErrorMessage } from "../../../utils/errorMessage";
 import {
   SubjectActivityType,
   SUBJECT_ACTIVITY_TYPE_LABELS,
@@ -163,6 +164,9 @@ function validateBannerUrl(u: string) {
 
 export default function ActivityForm({ subjectSlug, onClose }: ActivityFormProps) {
   const { create, loading, error } = useActivitiesStore();
+  const apiError = error
+    ? extractErrorMessage(error, "No se pudo crear la actividad.")
+    : null;
   const { items: subjects } = useSubjectsStore();
   const [title, setTitle] = useState("");
   const [type, setType] = useState<SubjectActivityType>("infografia");
@@ -623,7 +627,7 @@ export default function ActivityForm({ subjectSlug, onClose }: ActivityFormProps
         </div>
       )}
       {formError && <div className={styles.errorMsg}>{formError}</div>}
-      {error && <div className={styles.errorMsg}>{error}</div>}
+      {apiError && <div className={styles.errorMsg}>{apiError}</div>}
       <div className={styles.formActions}>
         <button type="submit" className={styles.submitBtn} disabled={loading}>
           {loading ? "Guardando..." : "Crear"}

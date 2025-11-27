@@ -11,6 +11,7 @@ import InfografiaTemplate from "./Plantillas/Infografia/Infografia";
 import PPTAnimadaTemplate from "./Plantillas/PPT-Animada/PPT-Animada";
 import QuizTemplate from "./Plantillas/Quiz/Quiz";
 import VideoTemplate from "./Plantillas/Video/Video";
+import { extractErrorMessage } from "../../utils/errorMessage";
 
 const SUPPORTED_TYPES = new Set(["infografia", "ppt-animada", "quiz", "video"]);
 
@@ -75,9 +76,7 @@ export default function ActivityPage() {
           return;
         }
         setError(
-          err instanceof Error
-            ? err.message
-            : "No se pudo cargar la actividad.",
+          extractErrorMessage(err, "No se pudo cargar la actividad."),
         );
         setStatus("error");
       });

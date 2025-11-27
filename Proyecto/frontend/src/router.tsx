@@ -1,4 +1,5 @@
 import NotFound from "./Pages/NotFound";
+import ErrorPage from "./Pages/ErrorPage";
 // ─────────────────────────────────────────────────────────────
 // router.tsx — Define TODAS las rutas con createBrowserRouter
 // ─────────────────────────────────────────────────────────────
@@ -59,18 +60,20 @@ function RequireAdmin({ children }: GuardProps) {
   return <>{children}</>;
 }
 
+const commonErrorElement = <ErrorPage />;
+
 // ─────────────────────────────────────────────────────────────
 // Definición de rutas (árbol) con createBrowserRouter
 // ─────────────────────────────────────────────────────────────
 export const router = createBrowserRouter([
   // ── Públicas (no requieren login) ──────────────────────────
-  { path: "/", element: <Home /> },
-  { path: "/login", element: <Login /> },
-  { path: "/register", element: <Register /> },
-  { path: "/forgot", element: <Forgot /> },
-  { path: "/reset", element: <Reset /> },
-  { path: "/reset/:token", element: <Reset /> },
-  { path: "/oauth/google/callback", element: <GoogleCallback /> },
+  { path: "/", element: <Home />, errorElement: commonErrorElement },
+  { path: "/login", element: <Login />, errorElement: commonErrorElement },
+  { path: "/register", element: <Register />, errorElement: commonErrorElement },
+  { path: "/forgot", element: <Forgot />, errorElement: commonErrorElement },
+  { path: "/reset", element: <Reset />, errorElement: commonErrorElement },
+  { path: "/reset/:token", element: <Reset />, errorElement: commonErrorElement },
+  { path: "/oauth/google/callback", element: <GoogleCallback />, errorElement: commonErrorElement },
 
   // Flujo inicial (selección TDAH)
   { path: "/tdah", element: <TdahSelect /> },
@@ -79,6 +82,7 @@ export const router = createBrowserRouter([
   // Todo lo que vaya dentro de ProtectedLayout exige sesión (tu ProtectedLayout ya hace el guard).
   {
     element: <ProtectedLayout />,
+    errorElement: commonErrorElement,
     children: [
       { path: "/profile", element: <Profile /> },
       { path: "/profile/edit", element: <EditProfile /> },
@@ -108,14 +112,13 @@ export const router = createBrowserRouter([
       { index: true, element: <Navigate to="/admin/dashboard" replace /> },
 
       // Páginas del panel
-      { path: "dashboard", element: <AdminDashboard /> },
-      { path: "ranking", element: <AdminRanking /> },
-      { path: "materias", element: <MateriasPage /> },
-      { path: "actividades", element: <ActividadesPage /> },
-      { path: "actividades/:subjectId", element: <SubjectActivitiesAdminPage /> },
-      { path: "estudiantes", element: <EstudiantesPage /> },
-      { path: "gestion/estudiantes/:id", element: <EstudianteDetallePage /> },
-
+      { path: "dashboard", element: <AdminDashboard />, errorElement: commonErrorElement },
+      { path: "ranking", element: <AdminRanking />, errorElement: commonErrorElement },
+      { path: "materias", element: <MateriasPage />, errorElement: commonErrorElement },
+      { path: "actividades", element: <ActividadesPage />, errorElement: commonErrorElement },
+      { path: "actividades/:subjectId", element: <SubjectActivitiesAdminPage />, errorElement: commonErrorElement },
+      { path: "estudiantes", element: <EstudiantesPage />, errorElement: commonErrorElement },
+      { path: "gestion/estudiantes/:id", element: <EstudianteDetallePage />, errorElement: commonErrorElement },
 
 
       // Agrega aquí más secciones cuando las tengas listas:
@@ -126,7 +129,7 @@ export const router = createBrowserRouter([
   },
 
   // ── 404 Not Found ───────────────────────────────
-  { path: "*", element: <NotFound /> },
+  { path: "*", element: <NotFound />, errorElement: commonErrorElement },
 ]);
 
 /* ─────────────────────────────────────────────────────────────

@@ -4,6 +4,7 @@ import Navbar from "../../Components/Navbar/Navbar";
 import styles from "./Login.module.css";
 import { useAuthStore } from "../../stores/authStore";
 import { useAppStore } from "../../stores/appStore";
+import { extractErrorMessage } from "../../utils/errorMessage";
 
 export default function Login() {
 
@@ -20,7 +21,10 @@ export default function Login() {
   const [notice, setNotice] = useState<string | null>(null);
 
   /* Store de auth: login (acción), loading y error */
-  const { login, loading, error } = useAuthStore();
+  const { login, loading, error: rawError } = useAuthStore();
+  const error = rawError
+    ? extractErrorMessage(rawError, "No se pudo iniciar sesión. Inténtalo de nuevo.")
+    : null;
 
   /* Navegación y lectura de query (?next=/ruta) para redirigir tras login */
   const navigate = useNavigate();
