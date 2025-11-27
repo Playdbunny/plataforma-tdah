@@ -48,10 +48,19 @@ app.use(
 
 // Seguridad: cabeceras HTTP y saneamiento de inputs
 app.use(helmet());
+
 // Habilitar HSTS en producción y confiar en proxy si aplica
 if (process.env.NODE_ENV === "production") {
-  app.enable("trust proxy");
-  app.use(helmet.hsts({ maxAge: 31536000 }));
+  const TRUST_PROXY_HOPS = Number(process.env.TRUST_PROXY_HOPS ?? "1");
+  
+  app.set("trust proxy", TRUST_PROXY_HOPS);
+
+  app.use(
+    helmet.hsts({ 
+      maxAge: 31536000,
+      includeSubDomains: true,
+    }),
+  );
 }
 
 // Arreglo para compatibilidad Express 5 + express-mongo-sanitize
