@@ -18,10 +18,7 @@ type SessionRefreshPayload = {
 };
 
 // ===== Base URL =====
-const envBaseUrl = import.meta.env.VITE_API_URL?.trim();
-const baseURL = envBaseUrl && /^https?:\/\//.test(envBaseUrl)
-  ? envBaseUrl.replace(/\/$/, "")
-  : "/api";
+const baseURL = "/api";
 
 export const getApiBaseUrl = () => baseURL;
 

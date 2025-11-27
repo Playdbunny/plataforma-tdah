@@ -317,7 +317,7 @@ export default function AdminDashboard() {
     if (!studentGrowth) return [];
     return studentGrowth.map((point) => ({
       label: formatLabelForRange(point.date, range),
-      value: point.totalStudents,
+      value: point.connectedStudents,
     }));
   }, [studentGrowth, range]);
 
@@ -349,8 +349,14 @@ export default function AdminDashboard() {
 
   const showSkeleton = kpisLoading && overviewLoading && precisionLoading;
 
-  const studentsTotal = formatNumber(lastGrowthPoint?.totalStudents ?? 0);
-  const studentsDelta = formatNumber(lastGrowthPoint?.newStudents ?? 0);
+  const studentsTotal = formatNumber(lastGrowthPoint?.connectedStudents ?? 0);
+  const previousGrowthPoint =
+    studentGrowth && studentGrowth.length > 1
+      ? studentGrowth[studentGrowth.length - 2]
+      : null;
+  const studentsDeltaNumber =
+    (lastGrowthPoint?.connectedStudents ?? 0) - (previousGrowthPoint?.connectedStudents ?? 0);
+  const studentsDelta = formatNumber(Math.abs(studentsDeltaNumber));
   const avgCompletionNow = formatMMSS(Math.round(lastAvgPoint?.avgDurationSec ?? 0));
 
   // ───────────── Render ─────────────
@@ -483,8 +489,11 @@ export default function AdminDashboard() {
             </div>
           </div>
           <p className={styles.chartSubtitle}>
-            Total de alumnos conectados: <strong>{studentsTotal}</strong>{" "}
-            <span className={styles.chartDelta}>+{studentsDelta} en el rango</span>
+            Alumnos conectados hoy: <strong>{studentsTotal}</strong>{" "}
+            <span className={styles.chartDelta}>
+              {studentsDeltaNumber >= 0 ? "+" : "-"}
+              {studentsDelta} vs. día anterior
+            </span>
           </p>
           <div className={styles.chartInner}>
             {studentGrowthLoading ? (

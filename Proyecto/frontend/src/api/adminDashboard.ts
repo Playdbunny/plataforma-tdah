@@ -2,8 +2,7 @@ import { api } from "@/Lib/api";
 
 export type StudentsGrowthPoint = {
   date: string;
-  newStudents: number;
-  totalStudents: number;
+  connectedStudents: number;
 };
 
 export type StudentsGrowthResponse = {

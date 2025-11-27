@@ -127,41 +127,42 @@ router.get(
       const rangeStart = startOfDay(new Date(today));
       rangeStart.setDate(rangeStart.getDate() - (days - 1));
 
-      const [baseline, grouped] = await Promise.all([
-        User.countDocuments({ role: "student", createdAt: { $lt: rangeStart } }),
-        User.aggregate<{ _id: string; count: number }>([
-          {
-            $match: {
-              role: "student",
-              createdAt: { $gte: rangeStart, $lte: today },
-            },
+       const grouped = await User.aggregate<{ _id: string; count: number }>([
+        {
+          $match: {
+            role: "student",
+            lastLogin: { $gte: rangeStart, $lte: today },
           },
-          {
-            $group: {
-              _id: {
-                $dateToString: {
-                  format: "%Y-%m-%d",
-                  date: "$createdAt",
-                  timezone: "UTC",
-                },
+        },
+        {
+          $group: {
+            _id: {
+              $dateToString: {
+                format: "%Y-%m-%d",
+                date: "$lastLogin",
+                timezone: "UTC",
               },
-              count: { $sum: 1 },
             },
+            studentIds: { $addToSet: "$_id" },
           },
-          { $sort: { _id: 1 } },
-        ]),
+        },
+        {
+          $project: {
+            _id: 1,
+            count: { $size: "$studentIds" },
+          },
+        },
+        { $sort: { _id: 1 } },
       ]);
 
       const groupedMap = new Map(grouped.map((item) => [item._id, item.count]));
-      const points: Array<{ date: string; newStudents: number; totalStudents: number }> = [];
-      let runningTotal = baseline;
+      const points: Array<{ date: string; connectedStudents: number }> = [];
       for (let i = 0; i < days; i++) {
         const current = new Date(rangeStart);
         current.setDate(rangeStart.getDate() + i);
         const key = dateKey(current);
-        const newStudents = groupedMap.get(key) ?? 0;
-        runningTotal += newStudents;
-        points.push({ date: current.toISOString(), newStudents, totalStudents: runningTotal });
+        const connectedStudents = groupedMap.get(key) ?? 0;
+        points.push({ date: current.toISOString(), connectedStudents });
       }
 
       res.json({ days, points });
