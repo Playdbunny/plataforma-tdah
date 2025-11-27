@@ -6,6 +6,7 @@ import { IUserSafe, TDAHType } from "../types/user";
 import { useAppStore } from "./appStore";
 import { reviveUserDates } from "../utils/user_serializers";
 import { normalizeAvatarUrl } from "../utils/avatar";
+import { extractErrorMessage } from "../utils/errorMessage";
 
 type RegisterBody = {
   name: string;
@@ -121,7 +122,7 @@ export const useAuthStore = create<AuthState>()(
             get().setSession(data);
           } catch (err: any) {
             set({
-              error: err?.response?.data?.error ?? err?.message ?? "No se pudo registrar",
+              error: extractErrorMessage(err, "No se pudo registrar"),
             });
             throw err;
           } finally {
@@ -136,8 +137,7 @@ export const useAuthStore = create<AuthState>()(
             get().setSession(data);
           } catch (err: any) {
             set({
-              error:
-                err?.response?.data?.error ?? err?.message ?? "No se pudo iniciar sesión",
+              error: extractErrorMessage(err, "No se pudo iniciar sesión"),
             });
             throw err;
           } finally {

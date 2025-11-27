@@ -7,6 +7,7 @@ import {
   fetchAdminStudents,
   type AdminStudentSummary,
 } from "../api/adminStudents";
+import { extractErrorMessage } from "../utils/errorMessage";
 
 export type Student = AdminStudentSummary;
 
@@ -30,7 +31,7 @@ export const useStudentsStore = create<StudentsState>((set, get) => ({
       const items = await fetchAdminStudents();
       set({ items });
     } catch (err: any) {
-      const message = err?.response?.data?.error ?? err?.message ?? "Error al cargar estudiantes";
+      const message = extractErrorMessage(err, "Error al cargar estudiantes");
       set({ error: message });
     } finally {
       set({ loading: false });

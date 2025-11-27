@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import axios from "axios";
 import Navbar from "../../Components/Navbar/Navbar";
 import styles from "./Forgot.module.css";
 import { requestPasswordReset } from "../../api/auth";
+import { extractErrorMessage } from "../../utils/errorMessage";
 
 export default function Forgot() {
 
@@ -27,12 +27,12 @@ export default function Forgot() {
       await requestPasswordReset({ email });
       setSent(true);
     } catch (err: unknown) {
-      if (axios.isAxiosError(err)) {
-        const message = (err.response?.data as { error?: string } | undefined)?.error;
-        setError(message ?? "No pudimos enviar el correo. Inténtalo nuevamente en unos minutos.");
-      } else {
-        setError("Ocurrió un error inesperado. Inténtalo nuevamente.");
-      }
+      setError(
+        extractErrorMessage(
+          err,
+          "No pudimos enviar el correo. Inténtalo nuevamente en unos minutos.",
+        ),
+      );
     } finally {
       setLoading(false);
     }

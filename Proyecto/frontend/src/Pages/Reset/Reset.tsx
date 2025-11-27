@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
-import axios from "axios";
 import Navbar from "../../Components/Navbar/Navbar";
 import styles from "./Reset.module.css";
 import { resetPassword } from "../../api/auth";
+import { extractErrorMessage } from "../../utils/errorMessage";
 
 function useResetToken() {
 
@@ -42,12 +42,12 @@ export default function Reset() {
       await resetPassword({ token, password: pw });
       setDone(true);
     } catch (err: unknown) {
-      if (axios.isAxiosError(err)) {
-        const message = (err.response?.data as { error?: string } | undefined)?.error;
-        setError(message ?? "No se pudo actualizar la contraseña. Inténtalo nuevamente.");
-      } else {
-        setError("Ocurrió un error inesperado. Inténtalo nuevamente.");
-      }
+      setError(
+        extractErrorMessage(
+          err,
+          "No se pudo actualizar la contraseña. Inténtalo nuevamente.",
+        ),
+      );
     } finally {
       setLoading(false);
     }

@@ -17,6 +17,7 @@ import {
 import { timeAgo } from "../../../utils/timeAgo";
 import { useBackendReady } from "@/Hooks";
 import { currentTotalXP } from "../../../Lib/Levels";
+import { extractErrorMessage } from "@/utils/errorMessage";
 
 function formatActivity(ev: AdminStudentActivity) {
   const amount = ev.amount >= 0 ? `+${ev.amount}` : `${ev.amount}`;
@@ -55,8 +56,7 @@ export default function EstudianteDetallePage() {
         if (err?.response?.status === 404) {
           setNotFound(true);
         } else {
-          const message =
-            err?.response?.data?.error ?? err?.message ?? "No se pudo cargar la información";
+          const message = extractErrorMessage(err, "No se pudo cargar la información");
           setError(message);
         }
         setLoading(false);

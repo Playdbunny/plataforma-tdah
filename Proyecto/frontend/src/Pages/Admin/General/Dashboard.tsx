@@ -18,6 +18,7 @@ import {
   type AvgCompletionTimePoint,
   type StudentsGrowthPoint,
 } from "@/api/adminDashboard";
+import { extractErrorMessage } from "@/utils/errorMessage";
 import {
   getAdminPrecisionToday,
   type AdminPrecisionToday,
@@ -196,9 +197,7 @@ export default function AdminDashboard() {
       } catch (err) {
         if (!active) return;
         console.error("Error cargando KPIs diarios", err);
-        const message =
-          (err as any)?.response?.data?.error ??
-          (err instanceof Error ? err.message : "No se pudo cargar la información");
+        const message = extractErrorMessage(err, "No se pudo cargar la información");
         setKpisError(message);
         setKpis(null);
       } finally {
@@ -215,9 +214,7 @@ export default function AdminDashboard() {
       } catch (err) {
         if (!active) return;
         console.error("Error cargando precisión global", err);
-        const message =
-          (err as any)?.response?.data?.error ??
-          (err instanceof Error ? err.message : "No se pudo cargar la precisión global");
+        const message = extractErrorMessage(err, "No se pudo cargar la precisión global");
         setPrecisionError(message);
         setPrecisionToday(null);
       } finally {
@@ -246,9 +243,7 @@ export default function AdminDashboard() {
       } catch (err) {
         if (!active) return;
         console.error("Error cargando overview del dashboard", err);
-        const message =
-          (err as any)?.response?.data?.error ??
-          (err instanceof Error ? err.message : "No se pudo cargar la información");
+        const message = extractErrorMessage(err, "No se pudo cargar la información");
         setOverviewError(message);
         setOverview(null);
       } finally {
@@ -276,9 +271,7 @@ export default function AdminDashboard() {
       } catch (err) {
         if (!active) return;
         console.error("Error cargando crecimiento de alumnos", err);
-        const message =
-          (err as any)?.response?.data?.error ??
-          (err instanceof Error ? err.message : "No se pudo cargar la información");
+        const message = extractErrorMessage(err, "No se pudo cargar la información");
         setStudentGrowthError(message);
         setStudentGrowth(null);
       } finally {
@@ -306,9 +299,7 @@ export default function AdminDashboard() {
       } catch (err) {
         if (!active) return;
         console.error("Error cargando tiempo promedio", err);
-        const message =
-          (err as any)?.response?.data?.error ??
-          (err instanceof Error ? err.message : "No se pudo cargar la información");
+        const message = extractErrorMessage(err, "No se pudo cargar la información");
         setAvgCompletionError(message);
         setAvgCompletion(null);
       } finally {

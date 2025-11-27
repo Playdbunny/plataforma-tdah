@@ -14,6 +14,7 @@ import type {
 } from "../api/subjects";
 import { getApiBaseUrl } from "../Lib/api";
 import { useAppStore } from "./appStore";
+import { extractErrorMessage as normalizeErrorMessage } from "../utils/errorMessage";
 
 // ========================
 // Tipo base de una materia
@@ -113,12 +114,7 @@ function normalizeSubject(subject: SubjectResponse | Subject): Subject {
 }
 
 function extractErrorMessage(err: any, fallback: string) {
-  const message =
-    err?.response?.data?.error ??
-    err?.response?.data?.message ??
-    err?.message ??
-    fallback;
-  return typeof message === "string" ? message : fallback;
+  return normalizeErrorMessage(err, fallback);
 }
 
 type FetchSubjectsOptions = {

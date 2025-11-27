@@ -7,6 +7,7 @@ import { useAppStore } from "../../stores/appStore";
 import { useAuthStore } from "../../stores/authStore";
 import type { TDAHType } from "../../types/user";
 import { updateProfile, type UpdateProfilePayload, uploadAvatar } from "../../api/users";
+import { extractErrorMessage } from "../../utils/errorMessage";
 
 // Catálogo con rareza y precio (solo pagan los no-comunes)
 const CHARACTERS = [
@@ -171,11 +172,9 @@ export default function EditProfile() {
       setAuthUser(updatedUser);
       navigate("/profile");
     } catch (err: any) {
-      const message =
-        err?.response?.data?.error ??
-        err?.message ??
-        "No se pudo guardar los cambios. Intenta nuevamente.";
-      setErrorMsg(typeof message === "string" ? message : "No se pudo guardar los cambios.");
+      setErrorMsg(
+        extractErrorMessage(err, "No se pudo guardar los cambios. Intenta nuevamente."),
+      );
     } finally {
       setSaving(false);
     }
